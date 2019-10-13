@@ -13,11 +13,11 @@ The following document summarizes UDP research into developing a new SB 50 sensi
 
 ### Review of the Literature
 Literature reviews on new construction and zoning reform on development-induced displacement offers mixed results. Important takeaways include: 
-* on the effects of new construction moderates prices and/or reduces displacement pressures (Zuk and Chapple; Ellen et al. (2019); Mast (2019)).
-* Neighborhood-scale results aren't as uniform: Bunten (2019) links new development to higher rates of out migration in low income/gentrifiable tracts, Zuk and Chapple (2016) find no significant effect. 
-* Zuk and Chapple (2019) and Ellen et al (2019) both report a strong link between subsidized housing, displacement mitigation, and/or price moderations at regional scales. 
-* Freemark (2019) shows how upzoning in Chicago increased speculation and the prices of existing housing stock, but finds no impacts on the number of newly permitted dwellings over a five year period. 
-* Lens and Monkkonen (2015) find that density restrictions are associated with segregation of the wealthy and middle income, and that local pressure to regulate land is linked to higher income segregation. 
+* Regional-scale studies tent to suggest that **new construction moderates prices and/or reduces displacement pressures** (Zuk and Chapple; Ellen et al. (2019); Mast (2019)).
+* Neighborhood-scale results aren't as uniform: Bunten (2019) **links new development to higher rates of out migration in low income/gentrifiable tracts**, Zuk and Chapple (2016) find **no significant effect**. 
+* Zuk and Chapple (2019) and Ellen et al (2019) both report a **strong link between subsidized housing, displacement mitigation, and/or price moderations at regional scales**. 
+* Freemark (2019) shows how **upzoning in Chicago increased speculation and the prices of existing housing stock**, but finds **no impacts on the number of newly permitted dwellings over a five year period**. 
+* Lens and Monkkonen (2015) find that **density restrictions are associated with segregation of the wealthy and middle income**, and that **local pressure to regulate land is linked to higher income segregation**. 
 
 ### Feedback from Stakeholder Calls
 
