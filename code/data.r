@@ -7,7 +7,7 @@
 #
 # Tasks
 # 1. Create measure extraction functions
-# 	* get county medians
+# 	* need to get the tracts that fall within various pumas. 
 # --------------------------------------------------------------------------
 
 # ==========================================================================
@@ -37,8 +37,11 @@ library(tmap)
 	caltracts <- 
 		tracts(state = "CA")
 
+	calpumas <- 
+		pumas(state = "CA")
+
 # Download CA tract data for select variables
-	caldata <-
+	caltractdata <-
 		get_acs(
 			geography = "tract",
 			variables = dis_var,
@@ -49,6 +52,28 @@ library(tmap)
 			output = "wide") %>%
 		select(-ends_with("M")) 
 
+	calpumadata <- 
+		get_acs(
+			geography = "public use microdata area", 
+			variables = dis_var, 
+			state = "CA", 
+			county = NULL, 
+			geometry = FALSE, 
+			cache_table = TRUE, 
+			output = "wide"
+			)
+
+	calcountydata <- 
+		get_acs(
+			geography = "county", 
+			variables = dis_var, 
+			state = "CA", 
+			county = NULL, 
+			geometry = FALSE, 
+			cache_table = TRUE, 
+			output = "wide"
+			) 
+		
 caltracts@data <- 
 	left_join(caltracts@data, 
 			  caldata, 
