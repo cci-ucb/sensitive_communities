@@ -1261,7 +1261,7 @@ dis_var <- c(
 	'HHIncTenRent_75' = 'B25118_022', # Renter occupied!!$50,000 to $74,999
 	'HHIncTenRent_100' = 'B25118_023', # Renter occupied!!$75,000 to $99,999
 	'HHIncTenRent_150' = 'B25118_024', # Renter occupied!!$100,000 to $149,999
-	'HHIncTenRent_151' = 'B25118_025' # Renter occupied!!$150,000 or more
+	'HHIncTenRent_151' = 'B25118_025', # Renter occupied!!$150,000 or more
 	'rb_tot' = 'B25070_001', # GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME
 	'rb_10.0' = 'B25070_002', # Less than 10.0 percent GROSS RENT as % hh income
 	'rb_14.9' = 'B25070_003', # 10.0 to 14.9 percent GROSS RENT as % hh income
@@ -1272,7 +1272,7 @@ dis_var <- c(
 	'rb_39.9' = 'B25070_008', # 35.0 to 39.9 percent GROSS RENT as % hh income
 	'rb_49.9' = 'B25070_009', # 40.0 to 49.9 percent GROSS RENT as % hh income
 	'rb_55' = 'B25070_010', # 50.0 percent or more GROSS RENT as % hh income
-	'rb_nc' = 'B25070_011' # Not computed GROSS RENT as % hh income
+	'rb_nc' = 'B25070_011', # Not computed GROSS RENT as % hh income
 # race
 	'totrace' = 'B03002_001',
 	'White' = 'B03002_003',
