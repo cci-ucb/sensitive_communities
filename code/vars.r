@@ -1219,3 +1219,135 @@ gen_vars11 <-
 	'pschlF4' = 'B14002_039E',
 	'pschlF5' = 'B14002_042E'
 	)
+
+
+#
+# Displacement Measure
+# --------------------------------------------------------------------------
+
+dis_var <- c(
+# income
+	'mhhinc' = 'B19013_001',
+	'mhhinc_wht' = 'B19013A_001',
+	'mhhinc_blk' = 'B19013B_001',
+	'mhhinc_aian' = 'B19013C_001',
+	'mhhinc_asi' = 'B19013D_001',
+	'mhhinc_nhop' = 'B19013E_001',
+	'mhhinc_oth' = 'B19013F_001',
+	'mhhinc_two' = 'B19013G_001',
+	'mhhinc_whtnl' = 'B19013H_001',
+	'mhhinc_lat' = 'B19013I_001',
+	'HHIncTen_Total' = 'B25118_001', # Total
+	'HHIncTenOwn' = 'B25118_002', # Owner occupied
+	'HHIncTenOwn_5' = 'B25118_003', # Owner occupied!!Less than $5,000
+	'HHIncTenOwn_10' = 'B25118_004', # Owner occupied!!$5,000 to $9,999
+	'HHIncTenOwn_15' = 'B25118_005', # Owner occupied!!$10,000 to $14,999
+	'HHIncTenOwn_20' = 'B25118_006', # Owner occupied!!$15,000 to $19,999
+	'HHIncTenOwn_25' = 'B25118_007', # Owner occupied!!$20,000 to $24,999
+	'HHIncTenOwn_35' = 'B25118_008', # Owner occupied!!$25,000 to $34,999
+	'HHIncTenOwn_50' = 'B25118_009', # Owner occupied!!$35,000 to $49,999
+	'HHIncTenOwn_75' = 'B25118_010', # Owner occupied!!$50,000 to $74,999
+	'HHIncTenOwn_100' = 'B25118_011', # Owner occupied!!$75,000 to $99,999
+	'HHIncTenOwn_150' = 'B25118_012', # Owner occupied!!$100,000 to $149,999
+	'HHIncTenOwn_151' = 'B25118_013', # Owner occupied!!$150,000 or more
+	'HHIncTenRent' = 'B25118_014', # Renter occupied
+	'HHIncTenRent_5' = 'B25118_015', # Renter occupied!!Less than $5,000
+	'HHIncTenRent_10' = 'B25118_016', # Renter occupied!!$5,000 to $9,999
+	'HHIncTenRent_15' = 'B25118_017', # Renter occupied!!$10,000 to $14,999
+	'HHIncTenRent_20' = 'B25118_018', # Renter occupied!!$15,000 to $19,999
+	'HHIncTenRent_25' = 'B25118_019', # Renter occupied!!$20,000 to $24,999
+	'HHIncTenRent_35' = 'B25118_020', # Renter occupied!!$25,000 to $34,999
+	'HHIncTenRent_50' = 'B25118_021', # Renter occupied!!$35,000 to $49,999
+	'HHIncTenRent_75' = 'B25118_022', # Renter occupied!!$50,000 to $74,999
+	'HHIncTenRent_100' = 'B25118_023', # Renter occupied!!$75,000 to $99,999
+	'HHIncTenRent_150' = 'B25118_024', # Renter occupied!!$100,000 to $149,999
+	'HHIncTenRent_151' = 'B25118_025' # Renter occupied!!$150,000 or more
+	'rb_tot' = 'B25070_001', # GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME
+	'rb_10.0' = 'B25070_002', # Less than 10.0 percent GROSS RENT as % hh income
+	'rb_14.9' = 'B25070_003', # 10.0 to 14.9 percent GROSS RENT as % hh income
+	'rb_19.9' = 'B25070_004', # 15.0 to 19.9 percent GROSS RENT as % hh income
+	'rb_24.9' = 'B25070_005', # 20.0 to 24.9 percent GROSS RENT as % hh income
+	'rb_29.9' = 'B25070_006', # 25.0 to 29.9 percent GROSS RENT as % hh income
+	'rb_34.9' = 'B25070_007', # 30.0 to 34.9 percent GROSS RENT as % hh income
+	'rb_39.9' = 'B25070_008', # 35.0 to 39.9 percent GROSS RENT as % hh income
+	'rb_49.9' = 'B25070_009', # 40.0 to 49.9 percent GROSS RENT as % hh income
+	'rb_55' = 'B25070_010', # 50.0 percent or more GROSS RENT as % hh income
+	'rb_nc' = 'B25070_011' # Not computed GROSS RENT as % hh income
+# race
+	'totrace' = 'B03002_001',
+	'White' = 'B03002_003',
+	'Black' = 'B03002_004',
+	'Asian' = 'B03002_006',
+	'Latinx' = 'B03002_012',
+# disadvantage
+	'totwelf' = 'B19057_001', #
+	'welf' = 'B19057_002',
+	'totpov' = 'B17017_001', #
+	'povfamh' = 'B17017_003',
+	'povnonfamh' = 'B17017_020',
+	'totunemp' = 'B23025_001',
+	'unemp' = 'B23025_005',
+	'totfemhh' = 'B09019_001',
+	'femfamhh' = 'B09019_006',
+	'femnonfamhh' = 'B09019_029',
+# age
+	'totage' = 'B01001_001',
+	'Munder5' = 'B01001_003',
+	'Mfiveto9' = 'B01001_004',
+	'Mtento14' = 'B01001_005',
+	'Mfiftto17' = 'B01001_006',
+	'Funder5' = 'B01001_027',
+	'Ffiveto9' = 'B01001_028',
+	'Ftento14' = 'B01001_029',
+	'Ffiftto17' = 'B01001_030',
+	'Mel1' = 'B01001_020', # Male!!65 and 66 years
+	'Mel2' = 'B01001_021', # Male!!67 to 69 years
+	'Mel3' = 'B01001_022', # Male!!70 to 74 years
+	'Mel4' = 'B01001_023', # Male!!75 to 79 years
+	'Mel5' = 'B01001_024', # Male!!80 to 84 years
+	'Mel6' = 'B01001_025', # Male!!85 years and over
+	'Fel1' = 'B01001_044', # Female!!65 and 66 years
+	'Fel2' = 'B01001_045', # Female!!67 to 69 years
+	'Fel3' = 'B01001_046', # Female!!70 to 74 years
+	'Fel4' = 'B01001_047', # Female!!75 to 79 years
+	'Fel5' = 'B01001_048', # Female!!80 to 84 years
+	'Fel6' = 'B01001_049', # Female!!85 years and over
+# eeducation
+	'toted' = 'B15003_001',
+	'bach' = 'B15003_022',
+	'mas' = 'B15003_023',
+	'pro' = 'B15003_024',
+	'doc' = 'B15003_025',
+# rent
+	'medrent' = 'B25064_001', #MEDIAN GROSS RENT (DOLLARS)
+	'totten' = 'B25003_001',  # Estimate!!Total TENURE
+	'totown' = 'B25003_002', # Estimate!!Total!!Owner occupied TENURE
+	'totrent' = 'B25003_003', # Estimate!!Total!!Renter occupied TENURE
+	'tottenWHT' = 'B25003A_001', # Estimate!!Total TENURE (WHITE ALONE HOUSEHOLDER)
+	'totownWHT' = 'B25003A_002', # Estimate!!Total!!Owner occupied TENURE (WHITE ALONE HOUSEHOLDER)
+	'totrentWHT' = 'B25003A_003', # Estimate!!Total!!Renter occupied TENURE (WHITE ALONE HOUSEHOLDER)
+	'tottenBLK' = 'B25003B_001', # Estimate!!Total TENURE (BLACK OR AFRICAN AMERICAN ALONE HOUSEHOLDER)
+	'totownBLK' = 'B25003B_002', # Estimate!!Total!!Owner occupied TENURE (BLACK OR AFRICAN AMERICAN ALONE HOUSEHOLDER)
+	'totrentBLK' = 'B25003B_003', # Estimate!!Total!!Renter occupied TENURE (BLACK OR AFRICAN AMERICAN ALONE HOUSEHOLDER)
+	'tottenAIAN' = 'B25003C_001', # Estimate!!Total TENURE (AMERICAN INDIAN AND ALASKA NATIVE ALONE HOUSEHOLDER)
+	'totownAIAN' = 'B25003C_002', # Estimate!!Total!!Owner occupied TENURE (AMERICAN INDIAN AND ALASKA NATIVE ALONE HOUSEHOLDER)
+	'totrentAIAN' = 'B25003C_003', # Estimate!!Total!!Renter occupied TENURE (AMERICAN INDIAN AND ALASKA NATIVE ALONE HOUSEHOLDER)
+	'tottenASI' = 'B25003D_001', # Estimate!!Total TENURE (ASIAN ALONE HOUSEHOLDER)
+	'totownASI' = 'B25003D_002', # Estimate!!Total!!Owner occupied TENURE (ASIAN ALONE HOUSEHOLDER)
+	'totrentASI' = 'B25003D_003', # Estimate!!Total!!Renter occupied TENURE (ASIAN ALONE HOUSEHOLDER)
+	'tottenNHOP' = 'B25003E_001', # Estimate!!Total TENURE (NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER ALONE HOUSEHOLDER)
+	'totownNHOP' = 'B25003E_002', # Estimate!!Total!!Owner occupied TENURE (NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER ALONE HOUSEHOLDER)
+	'totrentNHOP' = 'B25003E_003', # Estimate!!Total!!Renter occupied TENURE (NATIVE HAWAIIAN AND OTHER PACIFIC ISLANDER ALONE HOUSEHOLDER)
+	'tottenOTH' = 'B25003F_001', # Estimate!!Total TENURE (SOME OTHER RACE ALONE HOUSEHOLDER)
+	'totownOTH' = 'B25003F_002', # Estimate!!Total!!Owner occupied TENURE (SOME OTHER RACE ALONE HOUSEHOLDER)
+	'totrentOTH' = 'B25003F_003', # Estimate!!Total!!Renter occupied TENURE (SOME OTHER RACE ALONE HOUSEHOLDER)
+	'tottenTWO' = 'B25003G_001', # Estimate!!Total TENURE (TWO OR MORE RACES HOUSEHOLDER)
+	'totownTWO' = 'B25003G_002', # Estimate!!Total!!Owner occupied TENURE (TWO OR MORE RACES HOUSEHOLDER)
+	'totrentTWO' = 'B25003G_003', # Estimate!!Total!!Renter occupied TENURE (TWO OR MORE RACES HOUSEHOLDER)
+	'tottenWHTNL' = 'B25003H_001', # Estimate!!Total TENURE (WHITE ALONE, NOT HISPANIC OR LATINO HOUSEHOLDER)
+	'totownWHTNL' = 'B25003H_002', # Estimate!!Total!!Owner occupied TENURE (WHITE ALONE, NOT HISPANIC OR LATINO HOUSEHOLDER)
+	'totrentWHTNL' = 'B25003H_003', # Estimate!!Total!!Renter occupied TENURE (WHITE ALONE, NOT HISPANIC OR LATINO HOUSEHOLDER)
+	'tottenLAT' = 'B25003I_001', # Estimate!!Total TENURE (HISPANIC OR LATINO HOUSEHOLDER)
+	'totownLAT' = 'B25003I_002', # Estimate!!Total!!Owner occupied TENURE (HISPANIC OR LATINO HOUSEHOLDER)
+	'totrentLAT' = 'B25003I_003' # Estimate!!Total!!Renter occupied TENURE (HISPANIC OR LATINO HOUSEHOLDER)
+	)

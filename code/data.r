@@ -36,16 +36,15 @@ cal17 <-
 		geography = "tract",
 		variables = gen_vars12,
 		state = "CA",
-		county = NULL,
+		county = NULL, 
+		ouput = "wide",
 		geometry = TRUE,
-		cache_table = TRUE,
-		output = "wide") -
-	select_at(vars(ends_with("M")), funs(str_replace(,)))
+		cache_table = TRUE) 
 
-data <-
+
+df <-
 	cal17 %>%
-	select(-moe) %>%
-	group_by(GEOID) %>%
-	spread(variable, estimate)
+	select(-ends_with("E")) 
 
 
+data %>% 
