@@ -34,7 +34,7 @@ source("~/git/sensitive_communities/code/vars.r")
 cal17 <-
 	get_acs(
 		geography = "tract",
-		variables = gen_vars12,
+		variables = dis_var,
 		state = "CA",
 		county = NULL,
 		geometry = TRUE,
@@ -43,6 +43,7 @@ cal17 <-
 
 df <-
 	cal17 %>%
-	select(-ends_with("M")) 
+	select(-ends_with("M")) %>%
+	mutate()
 
 data %>% 
