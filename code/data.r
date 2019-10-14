@@ -36,15 +36,13 @@ cal17 <-
 		geography = "tract",
 		variables = gen_vars12,
 		state = "CA",
-		county = NULL, 
-		ouput = "wide",
+		county = NULL,
 		geometry = TRUE,
-		cache_table = TRUE) 
-
+		cache_table = TRUE, 
+		output = "wide") 
 
 df <-
 	cal17 %>%
-	select(-ends_with("E")) 
-
+	select(-ends_with("M")) 
 
 data %>% 
