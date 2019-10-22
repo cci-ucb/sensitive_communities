@@ -63,6 +63,32 @@ library(tmap)
 			year = 2012) %>%
 		select(-ends_with("M"))
 
+# Download CA block group data for select variables
+	cbg_data17 <-
+		get_acs(
+			geography = "block group",
+			variables = dis_var,
+			state = "CA",
+			county = NULL,
+			geometry = FALSE,
+			cache_table = TRUE,
+			output = "wide",
+			year = 2017) %>%
+		select(-ends_with("M"))
+
+### Block groups for 2008 to 2012 are not downloading
+	cbg_data12 <-
+		get_acs(
+			geography = "block group",
+			variables = dis_var,
+			state = "CA",
+			county = NULL,
+			geometry = FALSE,
+			cache_table = TRUE,
+			output = "wide",
+			year = 2012) %>%
+		select(-ends_with("M"))
+
 #
 # PUMA data - (ON HOLD)
 # --------------------------------------------------------------------------
@@ -109,19 +135,28 @@ library(tmap)
 
 # Download shapefile
 	ct <-
-		tracts(state = "CA")
+		tracts(state = "CA")	
+
+	cbg <-
+		block_groups(state = "CA")
 
 # create county join ID
 	ct@data <-
 		ct@data %>%
 		mutate(county = paste0(STATEFP, COUNTYFP))
 
-# Create new Cal object for posterity of OG ct object
-	cal <- ct
+# create county join ID
+	cbg@data <-
+		cbg@data %>%
+		mutate(county = paste0(STATEFP, COUNTYFP))
 
-# Join County and ACS tract data to cal shapefile
-	cal@data <-
-		left_join(cal@data,
+# Create new Cal object for posterity of OG ct object
+	cal_tracts <- ct
+	cal_bg <- cbg
+
+# Join County and ACS tract data to cal_tracts shapefile
+	cal_tracts@data <-
+		left_join(cal_tracts@data,
 				  cc_data,
 				  by = c("county" = "GEOID")) %>%
 		left_join(.,
@@ -141,7 +176,7 @@ newnames <-
 	c('HHInc_10E.x' = 10000,'HHInc_15E.x' = 14999,'HHInc_20E.x' = 19999,'HHInc_25E.x' = 24999,'HHInc_30E.x' = 29999,'HHInc_35E.x' = 34999,'HHInc_40E.x' = 39999,'HHInc_45E.x' = 44999,'HHInc_50E.x' = 49999,'HHInc_60E.x' = 59999,'HHInc_75E.x' = 74999,'HHInc_100E.x' = 99999,'HHInc_125E.x' = 124999,'HHInc_150E.x' = 149999,'HHInc_200E.x' = 199999,'HHInc_250E.x' = 200000)
 
 	hhinc12 <-
-		cal@data %>%
+		cal_tracts@data %>%
 		select(GEOID, county, co_medinc, HHInc_TotalE.x:HHInc_250E.x) %>%
 		group_by(GEOID) %>%
 		mutate(LI_val = co_medinc*.8,
