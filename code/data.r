@@ -322,7 +322,7 @@ cal_tracts@data <-
 	dist_nb <- dnearneigh(coords, d1=0, d2 = .1*max_1nn, row.names = IDs)
 	### listw object
 	spdep::set.ZeroPolicyOption(TRUE)
-	# set.ZeroPolicyOption(TRUE)
+	spdep::set.ZeroPolicyOption(TRUE)
 	dists <- nbdists(dist_nb, coordinates(cal_tracts))
 	idw <- lapply(dists, function(x) 1/(x^2))
 	lw_dist_idwW <- nb2listw(dist_nb, glist = idw, style = "W")
@@ -345,9 +345,9 @@ cal_tracts_co <- cal_tracts
 cal_tracts_co@data <-
 	cal_tracts_co@data %>%
 	group_by(COUNTYFP) %>%
-	mutate(tr_rentgap = tr_medrent17 - tr_medrent17.lag,
+	mutate(tr_rentgap = tr_medrent17.lag - tr_medrent17,
 		   tr_rentgapsc = scale(tr_rentgap),
-		   tr_rentgappropdiff = (tr_medrent17 - tr_medrent17.lag)/((tr_medrent17 + tr_medrent17.lag)/2),
+		   tr_rentgappropdiff = (tr_medrent17.lag - tr_medrent17)/((tr_medrent17 + tr_medrent17.lag)/2),
 		   co_rentgap = median(tr_rentgap),
 		   v_renters = if_else(tr_rentprop17 > co_medrentprop17, 1, 0),
 		   v_ELI = if_else(tr_propstudent17 < .25 & tr_ELI_prop17 > co_ELI_prop17, 1, 0),
@@ -365,11 +365,11 @@ cal_tracts_co@data <-
 		   dp_count_10 = sum(dp_chrent_10,
 		   					 # dp_ched,
 		   					 dp_rentgap_10, na.rm = TRUE),
-		   vulnerable = if_else(v_renters == 1 & v_count >=1, 1, 0),
-		   dis_press_co = if_else(dp_count_co == 1, 1, 0),
-		   dis_press_10 = if_else(dp_count_10 == 1, 1, 0),
-		   risk_co = if_else(vulnerable + dis_press_co == 2, 1, 0),
-		   risk_10 = if_else(vulnerable + dis_press_10 == 2, 1, 0)) %>%
+		   vulnerable = if_else(v_renters >= 1 & v_count >=1, 1, 0),
+		   dis_press_co = if_else(dp_count_co >= 1, 1, 0),
+		   dis_press_10 = if_else(dp_count_10 >= 1, 1, 0),
+		   risk_co = if_else(vulnerable + dis_press_co >= 2, 1, 0),
+		   risk_10 = if_else(vulnerable + dis_press_10 >= 2, 1, 0)) %>%
 	ungroup()
 
 cal_tracts_co@data %>%
@@ -378,8 +378,12 @@ cal_tracts_co@data %>%
 # ==========================================================================
 # Map
 # ==========================================================================
+
 cal_tracts_10 <- cal_tracts_co
+
 tmap_mode("view")
+
+sc_map <-
 tm_shape(cal_tracts_co) +
 	tm_fill("risk_co",
 			n = 2,
@@ -393,7 +397,12 @@ tm_shape(cal_tracts_co) +
 						   "Rent Gap" = "tr_rentgap",
 						   "Rent Burden" = "tr_rbprop17",
 						   "Prop. ELI" = "tr_ELI_prop17",
-						   "Prop. Students" = "tr_propstudent17"),
+						   "Prop. Students" = "tr_propstudent17",
+						   "v_renters",
+						   "v_ELI",
+						   "v_rb",
+						   "dp_chrent_comed",
+						   "dp_rentgap_comed"),
 			popup.format = list(digits=2)) +
 tm_shape(cal_tracts_10) +
 	tm_fill("risk_10",
@@ -408,9 +417,20 @@ tm_shape(cal_tracts_10) +
 						   "Rent Gap" = "tr_rentgap",
 						   "Rent Burden" = "tr_rbprop17",
 						   "Prop. ELI" = "tr_ELI_prop17",
-						   "Prop. Students" = "tr_propstudent17"),
+						   "Prop. Students" = "tr_propstudent17",
+						   "v_renters",
+						   "v_ELI",
+						   "v_rb",
+						   "dp_chrent_10",
+						   "dp_rentgap_10"),
 			popup.format = list(digits=2)) +
 	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 12), alpha = .5)
+
+save_tmap(sc_map, "~/git/sensitive_communities/sc_mapv1.html")
+
+# ==========================================================================
+# End Code
+# ==========================================================================
 
 
 alamedamap <-
