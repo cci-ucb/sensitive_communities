@@ -166,10 +166,10 @@ newnames12 <-
 					 if_else(ELI_val <= top_inccat &
 			   					ELI_val >= bottom_inccat,
 			   					(ELI_val - bottom_inccat)/(top_inccat - bottom_inccat), 0)),
-			   tr_totalinc12 = sum(medinc_cat_count),
-			   tr_LI_count12 = sum(LI*medinc_cat_count),
-			   tr_VLI_count12 = sum(VLI*medinc_cat_count),
-			   tr_ELI_count12 = sum(ELI*medinc_cat_count),
+			   tr_totalinc12 = sum(medinc_cat_count, na.rm = TRUE),
+			   tr_LI_count12 = sum(LI*medinc_cat_count, na.rm = TRUE),
+			   tr_VLI_count12 = sum(VLI*medinc_cat_count, na.rm = TRUE),
+			   tr_ELI_count12 = sum(ELI*medinc_cat_count, na.rm = TRUE),
 			   tr_LI_prop12 = tr_LI_count12/tr_totalinc12,
 			   tr_VLI_prop12 = tr_VLI_count12/tr_totalinc12,
 			   tr_ELI_prop12 = tr_ELI_count12/tr_totalinc12) %>%
@@ -210,10 +210,10 @@ newnames17 <-
 					 if_else(ELI_val <= top_inccat &
 			   					ELI_val >= bottom_inccat,
 			   					(ELI_val - bottom_inccat)/(top_inccat - bottom_inccat), 0)),
-			   tr_totalinc17 = sum(medinc_cat_count),
-			   tr_LI_count17 = sum(LI*medinc_cat_count),
-			   tr_VLI_count17 = sum(VLI*medinc_cat_count),
-			   tr_ELI_count17 = sum(ELI*medinc_cat_count),
+			   tr_totalinc17 = sum(medinc_cat_count, na.rm = TRUE),
+			   tr_LI_count17 = sum(LI*medinc_cat_count, na.rm = TRUE),
+			   tr_VLI_count17 = sum(VLI*medinc_cat_count, na.rm = TRUE),
+			   tr_ELI_count17 = sum(ELI*medinc_cat_count, na.rm = TRUE),
 			   tr_LI_prop17 = tr_LI_count17/tr_totalinc17,
 			   tr_VLI_prop17 = tr_VLI_count17/tr_totalinc17,
 			   tr_ELI_prop17 = tr_ELI_count17/tr_totalinc17) %>%
@@ -224,20 +224,20 @@ newnames17 <-
 lidata <-
 	left_join(trli12, trli17, by = c("GEOID", "COUNTYFP")) %>%
 	group_by(COUNTYFP) %>%
-	mutate(co_totalinc12 = sum(tr_totalinc12),
-		   co_LI_count12 = sum(tr_LI_count12),
-		   co_VLI_count12 = sum(tr_VLI_count12),
-		   co_ELI_count12 = sum(tr_ELI_count12),
+	mutate(co_totalinc12 = sum(tr_totalinc12, na.rm = TRUE),
+		   co_LI_count12 = sum(tr_LI_count12, na.rm = TRUE),
+		   co_VLI_count12 = sum(tr_VLI_count12, na.rm = TRUE),
+		   co_ELI_count12 = sum(tr_ELI_count12, na.rm = TRUE),
 		   co_LI_prop12 = co_LI_count12/co_totalinc12,
 		   co_VLI_prop12 = co_VLI_count12/co_totalinc12,
 		   co_ELI_prop12 = co_ELI_count12/co_totalinc12,
 		   co_LI_propmed12 = median(tr_LI_prop12, na.rm = TRUE),
 		   co_VLI_propmed12 = median(tr_VLI_prop12, na.rm = TRUE),
 		   co_ELI_propmed12 = median(tr_ELI_prop12, na.rm = TRUE),
-		   co_totalinc17 = sum(tr_totalinc17),
-		   co_LI_count17 = sum(tr_LI_count17),
-		   co_VLI_count17 = sum(tr_VLI_count17),
-		   co_ELI_count17 = sum(tr_ELI_count17),
+		   co_totalinc17 = sum(tr_totalinc17, na.rm = TRUE),
+		   co_LI_count17 = sum(tr_LI_count17, na.rm = TRUE),
+		   co_VLI_count17 = sum(tr_VLI_count17, na.rm = TRUE),
+		   co_ELI_count17 = sum(tr_ELI_count17, na.rm = TRUE),
 		   co_LI_prop17 = co_LI_count17/co_totalinc17,
 		   co_VLI_prop17 = co_VLI_count17/co_totalinc17,
 		   co_ELI_prop17 = co_ELI_count17/co_totalinc17,
@@ -245,26 +245,57 @@ lidata <-
 		   co_VLI_propmed17 = median(tr_VLI_prop17, na.rm = TRUE),
 		   co_ELI_propmed17 = median(tr_ELI_prop17, na.rm = TRUE))
 
-glimpse(lidata)
+# glimpse(lidata)
 
 #
 # Change
 # --------------------------------------------------------------------------
 
+
+cal_tracts@data <-
 	left_join(cal_tracts@data, lidata, by = c("GEOID", "COUNTYFP")) %>%
+	group_by(GEOID) %>%
+	mutate(tr_rentprop12 = totrentE.x/tottenE.x,
+		   tr_rentprop17 = totrentE.y/tottenE.y,
+		   tr_rbprop12 = sum(rb_34.9E.x,rb_39.9E.x,rb_49.9E.x,rb_55E.x, na.rm = TRUE)/rb_totE.x,
+		   tr_rbprop17 = sum(rb_34.9E.y,rb_39.9E.y,rb_49.9E.y,rb_55E.y, na.rm = TRUE)/rb_totE.y,
+		   tr_medrent12 = medrentE.x*1.07,
+		   tr_medrent17 = medrentE.y,
+		   tr_chrent = tr_medrent17-tr_medrent12,
+		   tr_propchrent = (tr_medrent17-tr_medrent12)/tr_medrent12,
+		   tr_bachplus12 = sum(bachE.x, masE.x, proE.x, docE.x, na.rm = TRUE),
+		   tr_bachplus17 = sum(bachE.y, masE.y, proE.y, docE.y, na.rm = TRUE),
 
+		   ### LEFT OFF - need to figure out what to do about NAN's below ###
+		   tr_proped12 = tr_bachplus12/(totedE.x+.0001),
+		   tr_proped17 = tr_bachplus17/(totedE.y+.0001),
+		   tr_propched = (tr_proped17 - tr_proped12)/(tr_proped12+.0001)) %>% # plus 1 in denom to fix 0's
+	group_by(COUNTYFP) %>%
+	mutate(co_medrentprop12 = median(tr_rentprop12, na.rm = TRUE),
+		   co_medrentprop17 = median(tr_rentprop17, na.rm = TRUE),
+		   co_medrbprop12 = median(tr_rbprop12, na.rm = TRUE),
+		   co_medrbprop17 = median(tr_rbprop17, na.rm = TRUE),
+		   co_medrent12 = median(tr_medrent12, na.rm = TRUE),
+		   co_medrent17 = median(tr_medrent17, na.rm = TRUE),
+		   co_medchrent = median(tr_chrent, na.rm = TRUE),
+		   co_medproped12 = median(tr_proped12, na.rm = TRUE),
+		   co_medproped17 = median(tr_proped17, na.rm = TRUE),
+		   co_medched = median(tr_propched, na.rm = TRUE)) %>%
+	group_by(GEOID) %>%
+	mutate(tr_medrent12 = if_else(is.na(tr_medrent12),
+								  co_medrent12,
+								  tr_medrent12),
+		   tr_medrent17 = if_else(is.na(tr_medrent17),
+		   						  co_medrent17,
+		   						  tr_medrent17),
+		   tr_chrent = if_else(is.na(tr_chrent),
+		   						   co_medchrent,
+		   						   tr_chrent),
+		   tr_propchrent = (tr_medrent17-tr_medrent12)/tr_medrent12) %>%
+	ungroup()
 
-#
-# Mutate select tract variables
-# --------------------------------------------------------------------------
-
-	cal@data <-
-		cal@data %>%
-		mutate(
-			   pRenters12 = totrentE.x/tottenE.x,
-			   pRenters17 = totrentE.y/tottenE.y,
-			   )
-
+cal_tracts@data %>% filter(tr_propched > 5000) %>% glimpse()
+cal_tracts@data %>% summary()
 # ==========================================================================
 # Create lag variables
 # ==========================================================================
@@ -272,18 +303,18 @@ glimpse(lidata)
 #
 # Create neighbor matrix
 # --------------------------------------------------------------------------
-	coords <- coordinates(cal)
-	IDs <- row.names(as(cal, "data.frame"))
-	cal_nb <- poly2nb(cal) # nb
-	lw_bin <- nb2listw(cal_nb, style = "B", zero.policy = TRUE)
+	coords <- coordinates(cal_tracts)
+	IDs <- row.names(as(cal_tracts, "data.frame"))
+	cal_tracts_nb <- poly2nb(cal_tracts) # nb
+	lw_bin <- nb2listw(cal_tracts_nb, style = "B", zero.policy = TRUE)
 	kern1 <- knn2nb(knearneigh(coords, k = 1), row.names=IDs)
 	dist <- unlist(nbdists(kern1, coords)); summary(dist)
 	max_1nn <- max(dist)
 	dist_nb <- dnearneigh(coords, d1=0, d2 = .1*max_1nn, row.names = IDs)
 	### listw object
-	set.ZeroPolicyOption(TRUE)
-	set.ZeroPolicyOption(TRUE)
-	dists <- nbdists(dist_nb, coordinates(cal))
+	spdep::set.ZeroPolicyOption(TRUE)
+	# set.ZeroPolicyOption(TRUE)
+	dists <- nbdists(dist_nb, coordinates(cal_tracts))
 	idw <- lapply(dists, function(x) 1/(x^2))
 	lw_dist_idwW <- nb2listw(dist_nb, glist = idw, style = "W")
 
@@ -291,7 +322,9 @@ glimpse(lidata)
 # Create select lag variables
 # --------------------------------------------------------------------------
 
-	ct$medrent.lag <- lag.listw(lw_dist_idwW,ct$medrentE)
+	cal_tracts$tr_chrent.lag <- lag.listw(lw_dist_idwW,cal_tracts$tr_chrent)
+	cal_tracts$tr_ched.lag <- lag.listw(lw_dist_idwW,cal_tracts$tr_ched)
+	cal_tracts$tr_medrent17.lag <- lag.listw(lw_dist_idwW,cal_tracts$tr_medrent17)
 	# ct$pPOV00.lag <- lag.listw(lw_dist_idwW,ct$pPOV00)
 	# ct$pPOV15.lag <- lag.listw(lw_dist_idwW,ct$pPOV15)
 	# ct$pRB30Plus_15.lag <- lag.listw(lw_dist_idwW,ct$pRB30Plus_15)
