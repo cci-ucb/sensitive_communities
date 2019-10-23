@@ -1335,6 +1335,10 @@ dis_var <- c(
 	'mas' = 'B15003_023',
 	'pro' = 'B15003_024',
 	'doc' = 'B15003_025',
+	'totenroll' = 'B14007_001', # Estimate!!Total	SCHOOL ENROLLMENT BY DETAILED  LEVEL OF SCHOOL FOR THE POPULATION 3 YEARS AND OVER
+	'colenroll' = 'B14007_017', # Estimate!!Total!!Enrolled in school!!Enrolled in college undergraduate years	SCHOOL ENROLLMENT BY DETAILED  LEVEL OF SCHOOL FOR THE POPULATION 3 YEARS AND OVER
+	'proenroll' = 'B14007_018', # Estimate!!Total!!Enrolled in school!!Graduate or professional school	SCHOOL ENROLLMENT BY DETAILED  LEVEL OF SCHOOL FOR THE POPULATION 3 YEARS AND OVER
+
 # rent
 	'medrent' = 'B25064_001', #MEDIAN GROSS RENT (DOLLARS)
 	'totten' = 'B25003_001',  # Estimate!!Total TENURE

@@ -173,7 +173,7 @@ newnames12 <-
 			   tr_LI_prop12 = tr_LI_count12/tr_totalinc12,
 			   tr_VLI_prop12 = tr_VLI_count12/tr_totalinc12,
 			   tr_ELI_prop12 = tr_ELI_count12/tr_totalinc12) %>%
-		select(GEOID, COUNTYFP, tr_totalinc12:tr_ELI_prop12) %>%
+		select(GEOID, COUNTYFP, LI_val:ELI_val, tr_totalinc12:tr_ELI_prop12) %>%
 		distinct() %>%
 		ungroup()
 
@@ -217,7 +217,7 @@ newnames17 <-
 			   tr_LI_prop17 = tr_LI_count17/tr_totalinc17,
 			   tr_VLI_prop17 = tr_VLI_count17/tr_totalinc17,
 			   tr_ELI_prop17 = tr_ELI_count17/tr_totalinc17) %>%
-		select(GEOID, COUNTYFP, tr_totalinc17:tr_ELI_prop17) %>%
+		select(GEOID, COUNTYFP, LI_val:ELI_val,tr_totalinc17:tr_ELI_prop17) %>%
 		distinct() %>%
 		ungroup()
 
@@ -255,21 +255,26 @@ lidata <-
 cal_tracts@data <-
 	left_join(cal_tracts@data, lidata, by = c("GEOID", "COUNTYFP")) %>%
 	group_by(GEOID) %>%
-	mutate(tr_rentprop12 = totrentE.x/tottenE.x,
+	mutate(tr_propstudent17 = sum(colenrollE.y, proenrollE.y)/totenrollE.y,
+		   tr_rentprop12 = totrentE.x/tottenE.x,
 		   tr_rentprop17 = totrentE.y/tottenE.y,
-		   tr_rbprop12 = sum(rb_34.9E.x,rb_39.9E.x,rb_49.9E.x,rb_55E.x, na.rm = TRUE)/rb_totE.x,
-		   tr_rbprop17 = sum(rb_34.9E.y,rb_39.9E.y,rb_49.9E.y,rb_55E.y, na.rm = TRUE)/rb_totE.y,
+		   tr_rbprop12 = sum(rb_55E.x, na.rm = TRUE)/rb_totE.x,
+		   tr_rbprop17 = sum(rb_55E.y, na.rm = TRUE)/rb_totE.y,
 		   tr_medrent12 = medrentE.x*1.07,
 		   tr_medrent17 = medrentE.y,
 		   tr_chrent = tr_medrent17-tr_medrent12,
 		   tr_propchrent = (tr_medrent17-tr_medrent12)/tr_medrent12,
 		   tr_bachplus12 = sum(bachE.x, masE.x, proE.x, docE.x, na.rm = TRUE),
 		   tr_bachplus17 = sum(bachE.y, masE.y, proE.y, docE.y, na.rm = TRUE),
-
-		   ### LEFT OFF - need to figure out what to do about NAN's below ###
-		   tr_proped12 = tr_bachplus12/(totedE.x+.0001),
-		   tr_proped17 = tr_bachplus17/(totedE.y+.0001),
-		   tr_propched = (tr_proped17 - tr_proped12)/(tr_proped12+.0001)) %>% # plus 1 in denom to fix 0's
+		   tr_proped12 = if_else(tr_bachplus12 == 0 & totedE.x == 0,
+		   						 0,
+		   						 tr_bachplus12/totedE.x),
+		   tr_proped17 = if_else(tr_bachplus17 == 0 & totedE.y == 0,
+		   						 0,
+		   						 tr_bachplus17/totedE.y),
+		   tr_propched = if_else(tr_proped17 == 0 & tr_proped12 == 0,
+		   						 0,
+		   						 (tr_proped17 - tr_proped12)/(tr_proped12))) %>%
 	group_by(COUNTYFP) %>%
 	mutate(co_medrentprop12 = median(tr_rentprop12, na.rm = TRUE),
 		   co_medrentprop17 = median(tr_rentprop17, na.rm = TRUE),
@@ -291,11 +296,15 @@ cal_tracts@data <-
 		   tr_chrent = if_else(is.na(tr_chrent),
 		   						   co_medchrent,
 		   						   tr_chrent),
-		   tr_propchrent = (tr_medrent17-tr_medrent12)/tr_medrent12) %>%
+		   tr_propchrent = (tr_medrent17-tr_medrent12)/tr_medrent12,
+		   co_medpropchrent = median(tr_propchrent),
+		   tr_propched = if_else(tr_propched == Inf,
+		   						 (tr_proped17-tr_proped12)/mean(tr_proped17,tr_proped12),
+		   						 tr_propched)) %>%
 	ungroup()
 
-cal_tracts@data %>% filter(tr_propched > 5000) %>% glimpse()
-cal_tracts@data %>% summary()
+# cal_tracts@data %>% filter(tr_propched >= 20) %>% glimpse()
+# cal_tracts@data %>% summary()
 # ==========================================================================
 # Create lag variables
 # ==========================================================================
@@ -323,30 +332,86 @@ cal_tracts@data %>% summary()
 # --------------------------------------------------------------------------
 
 	cal_tracts$tr_chrent.lag <- lag.listw(lw_dist_idwW,cal_tracts$tr_chrent)
-	cal_tracts$tr_ched.lag <- lag.listw(lw_dist_idwW,cal_tracts$tr_ched)
+	cal_tracts$tr_propchrent.lag <- lag.listw(lw_dist_idwW,cal_tracts$tr_propchrent)
+	cal_tracts$tr_propched.lag <- lag.listw(lw_dist_idwW,cal_tracts$tr_propched)
 	cal_tracts$tr_medrent17.lag <- lag.listw(lw_dist_idwW,cal_tracts$tr_medrent17)
-	# ct$pPOV00.lag <- lag.listw(lw_dist_idwW,ct$pPOV00)
-	# ct$pPOV15.lag <- lag.listw(lw_dist_idwW,ct$pPOV15)
-	# ct$pRB30Plus_15.lag <- lag.listw(lw_dist_idwW,ct$pRB30Plus_15)
-	# ct$pRB50Plus_15.lag <- lag.listw(lw_dist_idwW,ct$pRB50Plus_15)
 
-alameda <-
-	tracts(state = "CA",
-		   county = "Alameda")
+# ==========================================================================
+# Categorize tracts
+# ==========================================================================
 
-alameda@data <-
-	left_join(alameda@data,
-			  ct@data) %>%
-	mutate(medrentE = ifelse(medrentE == 0, NA, medrentE)) %>%
+cal_tracts_co <- cal_tracts
+
+cal_tracts_co@data <-
+	cal_tracts_co@data %>%
 	group_by(COUNTYFP) %>%
-	mutate(co_medrent.lag = median(medrent.lag),
-		   lag_rent_scale = scale(medrent.lag),
-		   tract_diffrent_loc.lag = medrentE - co_medrent.lag,
-		   tr_rentdiff_loc.lagscale = scale(tract_diffrent_loc.lag))
+	mutate(tr_rentgap = tr_medrent17 - tr_medrent17.lag,
+		   tr_rentgapsc = scale(tr_rentgap),
+		   tr_rentgappropdiff = (tr_medrent17 - tr_medrent17.lag)/((tr_medrent17 + tr_medrent17.lag)/2),
+		   co_rentgap = median(tr_rentgap),
+		   v_renters = if_else(tr_rentprop17 > co_medrentprop17, 1, 0),
+		   v_ELI = if_else(tr_propstudent17 < .25 & tr_ELI_prop17 > co_ELI_prop17, 1, 0),
+		   v_rb = if_else(tr_rbprop17 > co_medrbprop17, 1, 0),
+		   dp_chrent_comed = if_else(tr_propchrent > co_medpropchrent | tr_propchrent.lag > co_medpropchrent, 1, 0),
+		   dp_chrent_10 = if_else(tr_propchrent > .1 | tr_propchrent.lag > .1, 1, 0),
+		   dp_ched = if_else(tr_propched > co_medched | tr_propched.lag > co_medched, 1, 0),
+		   dp_rentgap_comed = if_else(tr_rentgap > co_rentgap, 1, 0),
+		   dp_rentgap_10 = ifelse(tr_rentgappropdiff > .1, 1, 0)) %>%
+	group_by(GEOID) %>%
+	mutate(v_count = sum(v_ELI, v_rb),
+		   dp_count_co = sum(dp_chrent_comed,
+		   					 # dp_ched,
+		   					 dp_rentgap_comed, na.rm = TRUE),
+		   dp_count_10 = sum(dp_chrent_10,
+		   					 # dp_ched,
+		   					 dp_rentgap_10, na.rm = TRUE),
+		   vulnerable = if_else(v_renters == 1 & v_count >=1, 1, 0),
+		   dis_press_co = if_else(dp_count_co == 1, 1, 0),
+		   dis_press_10 = if_else(dp_count_10 == 1, 1, 0),
+		   risk_co = if_else(vulnerable + dis_press_co == 2, 1, 0),
+		   risk_10 = if_else(vulnerable + dis_press_10 == 2, 1, 0)) %>%
+	ungroup()
 
-	# glimpse(wa_tracts@data)
+cal_tracts_co@data %>%
+	summarise(risk_co = sum(risk_co, na.rm = TRUE), risk_10 = sum(risk_10, na.rm = TRUE))
 
-	tmap_mode("view")
+# ==========================================================================
+# Map
+# ==========================================================================
+cal_tracts_10 <- cal_tracts_co
+tmap_mode("view")
+tm_shape(cal_tracts_co) +
+	tm_fill("risk_co",
+			n = 2,
+			title = "Tracts at Risk",
+			id = "GEOID",
+			popup.vars = c("Prop. Renters" = "tr_rentprop17",
+						   "Rent" = "tr_medrent17",
+						   "Rent Lag" = "tr_medrent17.lag",
+						   "Ch. Rent" = "tr_chrent",
+						   "Ch. Rent Lag" = "tr_chrent.lag",
+						   "Rent Gap" = "tr_rentgap",
+						   "Rent Burden" = "tr_rbprop17",
+						   "Prop. ELI" = "tr_ELI_prop17",
+						   "Prop. Students" = "tr_propstudent17"),
+			popup.format = list(digits=2)) +
+tm_shape(cal_tracts_10) +
+	tm_fill("risk_10",
+			n = 2,
+			title = "Tracts at Risk",
+			id = "GEOID",
+			popup.vars = c("Prop. Renters" = "tr_rentprop17",
+						   "Rent" = "tr_medrent17",
+						   "Rent Lag" = "tr_medrent17.lag",
+						   "Ch. Rent" = "tr_chrent",
+						   "Ch. Rent Lag" = "tr_chrent.lag",
+						   "Rent Gap" = "tr_rentgap",
+						   "Rent Burden" = "tr_rbprop17",
+						   "Prop. ELI" = "tr_ELI_prop17",
+						   "Prop. Students" = "tr_propstudent17"),
+			popup.format = list(digits=2)) +
+	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 12), alpha = .5)
+
 
 alamedamap <-
 	tm_shape(alameda) +
@@ -593,3 +658,34 @@ king@data <-
 	# 		output = "wide"
 	# 		) %>%
 	# 	select(-ends_with("M"))
+
+df %>%
+	# ungroup() %>%
+	# select(starts_with("tr_rentgap")) %>%
+	filter(tr_rentgapsc >= 0.5 & tr_rentgapsc <= 1) %>%
+	summarise(min = min(tr_rentgappropdiff), max = max(tr_rentgappropdiff)) %>%
+	arrange(min) %>%
+	summary()
+	data.frame()
+
+
+# ==========================================================================
+# END CODE
+# ==========================================================================
+alameda <-
+	tracts(state = "CA",
+		   county = "Alameda")
+
+alameda@data <-
+	left_join(alameda@data,
+			  ct@data) %>%
+	mutate(medrentE = ifelse(medrentE == 0, NA, medrentE)) %>%
+	group_by(COUNTYFP) %>%
+	mutate(co_medrent.lag = median(medrent.lag),
+		   lag_rent_scale = scale(medrent.lag),
+		   tract_diffrent_loc.lag = medrentE - co_medrent.lag,
+		   tr_rentdiff_loc.lagscale = scale(tract_diffrent_loc.lag))
+
+	# glimpse(wa_tracts@data)
+
+	tmap_mode("view")
