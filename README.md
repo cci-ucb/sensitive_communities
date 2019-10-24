@@ -3,6 +3,10 @@
 ## Summary
 The following document summarizes UDP research into developing a new SB 50 sensitive communities definition, to account for change-over-time and to incorporate more refined measures of community vulnerability.
 
+## Methods WIP Doc
+
+[Sensitive Communities Methods](https://docs.google.com/document/d/1JvqZLnh_sZIgfrxaXPtBSJRbTEPcbx-jl_tvf5JlqiU/edit)
+
 ### Review of Relevant Methodologies
 
 1. Vulnerability is often measured in terms of a tract's **median income** relative to regional or city medians. Tracts with lower than median income or above average % of low income households are classified as low income tracts. Over 50% of reviewed studies used income as a measure of vulnerability. 
