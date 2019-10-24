@@ -365,7 +365,7 @@ cal_tracts_co@data <-
 		   dp_count_10 = sum(dp_chrent_10,
 		   					 # dp_ched,
 		   					 dp_rentgap_10, na.rm = TRUE),
-		   vulnerable = if_else(v_renters >= 1 & v_count >=1, 1, 0),
+		   vulnerable = if_else(v_renters == 1 & v_count >=1, 1, 0),
 		   dis_press_co = if_else(dp_count_co >= 1, 1, 0),
 		   dis_press_10 = if_else(dp_count_10 >= 1, 1, 0),
 		   risk_co = if_else(vulnerable + dis_press_co >= 2, 1, 0),
@@ -387,7 +387,7 @@ sc_map_co <-
 tm_shape(cal_tracts_co) +
 	tm_fill("risk_co",
 			n = 2,
-			title = "Tracts at Risk",
+			title = "Sensitive Communities",
 			id = "GEOID",
 			popup.vars = c("Prop. Renters" = "tr_rentprop17",
 						   "Rent" = "tr_medrent17",
@@ -431,6 +431,31 @@ tm_shape(cal_tracts_10) +
 
 tmap_save(sc_map_co, "~/git/sensitive_communities/docs/sc_map_cov1.html")
 tmap_save(sc_map_10, "~/git/sensitive_communities/docs/sc_map_10v1.html")
+
+# ==========================================================================
+# Validation
+# ==========================================================================
+
+#
+# Check on how many tracts are High Rent, High RB, low ELI
+# --------------------------------------------------------------------------
+
+eli_check <- cal_tracts_10
+
+eli_check@data %>%
+	group_by(risk_co, v_renters, v_rb,v_ELI,v_count) %>%
+	count()
+	# There are 352 tracts that fit this scenerio
+
+eli_check@data <-
+	eli_check@data %>%
+	mutate(eli_check = if_else(v_renters == 1 & v_rb == 1 & v_ELI == 0 & risk_co == 1, 1, NA_real_))
+eli_map <-
+	tm_shape(eli_check) +
+	tm_fill("eli_check") +
+	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 12), alpha = .5)
+
+tmap_save(eli_map, "~/git/sensitive_communities/docs/eli_map.html")
 
 # ==========================================================================
 # End Code
