@@ -16,10 +16,10 @@
 # ==========================================================================
 
 #
-# Load packages and install them if they're not installed. 
+# Load packages and install them if they're not installed.
 # --------------------------------------------------------------------------
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(data.table, spdep, tidyverse, tigris, tidycensus, tmap) 
+pacman::p_load(data.table, spdep, tidyverse, tigris, tidycensus, tmap)
 
 
 options(tigris_use_cache = TRUE)
@@ -130,7 +130,7 @@ options(tigris_use_cache = TRUE)
 # --------------------------------------------------------------------------
 
 	unzip("~/git/sensitive_communities/data/TransitRichAreas4326.zip")
-	transit <- 
+	transit <-
 		st_read("~/git/sensitive_communities/data/TransitRichAreas4326/Transit Rich Areas 4326.shp")
 
 # ==========================================================================
@@ -310,8 +310,8 @@ cal_tracts@data <-
 		   tr_propched = if_else(tr_propched == Inf,
 		   						 (tr_proped17-tr_proped12)/mean(tr_proped17,tr_proped12),
 		   						 tr_propched)) %>%
-	group_by(COUNTYFP) %>% 
-	mutate(co_medpropchrent = median(tr_propchrent)) %>% 
+	group_by(COUNTYFP) %>%
+	mutate(co_medpropchrent = median(tr_propchrent)) %>%
 	ungroup()
 
 # cal_tracts@data %>% filter(tr_propched >= 20) %>% glimpse()
@@ -360,51 +360,70 @@ cal_tracts_co <-
 	mutate(tr_propchrent.lag = (tr_medrent17.lag - tr_medrent12.lag)/(tr_medrent12.lag),
 		   tr_rentgap = tr_medrent17.lag - tr_medrent17,
 		   tr_rentgappropdiff = (tr_medrent17.lag - tr_medrent17)/((tr_medrent17 + tr_medrent17.lag)/2),
-		   co_rentgap = median(tr_rentgap), 
-		   v_renters = if_else(tr_rentprop17 > co_medrentprop17, 
+		   co_rentgap = median(tr_rentgap),
+		   v_renters = if_else(tr_rentprop17 > co_medrentprop17,
 		   					   1, 0),
-		   v_ELI = if_else(tr_propstudent17 < .25 & 
-		   				   tr_ELI_prop17 > co_ELI_prop17, 
+		   v_ELI = if_else(tr_propstudent17 < .25 &
+		   				   tr_ELI_prop17 > co_ELI_prop17,
 		   				   1, 0),
-		   v_rb = if_else(tr_rbprop17 > co_medrbprop17, 
+		   v_rb = if_else(tr_rbprop17 > co_medrbprop17,
 		   				  1, 0),
-		   dp_chrent_co = if_else(tr_propchrent > co_medpropchrent | 
-		   						  tr_propchrent.lag > co_medpropchrent, 
+		   dp_chrent_co = if_else(tr_propchrent > co_medpropchrent |
+		   						  tr_propchrent.lag > co_medpropchrent,
 		   						  1, 0),
-		   dp_chrent_10 = if_else(tr_propchrent >= .1 | 
-		   						  tr_propchrent.lag >= .1, 
+		   dp_chrent_10 = if_else(tr_propchrent >= .1 |
+		   						  tr_propchrent.lag >= .1,
 		   						  1, 0),
-		   # dp_ched = if_else(tr_propched > co_medched | 
-		   # 					 tr_propched.lag > co_medched, 
-		   # 					 1, 0),
-		   dp_rentgap = ifelse(tr_rentgappropdiff > .1, 
-		   						  1, 0)) %>%
+		   dp_chrent_check = if_else((tr_propchrent - co_medpropchrent) > (tr_propchrent*.1),
+		   							 (tr_propchrent - co_medpropchrent),
+		   						if_else((tr_propchrent - co_medpropchrent) < (tr_propchrent*.1),
+		   								(tr_propchrent*.1),
+		   								NA_real_)),
+		   dp_chrent_check.lag = if_else((tr_propchrent.lag - co_medpropchrent) > (tr_propchrent.lag*.1), (tr_propchrent.lag - co_medpropchrent),
+		   						if_else((tr_propchrent.lag - co_medpropchrent) < (tr_propchrent.lag*.1),
+		   								(tr_propchrent.lag*.1),
+		   								NA_real_)),
+		   dp_chrent = if_else(tr_propchrent > dp_chrent_check |
+		   					   tr_propchrent.lag > dp_chrent_check.lag,
+		   					   1, 0),
+		   dp_rentgap = ifelse(tr_rentgappropdiff > .1,
+		   					   1, 0)) %>%
 	group_by(GEOID) %>%
-	mutate(vulnerable = if_else(v_renters == 1 & 
-								v_ELI == 1 & 
-								v_rb == 1, 
+	mutate(vulnerable = if_else(v_renters == 1 &
+								v_ELI == 1 &
+								v_rb == 1,
 								1, 0),
-		   dp_rentchange_co = if_else(dp_chrent_co == 1 | 
-		   							  dp_rentgap == 1, 
+		   dp_rentchange_co = if_else(dp_chrent_co == 1 |
+		   							  dp_rentgap == 1,
 		   							  1, 0),
-		   dp_rentchange_10 = sum(dp_chrent_10 == 1 | 
-		   						  dp_rentgap == 1, 
+		   dp_rentchange_10 = sum(dp_chrent_10 == 1 |
+		   						  dp_rentgap == 1,
 		   					      1, 0),
-		   sens_co = if_else(vulnerable == 1 & 
-		   					 sum(dp_rentchange_co, dp_rentgap, na.rm = TRUE) >= 1, 
-		   					 TRUE,FALSE), 
-		   sens_10 = if_else(vulnerable == 1 & 
-		   					 sum(dp_rentchange_10, dp_rentgap, na.rm = TRUE) >= 1, 
-		   					 TRUE, FALSE), 
+		   dp_rentchange = sum(dp_chrent == 1 |
+		   					   dp_rentgap == 1,
+		   					   1, 0),
+		   sens_co = if_else(vulnerable == 1 &
+		   					 sum(dp_rentchange_co, dp_rentgap, na.rm = TRUE) >= 1,
+		   					 TRUE, FALSE),
+		   sens_10 = if_else(vulnerable == 1 &
+		   					 sum(dp_rentchange_10, dp_rentgap, na.rm = TRUE) >= 1,
+		   					 TRUE, FALSE),
+		   sens = if_else(vulnerable == 1 &
+		   				  sum(dp_rentchange, dp_rentgap, na.rm = TRUE) >= 1,
+		   				  TRUE, FALSE),
 		   Criteria = "") %>% # for pop up text in tmap
-	ungroup() 
+	ungroup()
 
 cal_tracts_co %>%
-	st_set_geometry(NULL) %>% 
-	summarise(sens_co = sum(sens_co, na.rm = TRUE), sens_10 = sum(sens_10, na.rm = TRUE))
+	st_set_geometry(NULL) %>%
+	summarise(sens = sum(sens, na.rm = TRUE),
+			  sens_co = sum(sens_co, na.rm = TRUE),
+			  sens_10 = sum(sens_10, na.rm = TRUE))
 
 hist(cal_tracts_co$tr_propchrent.lag, col = "red", breaks = 10000)
 hist(cal_tracts_co$tr_propchrent.lag, col = "blue", add = TRUE, breaks = 10000)
+
+summary(cal_tracts_co)
 
 # ==========================================================================
 # Map
@@ -416,12 +435,12 @@ tmap_mode("view")
 
 sc_map_co <-
 tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
-tm_shape(transit) + 
+tm_shape(transit) +
 	tm_polygons("MAP_COLORS", palette="Greys", alpha = .7) +
 tm_shape(cal_tracts_co) +
 	tm_fill("sens_co",
 			palette = c("#FF6633","#FF6633"),
-			colorNA = NULL, 
+			colorNA = NULL,
 			title = "Sensitive Communities",
 			id = "GEOID",
 			popup.vars = c("Prop. Renters" = "tr_rentprop17",
@@ -445,12 +464,12 @@ tm_shape(cal_tracts_co) +
 
 sc_map_10 <-
 tm_basemap(leaflet::providers$CartoDB.Positron) +
-tm_shape(transit) + 
+tm_shape(transit) +
 	tm_polygons("MAP_COLORS", palette="Greys", alpha = .25) +
 tm_shape(cal_tracts_10) +
 	tm_fill("sens_10",
 			palette = c("#FF6633","#FF6633"),
-			colorNA = NULL, 
+			colorNA = NULL,
 			title = "Sensitive Communities",
 			id = "GEOID",
 			popup.vars = c("Prop. Renters" = "tr_rentprop17",
