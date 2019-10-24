@@ -383,7 +383,7 @@ cal_tracts_10 <- cal_tracts_co
 
 tmap_mode("view")
 
-sc_map <-
+sc_map_co <-
 tm_shape(cal_tracts_co) +
 	tm_fill("risk_co",
 			n = 2,
@@ -403,7 +403,9 @@ tm_shape(cal_tracts_co) +
 						   "v_rb",
 						   "dp_chrent_comed",
 						   "dp_rentgap_comed"),
-			popup.format = list(digits=2)) +
+			popup.format = list(digits=2))
+
+sc_map_10 <-
 tm_shape(cal_tracts_10) +
 	tm_fill("risk_10",
 			n = 2,
@@ -426,7 +428,8 @@ tm_shape(cal_tracts_10) +
 			popup.format = list(digits=2)) +
 	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 12), alpha = .5)
 
-save_tmap(sc_map, "~/git/sensitive_communities/sc_mapv1.html")
+tmap_save(sc_map_co, "~/git/sensitive_communities/docs/sc_map_cov1.html")
+tmap_save(sc_map_10, "~/git/sensitive_communities/docs/sc_map_10v1.html")
 
 # ==========================================================================
 # End Code
