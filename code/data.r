@@ -455,7 +455,7 @@ eli_map <-
 	tm_fill("eli_check") +
 	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 12), alpha = .5)
 
-tmap_save(eli_map, "~/git/sensitive_communities/docs/eli_map.html")
+tmap_save(eli_map, "~/git/sensitive_communities/docs/hirentpop_hirbpop_loeli_map.html")
 
 # ==========================================================================
 # End Code
