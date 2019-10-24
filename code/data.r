@@ -403,7 +403,8 @@ tm_shape(cal_tracts_co) +
 						   "v_rb",
 						   "dp_chrent_comed",
 						   "dp_rentgap_comed"),
-			popup.format = list(digits=2))
+			popup.format = list(digits=2)) +
+	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 12), alpha = .5)
 
 sc_map_10 <-
 tm_shape(cal_tracts_10) +
