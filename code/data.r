@@ -226,7 +226,7 @@ newnames17 <-
 			   tr_ELI_count17 = sum(ELI*medinc_cat_count, na.rm = TRUE),
 			   tr_LI_prop17 = tr_LI_count17/tr_totalinc17,
 			   tr_VLI_prop17 = tr_VLI_count17/tr_totalinc17,
-			   tr_ELI_prop17 = tr_ELI_count17/tr_totalinc17) %>%
+			   tr_ELI_prop17 = tr_ELI_count17/tr_totalinc17) %>% glimpse()
 		select(GEOID, COUNTYFP, LI_val:ELI_val,tr_totalinc17:tr_ELI_prop17) %>%
 		distinct() %>%
 		ungroup()
@@ -254,8 +254,6 @@ lidata <-
 		   co_LI_propmed17 = median(tr_LI_prop17, na.rm = TRUE),
 		   co_VLI_propmed17 = median(tr_VLI_prop17, na.rm = TRUE),
 		   co_ELI_propmed17 = median(tr_ELI_prop17, na.rm = TRUE))
-
-# glimpse(lidata)
 
 #
 # Change
@@ -314,8 +312,6 @@ cal_tracts@data <-
 	mutate(co_medpropchrent = median(tr_propchrent)) %>%
 	ungroup()
 
-# cal_tracts@data %>% filter(tr_propched >= 20) %>% glimpse()
-# cal_tracts@data %>% summary()
 # ==========================================================================
 # Create lag variables
 # ==========================================================================
@@ -359,10 +355,12 @@ cal_tracts_co <-
 	group_by(COUNTYFP) %>%
 	mutate(tr_propchrent.lag = (tr_medrent17.lag - tr_medrent12.lag)/(tr_medrent12.lag),
 		   tr_rentgap = tr_medrent17.lag - tr_medrent17,
-		   tr_rentgappropdiff = (tr_medrent17.lag - tr_medrent17)/((tr_medrent17 + tr_medrent17.lag)/2),
+		   tr_rentgapprop = (tr_medrent17.lag - tr_medrent17)/((tr_medrent17 + tr_medrent17.lag)/2),
 		   co_rentgap = median(tr_rentgap),
-		   v_renters = if_else(tr_rentprop17 > co_medrentprop17,
+		   co_rentgapprop = median(tr_rentgapprop),
+		   v_renters = if_else(tr_rentprop17 > co_medrentprop17, # explore thresholds
 		   					   1, 0),
+		   v_renterssd = scale(tr_rentprop17), 
 		   v_ELI = if_else(tr_propstudent17 < .25 &
 		   				   tr_ELI_prop17 > co_ELI_prop17,
 		   				   1, 0),
@@ -386,31 +384,34 @@ cal_tracts_co <-
 		   dp_chrent = if_else(tr_propchrent > dp_chrent_check |
 		   					   tr_propchrent.lag > dp_chrent_check.lag,
 		   					   1, 0),
-		   dp_rentgap = ifelse(tr_rentgappropdiff > .1,
+		   dp_rentgapprop = ifelse(tr_rentgapprop > .1,
+		   					   1, 0),
+		   dp_rentgapprop_co = ifelse(tr_rentgapprop > co_rentgapprop,
 		   					   1, 0)) %>%
 	group_by(GEOID) %>%
 	mutate(vulnerable = if_else(v_renters == 1 &
-								v_ELI == 1 &
-								v_rb == 1,
+								# v_rb == 1 &
+								v_ELI == 1,
 								1, 0),
 		   dp_rentchange_co = if_else(dp_chrent_co == 1 |
-		   							  dp_rentgap == 1,
+		   							  dp_rentgapprop == 1,
 		   							  1, 0),
 		   dp_rentchange_10 = sum(dp_chrent_10 == 1 |
-		   						  dp_rentgap == 1,
+		   						  dp_rentgapprop == 1,
 		   					      1, 0),
 		   dp_rentchange = sum(dp_chrent == 1 |
-		   					   dp_rentgap == 1,
+		   					   dp_rentgapprop == 1,
 		   					   1, 0),
 		   sens_co = if_else(vulnerable == 1 &
-		   					 sum(dp_rentchange_co, dp_rentgap, na.rm = TRUE) >= 1,
-		   					 TRUE, FALSE),
+		   					 sum(dp_rentchange_co, dp_rentgapprop_co, na.rm = TRUE) >= 1,
+		   					 TRUE, NA),
 		   sens_10 = if_else(vulnerable == 1 &
-		   					 sum(dp_rentchange_10, dp_rentgap, na.rm = TRUE) >= 1,
-		   					 TRUE, FALSE),
+		   					 sum(dp_rentchange_10, dp_rentgapprop, na.rm = TRUE) >= 1,
+		   					 TRUE, NA),
 		   sens = if_else(vulnerable == 1 &
-		   				  sum(dp_rentchange, dp_rentgap, na.rm = TRUE) >= 1,
-		   				  TRUE, FALSE),
+		   				  sum(dp_rentchange, dp_rentgapprop, na.rm = TRUE) >= 1,
+		   				  TRUE, NA),
+		   sensrg = if_else(vulnerable == 1 & dp_rentgapprop == 1, TRUE, NA),
 		   Criteria = "") %>% # for pop up text in tmap
 	ungroup()
 
@@ -418,12 +419,75 @@ cal_tracts_co %>%
 	st_set_geometry(NULL) %>%
 	summarise(sens = sum(sens, na.rm = TRUE),
 			  sens_co = sum(sens_co, na.rm = TRUE),
-			  sens_10 = sum(sens_10, na.rm = TRUE))
+			  sens_10 = sum(sens_10, na.rm = TRUE),
+			  sensrg = sum(sensrg, na.rm = TRUE))
+
+cal_tracts_co %>% 
+	st_set_geometry(NULL) %>%
+	group_by(v_renters, v_ELI, v_rb, dp_rentchange, dp_rentgapprop, sens) %>% 
+	count() %>%
+	data.frame
 
 hist(cal_tracts_co$tr_propchrent.lag, col = "red", breaks = 10000)
 hist(cal_tracts_co$tr_propchrent.lag, col = "blue", add = TRUE, breaks = 10000)
 
 summary(cal_tracts_co)
+glimpse(cal_tracts_co)
+
+# ==========================================================================
+# TESTBED
+test <- 
+	cal_tracts_co %>% 
+	st_set_geometry(NULL) %>% 
+	group_by(COUNTYFP) %>%
+	select(tottenE.y, tr_rentprop17, v_renterssd, co_medrentprop17, co_ELI_prop17,co_medrbprop17) %>% 
+	mutate(meanprop = mean(tr_rentprop17, na.rm = TRUE), co_rentcount = sum(tottenE.y, na.rm = TRUE), 
+		percrank=rank(tr_rentprop17)/length(tr_rentprop17)) %>% 
+	arrange(COUNTYFP,v_renterssd)
+
+test %>% 
+	tbl_df() %>% 
+	nest(-COUNTYFP) %>%
+  	mutate(Quantiles = map(data, ~ enframe(quantile(.$tr_rentprop17), "quantile"))) 
+
+hist(test$co_rentcount, breaks = 100)
+
+test %>% 
+	select(COUNTYFP, co_rentcount) %>% 
+	data.frame() %>% arrange(co_rentcount) %>% 
+	distinct() %>% 
+	ggplot() + 
+		geom_bar(aes(x = reorder(COUNTYFP,co_rentcount), y = co_rentcount), stat = "identity")
+
+test %>% 
+	select(COUNTYFP, co_medrentprop17) %>% 
+	data.frame() %>% arrange(co_medrentprop17) %>% 
+	distinct() %>% 
+	ggplot() + 
+		geom_bar(aes(x = reorder(COUNTYFP,co_medrentprop17), y = co_medrentprop17), stat = "identity")
+
+test %>% 
+	select(COUNTYFP, v_renterssd, ) %>% 
+	data.frame() %>% arrange(co_medrentprop17) %>% 
+	distinct() %>% 
+	ggplot() + 
+		geom_bar(aes(x = reorder(COUNTYFP,co_medrentprop17), y = co_medrentprop17), stat = "identity")
+
+test %>% 
+	select(COUNTYFP, co_ELI_prop17) %>% 
+	data.frame() %>% arrange(co_ELI_prop17) %>% 
+	distinct() %>% 
+	ggplot() + 
+		geom_bar(aes(x = reorder(COUNTYFP,co_ELI_prop17), y = co_ELI_prop17), stat = "identity")
+test %>% 
+	select(COUNTYFP, co_medrbprop17) %>% 
+	data.frame() %>% arrange(co_medrbprop17) %>% 
+	distinct() %>% 
+	ggplot() + 
+		geom_bar(aes(x = reorder(COUNTYFP,co_medrbprop17), y = co_medrbprop17), stat = "identity")
+
+
+# ==========================================================================
 
 # ==========================================================================
 # Map
@@ -457,7 +521,7 @@ tm_shape(cal_tracts_co) +
 						   "ELI" = "v_ELI",
 						   "Rent Burden" = "v_rb",
 						   "Ch. Rent" = "dp_chrent_co",
-						   "Rent Gap" = "dp_rentgap"),
+						   "Rent Gap" = "dp_rentgapprop"),
 			popup.format = list(digits=2)) +
 	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 12), alpha = .5)
 
@@ -486,10 +550,39 @@ tm_shape(cal_tracts_10) +
 						   "ELI" = "v_ELI",
 						   "Rent Burden" = "v_rb",
 						   "Ch. Rent" = "dp_chrent_co",
-						   "Rent Gap" = "dp_rentgap"),
+						   "Rent Gap" = "dp_rentgapprop"),
 			popup.format = list(digits=2)) +
 	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 12), alpha = .5)
 
+sc_maprg <-
+tm_basemap(leaflet::providers$CartoDB.Positron) +
+tm_shape(transit) +
+	tm_polygons("MAP_COLORS", palette="Greys", alpha = .25) +
+tm_shape(cal_tracts_co) +
+	tm_fill("sensrg",
+			palette = c("#FF6633","#FF6633"),
+			colorNA = NULL,
+			title = "Sensitive Communities",
+			id = "GEOID",
+			popup.vars = c("Prop. Renters" = "tr_rentprop17",
+						   "Rent" = "tr_medrent17",
+						   "Rent Lag" = "tr_medrent17.lag",
+						   "Ch. Rent" = "tr_chrent",
+						   "Ch. Rent Lag" = "tr_chrent.lag",
+						   "Rent Gap" = "tr_rentgap",
+						   "Rent Burden" = "tr_rbprop17",
+						   "Prop. ELI" = "tr_ELI_prop17",
+						   "Prop. Students" = "tr_propstudent17",
+						   "Criteria Met:" = "Criteria",
+						   "Renters" = "v_renters",
+						   "ELI" = "v_ELI",
+						   "Rent Burden" = "v_rb",
+						   "Ch. Rent" = "dp_chrent_co",
+						   "Rent Gap" = "dp_rentgapprop"),
+			popup.format = list(digits=2)) +
+	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 12), alpha = .5)
+
+tmap_save(sc_maprg, "~/git/sensitive_communities/docs/sc_maprgv1.html")
 tmap_save(sc_map_co, "~/git/sensitive_communities/docs/sc_map_cov1.html")
 tmap_save(sc_map_10, "~/git/sensitive_communities/docs/sc_map_10v1.html")
 
@@ -773,7 +866,7 @@ df %>%
 	# ungroup() %>%
 	# select(starts_with("tr_rentgap")) %>%
 	filter(tr_rentgapsc >= 0.5 & tr_rentgapsc <= 1) %>%
-	summarise(min = min(tr_rentgappropdiff), max = max(tr_rentgappropdiff)) %>%
+	summarise(min = min(tr_rentgapprop), max = max(tr_rentgapprop)) %>%
 	arrange(min) %>%
 	summary()
 	data.frame()
