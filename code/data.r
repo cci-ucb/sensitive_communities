@@ -358,7 +358,9 @@ cal_tracts_co <-
 		   tr_rentgapprop = (tr_medrent17.lag - tr_medrent17)/((tr_medrent17 + tr_medrent17.lag)/2),
 		   co_rentgap = median(tr_rentgap),
 		   co_rentgapprop = median(tr_rentgapprop),
-		   v_renters = if_else(tr_rentprop17 > co_medrentprop17, # explore thresholds
+		   v_renters_co = if_else(tr_rentprop17 > co_medrentprop17, # explore thresholds
+		   					   1, 0),		   
+		   v_renters_60th = if_else(tr_rentprop17 > co_medrentprop17, # explore thresholds
 		   					   1, 0),
 		   v_renterssd = scale(tr_rentprop17), 
 		   v_ELI = if_else(tr_propstudent17 < .25 &
