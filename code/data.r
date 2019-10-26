@@ -226,7 +226,7 @@ newnames17 <-
 			   tr_ELI_count17 = sum(ELI*medinc_cat_count, na.rm = TRUE),
 			   tr_LI_prop17 = tr_LI_count17/tr_totalinc17,
 			   tr_VLI_prop17 = tr_VLI_count17/tr_totalinc17,
-			   tr_ELI_prop17 = tr_ELI_count17/tr_totalinc17) %>% glimpse()
+			   tr_ELI_prop17 = tr_ELI_count17/tr_totalinc17) %>% 
 		select(GEOID, COUNTYFP, LI_val:ELI_val,tr_totalinc17:tr_ELI_prop17) %>%
 		distinct() %>%
 		ungroup()
