@@ -1307,6 +1307,9 @@ dis_var <- c(
 	'totfemhh' = 'B09019_001',
 	'femfamhh' = 'B09019_006',
 	'femnonfamhh' = 'B09019_029',
+	'totfhc' = 'B11005_001',
+	'femfamheadch' = 'B11005_007',
+	'femnonfamheadch' = 'B11005_010',
 # age
 	'totage' = 'B01001_001',
 	'Munder5' = 'B01001_003',
