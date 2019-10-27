@@ -447,6 +447,7 @@ final_df <-
 		`Scenario 24` = case_when(sum(v_renters_50p, v_ELI, v_rb, na.rm = TRUE) == 3 &
 						   sum(dp_chrent_10, dp_rentgap_co) >=1 ~ TRUE),
 		text = "",
+		popup_text = paste0("Tract: ", GEOID),
 		pwhite = WhiteE.y/totraceE.y,
 		pblack = BlackE.y/totraceE.y,
 		pasian = AsianE.y/totraceE.y,
@@ -468,40 +469,48 @@ tmap_mode("view")
 
 sen_map1 <- function(scen, renters, eli, rb, chrent, rentgap)
 tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
-tm_shape(transit) +
-	tm_polygons("MAP_COLORS", palette="Greys", alpha = .5) +
-tm_shape(final_df) +
+tm_shape(transit,
+		 name = "Transit Rich Areas Layer") +
+	tm_polygons("FID",
+				palette= "Greys",
+				alpha = .5,
+				label = "Transit Rich Areas",
+				title = "") +
+tm_shape(final_df, name = "Sensitive Communities Layer") +
 	tm_fill(scen,
 			palette = c("#FF6633","#FF6633"),
+			label = "Sensitive Communities",
 			alpha = .5,
 			colorNA = NULL,
-			title = "Sensitive Communities",
-			id = "GEOID",
-			popup.vars = c("Renters" = renters,
-						   "ELI" = eli,
-						   "RB" = rb,
-						   "Ch Rent" = chrent,
-						   "Rent Gap" = rentgap,
-						   "---" = "text",
-						   "% Rent" = "tr_rentprop17",
+			title = "",
+			id = "popup_text",
+			popup.vars = c("% Rent" = "tr_rentprop17",
 						   "$ Rent" = "tr_medrent17",
-						   "Rent Lag" = "tr_medrent17.lag",
+						   "$ R Lag" = "tr_medrent17.lag",
+						   "$ R Gap" = "tr_rentgap",
 						   "Ch Rent" = "tr_chrent",
 						   "Ch R Lag" = "tr_chrent.lag",
-						   "Rent Gap" = "tr_rentgap",
-						   "RB" = "tr_rbprop17",
+						   "% RB" = "tr_rbprop17",
 						   "% ELI" = "tr_ELI_prop17",
 						   "% Stud." = "tr_propstudent17",
-						   "---" = "text",
+						   "----------" = "text",
 						   "% White" = "pwhite",
 						   "% Black" = "pblack",
 						   "% Asian" = "pasian",
 						   "% Lat" = "platinx",
 						   "% Other" = "pother",
-						   "% Welf." = "pwelfare",
-						   "% Pov." = "ppoverty",
-						   "% Unemp." = "unemp",
-						   "% FHHw/C"= "pfemhhch"
+						   "% Welf" = "pwelfare",
+						   "% Pov" = "ppoverty",
+						   "% Unemp" = "unemp",
+						   "%FHHw/C"= "pfemhhch",
+						   "----------" = "text",
+						   "Criteria" = "text",
+						   "----------" = "text",
+						   "Renters" = renters,
+						   "ELI" = eli,
+						   "RB" = rb,
+						   "Ch Rent" = chrent,
+						   "Rent Gap" = rentgap
 						   ),
 			popup.format = list(digits=2)) +
 	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 12), alpha = .5) +
@@ -514,6 +523,7 @@ sen_map2 <- function(scen, renters, eli, rb, chrent, rentgap)
 save_map <- function(x,y)
 	tmap_save(x, paste0("~/git/sensitive_communities/docs/", y, ".html"))
 
+sen_map1("Scenario 01", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
 
 scen01 <- sen_map1("Scenario 01", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
 scen02 <- sen_map1("Scenario 02", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
@@ -545,7 +555,7 @@ scen22 <- sen_map2("Scenario 22", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_c
 scen23 <- sen_map2("Scenario 23", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
 scen24 <- sen_map2("Scenario 24", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
 
-save_map(scen01, "scen01"); save_map(scen02, "scen02"); save_map(scen03, "scen03"); save_map(scen04, "scen04"); save_map(scen05, "scen05"); save_map(scen06, "scen06"); save_map(scen07, "scen07"); save_map(scen08, "scen08"); save_map(scen09, "scen09"); save_map(scen10, "scen10"); save_map(scen11, "scen11"); save_map(scen12, "scen12"); save_map(scen13, "scen13"); save_map(scen14, "scen14"); save_map(scen15, "scen15"); save_map(scen16, "scen16"); save_map(scen17, "scen17"); save_map(scen18, "scen18"); save_map(scen19, "scen19"); save_map(scen20, "scen20"); save_map(scen21, "scen21"); save_map(scen22, "scen22"); save_map(scen23, "scen23"); save_map(scen24, "scen24");
+save_map(scen01, "scen01"); save_map(scen02, "scen02"); save_map(scen03, "scen03"); save_map(scen04, "scen04"); save_map(scen05, "scen05"); save_map(scen06, "scen06"); save_map(scen07, "scen07"); save_map(scen08, "scen08"); save_map(scen09, "scen09"); save_map(scen10, "scen10"); save_map(scen11, "scen11"); save_map(scen12, "scen12"); save_map(scen13, "scen13"); save_map(scen14, "scen14"); save_map(scen15, "scen15"); save_map(scen16, "scen16"); save_map(scen17, "scen17"); save_map(scen18, "scen18"); save_map(scen19, "scen19"); save_map(scen20, "scen20"); save_map(scen21, "scen21"); save_map(scen22, "scen22"); save_map(scen23, "scen23"); save_map(scen24, "scen24")
 
 # ==========================================================================
 # Get tract counts for each scenario
