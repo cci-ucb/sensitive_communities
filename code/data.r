@@ -20,7 +20,7 @@
 # --------------------------------------------------------------------------
 
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(rmapshaper, data.table, spdep, tidyverse, tigris, tidycensus, tmap)
+pacman::p_load(data.table, spdep, tidyverse, tigris, tidycensus, tmap)
 
 options(tigris_use_cache = TRUE)
 
