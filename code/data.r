@@ -552,6 +552,7 @@ save_map(scen01, "scen01"); save_map(scen02, "scen02"); save_map(scen03, "scen03
 # ==========================================================================
 
 	final_df %>%
+	st_set_geometry(NULL) %>%
 	ungroup() %>%
 	select(GEOID, COUNTYFP, `Scenario 01`:`Scenario 24`) %>%
 	gather(scenario, value, `Scenario 01`:`Scenario 24`) %>%
