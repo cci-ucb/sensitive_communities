@@ -77,53 +77,53 @@ This page shows 24 mutually exclusive combinations of vulnerable population and 
 * dp_rentgap_co
 
 
-### [Scenario 09](https://cci-ucb.github.io/sensitive_communities/scen09.html) (# tracts =  773)
+### [Scenario 09](https://cci-ucb.github.io/sensitive_communities/scen09.html) (# tracts =  1,872)
 * v_renters_60th
 * v_ELI
 * dp_chrent_co
 * dp_rentgap_10
 
-### [Scenario 10](https://cci-ucb.github.io/sensitive_communities/scen10.html) (# tracts =  851)
+### [Scenario 10](https://cci-ucb.github.io/sensitive_communities/scen10.html) (# tracts =  2,082)
 * v_renters_60th
 * v_ELI
 * dp_chrent_co
 * dp_rentgap_co
 
-### [Scenario 11](https://cci-ucb.github.io/sensitive_communities/scen11.html) (# tracts =  635)
+### [Scenario 11](https://cci-ucb.github.io/sensitive_communities/scen11.html) (# tracts =  1,540)
 * v_renters_60th
 * v_ELI
 * dp_chrent_10
 * dp_rentgap_10
 
-### [Scenario 12](https://cci-ucb.github.io/sensitive_communities/scen12.html) (# tracts =  760)
+### [Scenario 12](https://cci-ucb.github.io/sensitive_communities/scen12.html) (# tracts =  1,935)
 * v_renters_60th
 * v_ELI
 * dp_chrent_10
 * dp_rentgap_co
 
 
-### [Scenario 13](https://cci-ucb.github.io/sensitive_communities/scen13.html) (# tracts =  536)
+### [Scenario 13](https://cci-ucb.github.io/sensitive_communities/scen13.html) (# tracts =  1,322)
 * v_renters_60th
 * v_ELI
 * v_rb
 * dp_chrent_co
 * dp_rentgap_10
 
-### [Scenario 14](https://cci-ucb.github.io/sensitive_communities/scen14.html) (# tracts =  591)
+### [Scenario 14](https://cci-ucb.github.io/sensitive_communities/scen14.html) (# tracts =  1,492)
 * v_renters_60th
 * v_ELI
 * v_rb
 * dp_chrent_co
 * dp_rentgap_co
 
-### [Scenario 15](https://cci-ucb.github.io/sensitive_communities/scen15.html) (# tracts =  441)
+### [Scenario 15](https://cci-ucb.github.io/sensitive_communities/scen15.html) (# tracts =  1,078)
 * v_renters_60th
 * v_ELI
 * v_rb
 * dp_chrent_10
 * dp_rentgap_10
 
-### [Scenario 16](https://cci-ucb.github.io/sensitive_communities/scen16.html) (# tracts =  529)
+### [Scenario 16](https://cci-ucb.github.io/sensitive_communities/scen16.html) (# tracts =  1,381)
 * v_renters_60th
 * v_ELI
 * v_rb

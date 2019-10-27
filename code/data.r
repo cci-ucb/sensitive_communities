@@ -373,7 +373,7 @@ final_df <-
 ## Vulnerable Population Variables ##
 		v_renters_co = case_when(tr_rentprop17 > co_medrentprop17 ~ 1,
 								 TRUE ~ 0),
-		v_renters_60th = case_when(rent_prank <= .6 ~ 1,
+		v_renters_60th = case_when(rent_prank >= .6 ~ 1,
 								   TRUE ~ 0),
 		v_renters_50p = case_when(tr_rentprop17 >= .5 ~ 1,
 								  TRUE ~ 0),
