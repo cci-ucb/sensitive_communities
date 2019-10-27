@@ -393,58 +393,58 @@ final_df <-
 								  TRUE ~ 0),
 		dp_rentgap_10 = case_when(tr_rentgapprop > .1 ~ 1,
 								  TRUE ~ 0),
-		scen01 = case_when(sum(v_renters_co, v_ELI, na.rm = TRUE) == 2 &
+		`Scenario 01` = case_when(sum(v_renters_co, v_ELI, na.rm = TRUE) == 2 &
 						   sum(dp_chrent_co, dp_rentgap_10) >=1 ~ TRUE),
-		scen02 = case_when(sum(v_renters_co, v_ELI, na.rm = TRUE) == 2 &
+		`Scenario 02` = case_when(sum(v_renters_co, v_ELI, na.rm = TRUE) == 2 &
 						   sum(dp_chrent_co, dp_rentgap_co) >=1 ~ TRUE),
-		scen03 = case_when(sum(v_renters_co, v_ELI, na.rm = TRUE) == 2 &
+		`Scenario 03` = case_when(sum(v_renters_co, v_ELI, na.rm = TRUE) == 2 &
 						   sum(dp_chrent_10, dp_rentgap_10) >=1 ~ TRUE),
-		scen04 = case_when(sum(v_renters_co, v_ELI, na.rm = TRUE) == 2 &
+		`Scenario 04` = case_when(sum(v_renters_co, v_ELI, na.rm = TRUE) == 2 &
 						   sum(dp_chrent_10, dp_rentgap_co) >=1 ~ TRUE),
 
-		scen05 = case_when(sum(v_renters_co, v_ELI, v_rb, na.rm = TRUE) == 3 &
+		`Scenario 05` = case_when(sum(v_renters_co, v_ELI, v_rb, na.rm = TRUE) == 3 &
 						   sum(dp_chrent_co, dp_rentgap_10) >=1 ~ TRUE),
-		scen06 = case_when(sum(v_renters_co, v_ELI, v_rb, na.rm = TRUE) == 3 &
+		`Scenario 06` = case_when(sum(v_renters_co, v_ELI, v_rb, na.rm = TRUE) == 3 &
 						   sum(dp_chrent_co, dp_rentgap_co) >=1 ~ TRUE),
-		scen07 = case_when(sum(v_renters_co, v_ELI, v_rb, na.rm = TRUE) == 3 &
+		`Scenario 07` = case_when(sum(v_renters_co, v_ELI, v_rb, na.rm = TRUE) == 3 &
 						   sum(dp_chrent_10, dp_rentgap_10) >=1 ~ TRUE),
-		scen08 = case_when(sum(v_renters_co, v_ELI, v_rb, na.rm = TRUE) == 3 &
+		`Scenario 08` = case_when(sum(v_renters_co, v_ELI, v_rb, na.rm = TRUE) == 3 &
 						   sum(dp_chrent_10, dp_rentgap_co) >=1 ~ TRUE),
 
-		scen09 = case_when(sum(v_renters_60th, v_ELI, na.rm = TRUE) == 2 &
+		`Scenario 09` = case_when(sum(v_renters_60th, v_ELI, na.rm = TRUE) == 2 &
 						   sum(dp_chrent_co, dp_rentgap_10) >=1 ~ TRUE),
-		scen10 = case_when(sum(v_renters_60th, v_ELI, na.rm = TRUE) == 2 &
+		`Scenario 10` = case_when(sum(v_renters_60th, v_ELI, na.rm = TRUE) == 2 &
 						   sum(dp_chrent_co, dp_rentgap_co) >=1 ~ TRUE),
-		scen11 = case_when(sum(v_renters_60th, v_ELI, na.rm = TRUE) == 2 &
+		`Scenario 11` = case_when(sum(v_renters_60th, v_ELI, na.rm = TRUE) == 2 &
 						   sum(dp_chrent_10, dp_rentgap_10) >=1 ~ TRUE),
-		scen12 = case_when(sum(v_renters_60th, v_ELI, na.rm = TRUE) == 2 &
+		`Scenario 12` = case_when(sum(v_renters_60th, v_ELI, na.rm = TRUE) == 2 &
 						   sum(dp_chrent_10, dp_rentgap_co) >=1 ~ TRUE),
 
-		scen13 = case_when(sum(v_renters_60th, v_ELI, v_rb, na.rm = TRUE) == 3 &
+		`Scenario 13` = case_when(sum(v_renters_60th, v_ELI, v_rb, na.rm = TRUE) == 3 &
 						   sum(dp_chrent_co, dp_rentgap_10) >=1 ~ TRUE),
-		scen14 = case_when(sum(v_renters_60th, v_ELI, v_rb, na.rm = TRUE) == 3 &
+		`Scenario 14` = case_when(sum(v_renters_60th, v_ELI, v_rb, na.rm = TRUE) == 3 &
 						   sum(dp_chrent_co, dp_rentgap_co) >=1 ~ TRUE),
-		scen15 = case_when(sum(v_renters_60th, v_ELI, v_rb, na.rm = TRUE) == 3 &
+		`Scenario 15` = case_when(sum(v_renters_60th, v_ELI, v_rb, na.rm = TRUE) == 3 &
 						   sum(dp_chrent_10, dp_rentgap_10) >=1 ~ TRUE),
-		scen16 = case_when(sum(v_renters_60th, v_ELI, v_rb, na.rm = TRUE) == 3 &
+		`Scenario 16` = case_when(sum(v_renters_60th, v_ELI, v_rb, na.rm = TRUE) == 3 &
 						   sum(dp_chrent_10, dp_rentgap_co) >=1 ~ TRUE),
 
-		scen17 = case_when(sum(v_renters_50p, v_ELI, na.rm = TRUE) == 2 &
+		`Scenario 17` = case_when(sum(v_renters_50p, v_ELI, na.rm = TRUE) == 2 &
 						   sum(dp_chrent_co, dp_rentgap_10) >=1 ~ TRUE),
-		scen18 = case_when(sum(v_renters_50p, v_ELI, na.rm = TRUE) == 2 &
+		`Scenario 18` = case_when(sum(v_renters_50p, v_ELI, na.rm = TRUE) == 2 &
 						   sum(dp_chrent_co, dp_rentgap_co) >=1 ~ TRUE),
-		scen19 = case_when(sum(v_renters_50p, v_ELI, na.rm = TRUE) == 2 &
+		`Scenario 19` = case_when(sum(v_renters_50p, v_ELI, na.rm = TRUE) == 2 &
 						   sum(dp_chrent_10, dp_rentgap_10) >=1 ~ TRUE),
-		scen20 = case_when(sum(v_renters_50p, v_ELI, na.rm = TRUE) == 2 &
+		`Scenario 20` = case_when(sum(v_renters_50p, v_ELI, na.rm = TRUE) == 2 &
 						   sum(dp_chrent_10, dp_rentgap_co) >=1 ~ TRUE),
 
-		scen21 = case_when(sum(v_renters_50p, v_ELI, v_rb, na.rm = TRUE) == 3 &
+		`Scenario 21` = case_when(sum(v_renters_50p, v_ELI, v_rb, na.rm = TRUE) == 3 &
 						   sum(dp_chrent_co, dp_rentgap_10) >=1 ~ TRUE),
-		scen22 = case_when(sum(v_renters_50p, v_ELI, v_rb, na.rm = TRUE) == 3 &
+		`Scenario 22` = case_when(sum(v_renters_50p, v_ELI, v_rb, na.rm = TRUE) == 3 &
 						   sum(dp_chrent_co, dp_rentgap_co) >=1 ~ TRUE),
-		scen23 = case_when(sum(v_renters_50p, v_ELI, v_rb, na.rm = TRUE) == 3 &
+		`Scenario 23` = case_when(sum(v_renters_50p, v_ELI, v_rb, na.rm = TRUE) == 3 &
 						   sum(dp_chrent_10, dp_rentgap_10) >=1 ~ TRUE),
-		scen24 = case_when(sum(v_renters_50p, v_ELI, v_rb, na.rm = TRUE) == 3 &
+		`Scenario 24` = case_when(sum(v_renters_50p, v_ELI, v_rb, na.rm = TRUE) == 3 &
 						   sum(dp_chrent_10, dp_rentgap_co) >=1 ~ TRUE),
 		text = "",
 		pwhite = WhiteE.y/totraceE.y,
@@ -466,13 +466,14 @@ glimpse(final_df)
 
 tmap_mode("view")
 
-sen_map <- function(scen, renters, eli, rb, chrent, rentgap)
+sen_map1 <- function(scen, renters, eli, rb, chrent, rentgap)
 tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
 tm_shape(transit) +
-	tm_polygons("MAP_COLORS", palette="Greys", alpha = .7) +
+	tm_polygons("MAP_COLORS", palette="Greys", alpha = .5) +
 tm_shape(final_df) +
 	tm_fill(scen,
 			palette = c("#FF6633","#FF6633"),
+			alpha = .5,
 			colorNA = NULL,
 			title = "Sensitive Communities",
 			id = "GEOID",
@@ -503,43 +504,50 @@ tm_shape(final_df) +
 						   "% FHHw/C"= "pfemhhch"
 						   ),
 			popup.format = list(digits=2)) +
-	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 12), alpha = .5)
+	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 12), alpha = .5) +
+	tm_layout(title = paste0(scen, ": ",renters,", ", eli, ", ", chrent, ", ", rentgap))
 
-save_map <- function(x)
-	tmap_save(x, paste0("~/git/sensitive_communities/docs/", x, ".html"))
+sen_map2 <- function(scen, renters, eli, rb, chrent, rentgap)
+	sen_map1(scen, renters, eli, rb, chrent, rentgap) +
+	tm_layout(title = paste0(scen, ": ",renters,", ", eli, ", ", rb, ", ", chrent, ", ", rentgap))
+
+save_map <- function(x,y)
+	tmap_save(x, paste0("~/git/sensitive_communities/docs/", y, ".html"))
 
 
-scen01 <- sen_map("scen01", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
-scen02 <- sen_map("scen02", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
-scen03 <- sen_map("scen03", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
-scen04 <- sen_map("scen04", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
+scen01 <- sen_map1("Scenario 01", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
+scen02 <- sen_map1("Scenario 02", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
+scen03 <- sen_map1("Scenario 03", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
+scen04 <- sen_map1("Scenario 04", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
 
-scen05 <- sen_map("scen05", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
-scen06 <- sen_map("scen06", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
-scen07 <- sen_map("scen07", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
-scen08 <- sen_map("scen08", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
+scen05 <- sen_map2("Scenario 05", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
+scen06 <- sen_map2("Scenario 06", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
+scen07 <- sen_map2("Scenario 07", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
+scen08 <- sen_map2("Scenario 08", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
 
-scen09 <- sen_map("scen09", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
-scen10 <- sen_map("scen10", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
-scen11 <- sen_map("scen11", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
-scen12 <- sen_map("scen12", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
+scen09 <- sen_map1("Scenario 09", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
+scen10 <- sen_map1("Scenario 10", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
+scen11 <- sen_map1("Scenario 11", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
+scen12 <- sen_map1("Scenario 12", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
 
-scen13 <- sen_map("scen13", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
-scen14 <- sen_map("scen14", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
-scen15 <- sen_map("scen15", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
-scen16 <- sen_map("scen16", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
+scen13 <- sen_map2("Scenario 13", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
+scen14 <- sen_map2("Scenario 14", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
+scen15 <- sen_map2("Scenario 15", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
+scen16 <- sen_map2("Scenario 16", "v_renters_60th", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
 
-scen17 <- sen_map("scen17", "v_renters_50p", "v_ELI", "v_rb","dp_chrent_co", "dp_rentgap_10")
-scen18 <- sen_map("scen18", "v_renters_50p", "v_ELI", "v_rb","dp_chrent_co", "dp_rentgap_co")
-scen19 <- sen_map("scen19", "v_renters_50p", "v_ELI", "v_rb","dp_chrent_10", "dp_rentgap_10")
-scen20 <- sen_map("scen20", "v_renters_50p", "v_ELI", "v_rb","dp_chrent_10", "dp_rentgap_co")
+scen17 <- sen_map1("Scenario 17", "v_renters_50p", "v_ELI", "v_rb","dp_chrent_co", "dp_rentgap_10")
+scen18 <- sen_map1("Scenario 18", "v_renters_50p", "v_ELI", "v_rb","dp_chrent_co", "dp_rentgap_co")
+scen19 <- sen_map1("Scenario 19", "v_renters_50p", "v_ELI", "v_rb","dp_chrent_10", "dp_rentgap_10")
+scen20 <- sen_map1("Scenario 20", "v_renters_50p", "v_ELI", "v_rb","dp_chrent_10", "dp_rentgap_co")
 
-scen21 <- sen_map("scen21", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
-scen22 <- sen_map("scen22", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
-scen23 <- sen_map("scen23", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
-scen24 <- sen_map("scen24", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
+scen21 <- sen_map2("Scenario 21", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
+scen22 <- sen_map2("Scenario 22", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
+scen23 <- sen_map2("Scenario 23", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
+scen24 <- sen_map2("Scenario 24", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
 
-save_map(scen01); save_map(scen02); save_map(scen03); save_map(scen04); save_map(scen05); save_map(scen06); save_map(scen07); save_map(scen08); save_map(scen09); save_map(scen10); save_map(scen11); save_map(scen12); save_map(scen13); save_map(scen14); save_map(scen15); save_map(scen16); save_map(scen17); save_map(scen18); save_map(scen19); save_map(scen20); save_map(scen21); save_map(scen22); save_map(scen23); save_map(scen24);
+save_map(scen01, "scen01"); save_map(scen02, "scen02"); save_map(scen03, "scen03"); save_map(scen04, "scen04"); save_map(scen05, "scen05"); save_map(scen06, "scen06"); save_map(scen07, "scen07"); save_map(scen08, "scen08"); save_map(scen09, "scen09"); save_map(scen10, "scen10"); save_map(scen11, "scen11"); save_map(scen12, "scen12"); save_map(scen13, "scen13"); save_map(scen14, "scen14"); save_map(scen15, "scen15"); save_map(scen16, "scen16"); save_map(scen17, "scen17"); save_map(scen18, "scen18"); save_map(scen19, "scen19"); save_map(scen20, "scen20"); save_map(scen21, "scen21"); save_map(scen22, "scen22"); save_map(scen23, "scen23"); save_map(scen24, "scen24");
+
+
 
 # ==========================================================================
 # TESTBED
@@ -669,7 +677,7 @@ eli_check <- ct_10
 eli_check@data %>%
 	group_by(risk_co, v_renters, v_rb,v_ELI,v_count) %>%
 	count()
-	# There are 352 tracts that fit this scenerio
+	# There are 352 tracts that fit this Scenario
 
 eli_check@data <-
 	eli_check@data %>%
