@@ -1,3 +1,7 @@
+---
+permalink: /index.html
+---
+
 # Sensitive Communities Map Review
 
 ## ***DO NOT SHARE. NOT FOR PUBLIC.***
