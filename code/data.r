@@ -548,6 +548,18 @@ scen24 <- sen_map2("Scenario 24", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_1
 save_map(scen01, "scen01"); save_map(scen02, "scen02"); save_map(scen03, "scen03"); save_map(scen04, "scen04"); save_map(scen05, "scen05"); save_map(scen06, "scen06"); save_map(scen07, "scen07"); save_map(scen08, "scen08"); save_map(scen09, "scen09"); save_map(scen10, "scen10"); save_map(scen11, "scen11"); save_map(scen12, "scen12"); save_map(scen13, "scen13"); save_map(scen14, "scen14"); save_map(scen15, "scen15"); save_map(scen16, "scen16"); save_map(scen17, "scen17"); save_map(scen18, "scen18"); save_map(scen19, "scen19"); save_map(scen20, "scen20"); save_map(scen21, "scen21"); save_map(scen22, "scen22"); save_map(scen23, "scen23"); save_map(scen24, "scen24");
 
 # ==========================================================================
+# Get tract counts for each scenario
+# ==========================================================================
+
+	final_df %>%
+	ungroup() %>%
+	select(GEOID, COUNTYFP, `Scenario 01`:`Scenario 24`) %>%
+	gather(scenario, value, `Scenario 01`:`Scenario 24`) %>%
+	group_by(scenario) %>%
+	summarise(count = sum(case_when(value == TRUE ~ 1, TRUE ~ 0), na.rm = TRUE)) %>%
+	data.frame()
+
+# ==========================================================================
 # TESTBED
 test <-
 	ct_sf %>%
