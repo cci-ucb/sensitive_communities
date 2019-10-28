@@ -465,17 +465,21 @@ glimpse(final_df)
 # Map
 # ==========================================================================
 
+#
+# Mapping function (transit on hold till update)
+# --------------------------------------------------------------------------
+
 tmap_mode("view")
 
 sen_map1 <- function(scen, renters, eli, rb, chrent, rentgap)
 tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
-tm_shape(transit,
-		 name = "Transit Rich Areas Layer") +
-	tm_polygons("FID",
-				palette= "Greys",
-				alpha = .5,
-				label = "Transit Rich Areas",
-				title = "") +
+# tm_shape(transit,
+# 		 name = "Transit Rich Areas Layer") +
+# 	tm_polygons("FID",
+# 				palette= "Greys",
+# 				alpha = .5,
+# 				label = "Transit Rich Areas",
+# 				title = "") +
 tm_shape(final_df, name = "Sensitive Communities Layer") +
 	tm_fill(scen,
 			palette = c("#FF6633","#FF6633"),
@@ -523,7 +527,9 @@ sen_map2 <- function(scen, renters, eli, rb, chrent, rentgap)
 save_map <- function(x,y)
 	tmap_save(x, paste0("~/git/sensitive_communities/docs/", y, ".html"))
 
-sen_map1("Scenario 01", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
+#
+# Make maps
+# --------------------------------------------------------------------------
 
 scen01 <- sen_map1("Scenario 01", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
 scen02 <- sen_map1("Scenario 02", "v_renters_co", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
@@ -555,7 +561,34 @@ scen22 <- sen_map2("Scenario 22", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_c
 scen23 <- sen_map2("Scenario 23", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
 scen24 <- sen_map2("Scenario 24", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
 
-save_map(scen01, "scen01"); save_map(scen02, "scen02"); save_map(scen03, "scen03"); save_map(scen04, "scen04"); save_map(scen05, "scen05"); save_map(scen06, "scen06"); save_map(scen07, "scen07"); save_map(scen08, "scen08"); save_map(scen09, "scen09"); save_map(scen10, "scen10"); save_map(scen11, "scen11"); save_map(scen12, "scen12"); save_map(scen13, "scen13"); save_map(scen14, "scen14"); save_map(scen15, "scen15"); save_map(scen16, "scen16"); save_map(scen17, "scen17"); save_map(scen18, "scen18"); save_map(scen19, "scen19"); save_map(scen20, "scen20"); save_map(scen21, "scen21"); save_map(scen22, "scen22"); save_map(scen23, "scen23"); save_map(scen24, "scen24")
+#
+# Save maps
+# --------------------------------------------------------------------------
+
+save_map(scen01, "scen01")
+save_map(scen02, "scen02")
+save_map(scen03, "scen03")
+save_map(scen04, "scen04")
+save_map(scen05, "scen05")
+save_map(scen06, "scen06")
+save_map(scen07, "scen07")
+save_map(scen08, "scen08")
+save_map(scen09, "scen09")
+save_map(scen10, "scen10")
+save_map(scen11, "scen11")
+save_map(scen12, "scen12")
+save_map(scen13, "scen13")
+save_map(scen14, "scen14")
+save_map(scen15, "scen15")
+save_map(scen16, "scen16")
+save_map(scen17, "scen17")
+save_map(scen18, "scen18")
+save_map(scen19, "scen19")
+save_map(scen20, "scen20")
+save_map(scen21, "scen21")
+save_map(scen22, "scen22")
+save_map(scen23, "scen23")
+save_map(scen24, "scen24")
 
 # ==========================================================================
 # Get tract counts for each scenario
