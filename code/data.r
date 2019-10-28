@@ -603,6 +603,38 @@ save_map(scen24, "scen24")
 	summarise(count = sum(case_when(value == TRUE ~ 1, TRUE ~ 0), na.rm = TRUE)) %>%
 	data.frame()
 
+#
+# Bay area sen count
+# --------------------------------------------------------------------------
+bay_co <-
+c("Alameda","Contra Costa","Marin","Napa","San Francisco","Santa Clara","San Mateo","Solano","Sonoma")
+
+bay_co = c(001,013,041,055,075,081,085,095,097)
+
+	final_df %>%
+	st_set_geometry(NULL) %>%
+	filter(as.numeric(COUNTYFP) %in% bay_co) %>%
+	group_by(COUNTYFP) %>%
+	summarise(n = sum(`Scenario 22`, na.rm = TRUE)) %>%
+	ungroup() %>%
+	mutate(total = sum(n))
+
+#
+# All county counts
+# --------------------------------------------------------------------------
+
+	final_df %>%
+	st_set_geometry(NULL) %>%
+	group_by(COUNTYFP) %>%
+	summarise(n = sum(`Scenario 22`, na.rm = TRUE)) %>%
+	ungroup() %>%
+	mutate(total = sum(n)) %>%
+	data.frame()
+
+
+
+# ==========================================================================
+# ==========================================================================
 # ==========================================================================
 # TESTBED
 test <-
