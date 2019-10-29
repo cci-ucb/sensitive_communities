@@ -481,10 +481,12 @@ tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github
 # 				label = "Transit Rich Areas",
 # 				title = "") +
 tm_shape(final_df, name = "Sensitive Communities Layer") +
-	tm_fill(scen,
+	tm_polygons(scen,
 			palette = c("#FF6633","#FF6633"),
 			label = "Sensitive Communities",
 			alpha = .5,
+			border.alpha = .15,
+			border.color = "gray",
 			colorNA = NULL,
 			title = "",
 			id = "popup_text",
@@ -518,7 +520,7 @@ tm_shape(final_df, name = "Sensitive Communities Layer") +
 						   "Rent Gap" = rentgap
 						   ),
 			popup.format = list(digits=2)) +
-	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 12), alpha = .5) +
+	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .5) +
 	tm_layout(title = paste0(scen, ": ",renters,", ", eli, ", ", chrent, ", ", rentgap))
 
 sen_map2 <- function(scen, renters, eli, rb, chrent, rentgap)
@@ -653,20 +655,35 @@ senmed <-
 	st_set_geometry(NULL) %>%
 	filter(`Scenario 22` == 1) %>%
 	group_by(COUNTYFP) %>%
-	mutate(
-		sentrmedWhite = median(round(pwhite, 3)*100,na.rm = TRUE),
-		sentrmedBlack = median(round(pblack, 3)*100,na.rm = TRUE),
-		sentrmedAsian = median(round(pasian, 3)*100,na.rm = TRUE),
-		sentrmedLat = median(round(platinx, 3)*100,na.rm = TRUE),
-		sentrmedOther = median(round(pother, 3)*100,na.rm = TRUE),
-		sentrmedRB = median(round(tr_rbprop17, 3)*100,na.rm = TRUE),
-		sentrmedELI = median(round(tr_ELI_prop17, 3)*100,na.rm = TRUE),
+	summarise(
+		sentrmedWhite = median(round(pwhite, 3),na.rm = TRUE),
+		sentrmedBlack = median(round(pblack, 3),na.rm = TRUE),
+		sentrmedAsian = median(round(pasian, 3),na.rm = TRUE),
+		sentrmedLat = median(round(platinx, 3),na.rm = TRUE),
+		sentrmedOther = median(round(pother, 3),na.rm = TRUE),
+		sentrmedRB = median(round(tr_rbprop17, 3),na.rm = TRUE),
+		sentrmedELI = median(round(tr_ELI_prop17, 3),na.rm = TRUE),
 		sentrmedRent = median(round(tr_medrent17, 3),na.rm = TRUE),
 		sentrmedrent_Gap = median(round(tr_rentgap, 3),na.rm = TRUE),
 		sentrmedCh_Rent = median(round(tr_chrent, 3),na.rm = TRUE)) %>%
 	data.frame()
 
 final_df %>%
+st_set_geometry(NULL) %>%
+group_by(COUNTYFP) %>%
+	summarise(
+		cotrmedWhite = median(round(pwhite, 3),na.rm = TRUE),
+		cotrmedBlack = median(round(pblack, 3),na.rm = TRUE),
+		cotrmedAsian = median(round(pasian, 3),na.rm = TRUE),
+		cotrmedLat = median(round(platinx, 3),na.rm = TRUE),
+		cotrmedOther = median(round(pother, 3),na.rm = TRUE),
+		cotrmedRB = median(round(tr_rbprop17, 3),na.rm = TRUE),
+		cotrmedELI = median(round(tr_ELI_prop17, 3),na.rm = TRUE),
+		cotrmedRent = median(round(tr_medrent17, 3),na.rm = TRUE),
+		cotrmedrent_Gap = median(round(tr_rentgap, 3),na.rm = TRUE),
+		cotrmedCh_Rent = median(round(tr_chrent, 3),na.rm = TRUE)) %>%
+	left_join(., senmed) %>%
+	data.frame
 
 
 
