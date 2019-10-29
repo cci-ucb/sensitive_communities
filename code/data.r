@@ -488,7 +488,8 @@ tm_shape(final_df, name = "Sensitive Communities Layer") +
 			colorNA = NULL,
 			title = "",
 			id = "popup_text",
-			popup.vars = c("% Rent" = "tr_rentprop17",
+			popup.vars = c(
+						   "% Rent" = "tr_rentprop17",
 						   "$ Rent" = "tr_medrent17",
 						   "$ R Lag" = "tr_medrent17.lag",
 						   "$ R Gap" = "tr_rentgap",
@@ -603,6 +604,87 @@ save_map(scen24, "scen24")
 	summarise(count = sum(case_when(value == TRUE ~ 1, TRUE ~ 0), na.rm = TRUE)) %>%
 	data.frame()
 
+#
+# Bay area sen count
+# --------------------------------------------------------------------------
+bay_co <-
+c("Alameda","Contra Costa","Marin","Napa","San Francisco","Santa Clara","San Mateo","Solano","Sonoma")
+
+bay_co = c(001,013,041,055,075,081,085,095,097)
+
+	final_df %>%
+	st_set_geometry(NULL) %>%
+	filter(as.numeric(COUNTYFP) %in% bay_co) %>%
+	group_by(COUNTYFP) %>%
+	summarise(n_sen = sum(`Scenario 22`, na.rm = TRUE),
+			  t_count = n(),
+			  p_sen = n_sen/t_count) %>%
+	ungroup() %>%
+	mutate(total_sen = sum(t_count),
+		   p_sen_of_area = n_sen/total_sen)
+
+#
+# All county counts
+# --------------------------------------------------------------------------
+
+
+	final_df %>%
+	st_set_geometry(NULL) %>%
+	group_by(COUNTYFP) %>%
+	summarise(n_sen = sum(`Scenario 22`, na.rm = TRUE),
+			  t_count = n(),
+			  p_sen = n_sen/t_count) %>%
+	ungroup() %>%
+	mutate(total_sen = sum(t_count),
+		   p_sen_of_area = n_sen/total_sen) %>%
+	data.frame()
+
+
+# ==========================================================================
+# Get demographics
+# ==========================================================================
+
+#
+# For SC's
+# --------------------------------------------------------------------------
+
+senmed <-
+	final_df %>%
+	st_set_geometry(NULL) %>%
+	filter(`Scenario 22` == 1) %>%
+	group_by(COUNTYFP) %>%
+	mutate(
+		sentrmedWhite = median(round(pwhite, 3)*100,na.rm = TRUE),
+		sentrmedBlack = median(round(pblack, 3)*100,na.rm = TRUE),
+		sentrmedAsian = median(round(pasian, 3)*100,na.rm = TRUE),
+		sentrmedLat = median(round(platinx, 3)*100,na.rm = TRUE),
+		sentrmedOther = median(round(pother, 3)*100,na.rm = TRUE),
+		sentrmedRB = median(round(tr_rbprop17, 3)*100,na.rm = TRUE),
+		sentrmedELI = median(round(tr_ELI_prop17, 3)*100,na.rm = TRUE),
+		sentrmedRent = median(round(tr_medrent17, 3),na.rm = TRUE),
+		sentrmedrent_Gap = median(round(tr_rentgap, 3),na.rm = TRUE),
+		sentrmedCh_Rent = median(round(tr_chrent, 3),na.rm = TRUE)) %>%
+	data.frame()
+
+final_df %>%
+
+
+
+
+	# pRent = paste0(min(round(tr_rentprop17, 3)*100), " / ",median(round(tr_rentprop17, 3)*100), " / ", max(round(tr_rentprop17, 3)*100)),
+	# rent_Lag = paste0(min(round(tr_medrent17.lag, 3)*100), " / ",median(round(tr_medrent17.lag, 3)*100), " / ", max(round(tr_medrent17.lag, 3)*100)),
+	# Ch_rent_Lag = paste0(min(round(tr_chrent.lag, 3)*100), " / ",median(round(tr_chrent.lag, 3)*100), " / ", max(round(tr_chrent.lag, 3)*100)),
+	# students = paste0(min(round(tr_propstudent17, 3)*100), " / ",median(round(tr_propstudent17, 3)*100), " / ", max(round(tr_propstudent17, 3)*100)),
+	# Welf = paste0(min(round(pwelfare, 3)*100), " / ",median(round(pwelfare, 3)*100), " / ", max(round(pwelfare, 3)*100)),
+	# Pov = paste0(min(round(ppoverty, 3)*100), " / ",median(round(ppoverty, 3)*100), " / ", max(round(ppoverty, 3)*100)),
+	# Unemp = paste0(min(round(unemp, 3)*100), " / ",median(round(unemp, 3)*100), " / ", max(round(unemp, 3)*100)),
+	# FemHHwCh = paste0(min(round(pfemhhch, 3)*100), " / ",median(round(pfemhhch, 3)*100), " / ", max(round(pfemhhch, 3)*100))) %>%
+data.frame
+
+
+
+# ==========================================================================
+# ==========================================================================
 # ==========================================================================
 # TESTBED
 test <-
