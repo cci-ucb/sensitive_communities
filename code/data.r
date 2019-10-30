@@ -641,6 +641,41 @@ bay_co = c(001,013,041,055,075,081,085,095,097)
 		   p_sen_of_area = n_sen/total_sen) %>%
 	data.frame()
 
+# ==========================================================================
+# Export shapefile
+# ==========================================================================
+
+	final_df %>% 
+	ungroup() %>% 
+	mutate(
+		tract_FIPS = GEOID, 
+		sens_com = `Scenario 22`, 
+		meets_renter_crit = v_renters_50p,
+		meets_ELI_crit = v_ELI,
+		meets_rentburden_crit = v_rb,
+		meets_ch_Rent_crit = dp_chrent_co,
+		meets_rentgap_crit = dp_rentgap_co,
+		proportion_renters = tr_rentprop17,
+		tract_median_rent = tr_medrent17,
+		nearby_med_rent = tr_medrent17.lag,
+		rent_gap = tr_rentgap,
+		Rent_change = tr_chrent,
+		nearby_rent_change = tr_chrent.lag,
+		prop_rent_burden = tr_rbprop17,
+		prop_ELI = tr_ELI_prop17,
+		prop_students = tr_propstudent17,
+		prop_white = pwhite,
+		prop_Black = pblack,
+		prop_Asian = pasian,
+		prop_Lat = platinx,
+		prop_Other = pother,
+		prop_on_welfare = pwelfare,
+		prop_poverty = ppoverty,
+		prop_unemployed = unemp
+		) %>% 
+	select(tract_FIPS:prop_unemployed) %>% 
+	st_write("~/git/sensitive_communities/data/output/UDP_SCMap.shp")
+
 
 # ==========================================================================
 # Get demographics
