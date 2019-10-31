@@ -52,21 +52,27 @@ tr_data <- function(year)
 		) %>%
 	select(-ends_with("M"))
 
-bg_data <- function(year){
-	ctys <- counties(state = "CA", cb = TRUE)
+#
+# Block group data - NOT WORKING
+# --------------------------------------------------------------------------
 
-	bgs <- map_df(get_acs(
-		geography = "block group",
-		variables = dis_var,
-		state = "CA",
-		county = NULL,
-		geometry = FALSE,
-		cache_table = TRUE,
-		output = "wide",
-		year = year
-		) %>%
-	select(-ends_with("M"))
-}
+# ctys <- counties(state = "CA", cb = TRUE, class = "sf") %>%
+# pull(NAME) %>% unique()
+
+# bgs12 <- map_df(ctys, function(cty) {
+# 	get_acs(
+# 		geography = "block group",
+# 		variables = dis_var,
+# 		state = "CA",
+# 		county = "Alameda",
+# 		geometry = FALSE,
+# 		cache_table = TRUE,
+# 		output = "wide",
+# 		year = 2012
+# 		) %>%
+# 	select(-ends_with("M"))
+# })
+
 #
 # County data
 # --------------------------------------------------------------------------
@@ -471,7 +477,8 @@ final_df <-
 		pwelfare = welfE.y/totwelfE.y,
 		ppoverty = sum(povfamhE.y, povnonfamhE.y, na.rm = TRUE)/totpovE.y,
 		unemp = unempE.y/totunempE.y,
-		pfemhhch = sum(femfamheadchE.y, femnonfamheadchE.y, na.rm = TRUE)/totfhcE.y
+		pfemhhch = sum(femfamheadchE.y, femnonfamheadchE.y, na.rm = TRUE)/totfhcE.y,
+		pPOC = (totraceE.y - WhiteE.y)/totraceE.y
 		)
 
 glimpse(final_df)
@@ -657,14 +664,37 @@ bay_co = c(001,013,041,055,075,081,085,095,097)
 	data.frame()
 
 # ==========================================================================
-# Export shapefile
+# Get proportion POC for SC and Counties
 # ==========================================================================
 
-	final_df %>% 
-	ungroup() %>% 
+#
+# for sc 22
+# --------------------------------------------------------------------------
+
+	final_df %>%
+	st_set_geometry(NULL) %>%
+	group_by(COUNTYFP) %>%
+	summarise(n_sen = sum(`Scenario 22`, na.rm = TRUE),
+			  t_count = n(),
+			  p_sen = n_sen/t_count) %>%
+	ungroup() %>%
+	mutate(total)
+
+
+
+# ==========================================================================
+# ==========================================================================
+# ==========================================================================
+# Export shapefile
+# ==========================================================================
+# ==========================================================================
+# ==========================================================================
+
+	final_df %>%
+	ungroup() %>%
 	mutate(
-		tract_FIPS = GEOID, 
-		sens_com = `Scenario 22`, 
+		tract_FIPS = GEOID,
+		sens_com = `Scenario 22`,
 		meets_renter_crit = v_renters_50p,
 		meets_ELI_crit = v_ELI,
 		meets_rentburden_crit = v_rb,
@@ -687,8 +717,8 @@ bay_co = c(001,013,041,055,075,081,085,095,097)
 		prop_on_welfare = pwelfare,
 		prop_poverty = ppoverty,
 		prop_unemployed = unemp
-		) %>% 
-	select(tract_FIPS:prop_unemployed) %>% 
+		) %>%
+	select(tract_FIPS:prop_unemployed) %>%
 	st_write("~/git/sensitive_communities/data/output/UDP_SCMap.shp")
 
 
@@ -707,6 +737,7 @@ senmed <-
 	group_by(COUNTYFP) %>%
 	summarise(
 		sentrmedWhite = median(round(pwhite, 3),na.rm = TRUE),
+		sentrmedPOC = median(round(pPOC, 3),na.rm = TRUE),
 		sentrmedBlack = median(round(pblack, 3),na.rm = TRUE),
 		sentrmedAsian = median(round(pasian, 3),na.rm = TRUE),
 		sentrmedLat = median(round(platinx, 3),na.rm = TRUE),
@@ -723,6 +754,7 @@ st_set_geometry(NULL) %>%
 group_by(COUNTYFP) %>%
 	summarise(
 		cotrmedWhite = median(round(pwhite, 3),na.rm = TRUE),
+		cotrmedPOC = median(round(pPOC, 3),na.rm = TRUE),
 		cotrmedBlack = median(round(pblack, 3),na.rm = TRUE),
 		cotrmedAsian = median(round(pasian, 3),na.rm = TRUE),
 		cotrmedLat = median(round(platinx, 3),na.rm = TRUE),
