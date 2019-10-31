@@ -52,6 +52,21 @@ tr_data <- function(year)
 		) %>%
 	select(-ends_with("M"))
 
+bg_data <- function(year){
+	ctys <- counties(state = "CA", cb = TRUE)
+
+	bgs <- map_df(get_acs(
+		geography = "block group",
+		variables = dis_var,
+		state = "CA",
+		county = NULL,
+		geometry = FALSE,
+		cache_table = TRUE,
+		output = "wide",
+		year = year
+		) %>%
+	select(-ends_with("M"))
+}
 #
 # County data
 # --------------------------------------------------------------------------
@@ -511,7 +526,7 @@ tm_shape(final_df, name = "Sensitive Communities Layer") +
 						   "% Unemp" = "unemp",
 						   "%FHHw/C"= "pfemhhch",
 						   "----------" = "text",
-						   "Criteria" = "text",
+						   "SC Criteria" = "text",
 						   "----------" = "text",
 						   "Renters" = renters,
 						   "ELI" = eli,
