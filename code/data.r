@@ -20,7 +20,7 @@
 # --------------------------------------------------------------------------
 
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(data.table, spdep, tidyverse, tigris, tidycensus, tmap)
+pacman::p_load(data.table, plotly, spdep, tidyverse, tigris, tidycensus, tmap)
 
 options(tigris_use_cache = TRUE)
 
@@ -483,7 +483,7 @@ final_df <-
 ungroup()
 
 glimpse(final_df)
-st_write(final_df, "~/data/sensitive_communities/final_df_v1.shp")
+# st_write(final_df, "~/data/sensitive_communities/final_df_v1.shp")
 
 # ==========================================================================
 # ==========================================================================
@@ -505,8 +505,181 @@ cal_nt <-
 ntcheck(cal_nt)
 
 v2df <-
-	left_join(final_df, cal_nt %>% select(GEOID,NeighType))
+	left_join(final_df, cal_nt %>% select(GEOID,NeighType)) %>% 
+	mutate(v_poc = case_when(NeighType != "White-Asian" ~ 0,
+							 NeighType != "All White" ~ 0,
+							 TRUE ~ 1))	
 
+# ==========================================================================
+# Change income to renter income
+# ==========================================================================
+
+ri_names12 <- c(
+	'HHIncTenRent_5E.x' = 4999, # Renter occupied!!Less than $5,000
+	'HHIncTenRent_10E.x' = 9999, # Renter occupied!!$5,000 to $9,999
+	'HHIncTenRent_15E.x' = 14999, # Renter occupied!!$10,000 to $14,999
+	'HHIncTenRent_20E.x' = 19999, # Renter occupied!!$15,000 to $19,999
+	'HHIncTenRent_25E.x' = 24999, # Renter occupied!!$20,000 to $24,999
+	'HHIncTenRent_35E.x' = 34999, # Renter occupied!!$25,000 to $34,999
+	'HHIncTenRent_50E.x' = 49999, # Renter occupied!!$35,000 to $49,999
+	'HHIncTenRent_75E.x' = 74999, # Renter occupied!!$50,000 to $74,999
+	'HHIncTenRent_100E.x' = 99999, # Renter occupied!!$75,000 to $99,999
+	'HHIncTenRent_150E.x' = 149999, # Renter occupied!!$100,000 to $149,999
+	'HHIncTenRent_151E.x' = 149999 # Renter occupied!!$150,000 or more
+	)
+
+ri_names17 <- c(
+	'HHIncTenRent_5E.y' = 4999, # Renter occupied!!Less than $5,000
+	'HHIncTenRent_10E.y' = 9999, # Renter occupied!!$5,000 to $9,999
+	'HHIncTenRent_15E.y' = 14999, # Renter occupied!!$10,000 to $14,999
+	'HHIncTenRent_20E.y' = 19999, # Renter occupied!!$15,000 to $19,999
+	'HHIncTenRent_25E.y' = 24999, # Renter occupied!!$20,000 to $24,999
+	'HHIncTenRent_35E.y' = 34999, # Renter occupied!!$25,000 to $34,999
+	'HHIncTenRent_50E.y' = 49999, # Renter occupied!!$35,000 to $49,999
+	'HHIncTenRent_75E.y' = 74999, # Renter occupied!!$50,000 to $74,999
+	'HHIncTenRent_100E.y' = 99999, # Renter occupied!!$75,000 to $99,999
+	'HHIncTenRent_150E.y' = 149999, # Renter occupied!!$100,000 to $149,999
+	'HHIncTenRent_151E.y' = 149999 # Renter occupied!!$150,000 or more
+	)
+
+
+trli12 <-
+	ct@data %>%
+	select(GEOID, COUNTYFP, co_medinc.x, HHInc_TotalE.x, HHIncTenRentE.x:HHIncTenRent_151E.x) %>%
+	group_by(GEOID) %>%
+	mutate(
+		LI_val = co_medinc.x*.8,
+		VLI_val = co_medinc.x*.5,
+		ELI_val = co_medinc.x*.3
+		) %>%
+	gather(
+		r_medinc_cat,
+		r_medinc_cat_count,
+		HHIncTenRent_5E.x:HHIncTenRent_151E.x
+		) %>%
+	mutate_at(vars(r_medinc_cat), ~ri_names12
+		) %>%
+	mutate(
+		bottom_inccat = case_when(r_medinc_cat <= 4999 ~ r_medinc_cat - 4999,
+					   			  r_medinc_cat <= 49999 &
+								  r_medinc_cat >= 10000 ~ r_medinc_cat - 4999,
+								  r_medinc_cat >= 50000 &
+								  r_medinc_cat <= 99999 ~ r_medinc_cat -24999,
+								  r_medinc_cat >= 100000 &
+								  r_medinc_cat <= 199999 ~ r_medinc_cat - 49999,
+								  TRUE ~ NA_real_),
+		top_inccat = r_medinc_cat
+		) %>% glimpse()
+	mutate(
+		LI = case_when(LI_val >= top_inccat ~ 1,
+					   LI_val <= top_inccat &
+		   			   LI_val >= bottom_inccat ~
+	   				   (LI_val - bottom_inccat)/(top_inccat - bottom_inccat),
+		   			   TRUE ~ 0),
+		VLI = case_when(VLI_val >= top_inccat ~ 1,
+					 	VLI_val <= top_inccat &
+			   			VLI_val >= bottom_inccat ~
+						(VLI_val - bottom_inccat)/(top_inccat - bottom_inccat),
+						TRUE ~ 0),
+		ELI = case_when(ELI_val >= top_inccat ~ 1,
+			 		    ELI_val <= top_inccat &
+						ELI_val >= bottom_inccat ~
+						(ELI_val - bottom_inccat)/(top_inccat - bottom_inccat),
+						TRUE ~ 0),
+		tr_totalinc12 = sum(r_medinc_cat_count, na.rm = TRUE),
+		tr_LI_count12 = sum(LI*r_medinc_cat_count, na.rm = TRUE),
+		tr_VLI_count12 = sum(VLI*r_medinc_cat_count, na.rm = TRUE),
+		tr_ELI_count12 = sum(ELI*r_medinc_cat_count, na.rm = TRUE),
+		tr_LI_prop12 = tr_LI_count12/tr_totalinc12,
+		tr_VLI_prop12 = tr_VLI_count12/tr_totalinc12,
+		tr_ELI_prop12 = tr_ELI_count12/tr_totalinc12
+		) %>%
+	select(GEOID, COUNTYFP, LI_val:ELI_val, tr_totalinc12:tr_ELI_prop12) %>%
+	distinct() %>%
+	ungroup()
+
+
+trli17 <-
+	ct@data %>%
+	select(GEOID, COUNTYFP, co_medinc.y, HHInc_TotalE.y:HHInc_250E.y) %>%
+	group_by(GEOID) %>%
+	mutate(
+		LI_val = co_medinc.y*.8,
+		VLI_val = co_medinc.y*.5,
+		ELI_val = co_medinc.y*.3
+		) %>%
+	gather(r_medinc_cat, r_medinc_cat_count, HHIncTenRent_5E.y:HHIncTenRent_151E.y) %>%
+	mutate_at(vars(r_medinc_cat), ~ri_names17) %>%
+	mutate(
+		bottom_inccat = case_when(r_medinc_cat <= 9999 ~ r_medinc_cat - 9999,
+								  r_medinc_cat <= 49999 &
+								  r_medinc_cat >= 10000 ~ r_medinc_cat - 4999,
+								  r_medinc_cat >= 50000 &
+								  r_medinc_cat <= 99999 ~ r_medinc_cat -24999,
+								  r_medinc_cat >= 100000 &
+								  r_medinc_cat <= 199999 ~ r_medinc_cat - 49999,
+								  TRUE ~ NA_real_),
+		top_inccat = r_medinc_cat
+		) %>%
+	mutate(
+		LI = case_when(LI_val >= top_inccat ~ 1,
+					   LI_val <= top_inccat &
+					   LI_val >= bottom_inccat ~
+			   		   (LI_val - bottom_inccat)/(top_inccat - bottom_inccat),
+			   		   TRUE ~ 0),
+		VLI = case_when(VLI_val >= top_inccat ~ 1,
+					    VLI_val <= top_inccat &
+			   			VLI_val >= bottom_inccat ~
+			   			(VLI_val - bottom_inccat)/(top_inccat - bottom_inccat),
+			   			TRUE ~ 0),
+		ELI = case_when(ELI_val >= top_inccat ~ 1,
+						ELI_val <= top_inccat &
+						ELI_val >= bottom_inccat ~
+						(ELI_val - bottom_inccat)/(top_inccat - bottom_inccat),
+						TRUE ~ 0),
+		tr_totalinc17 = sum(r_medinc_cat_count, na.rm = TRUE),
+		tr_LI_count17 = sum(LI*r_medinc_cat_count, na.rm = TRUE),
+		tr_VLI_count17 = sum(VLI*r_medinc_cat_count, na.rm = TRUE),
+		tr_ELI_count17 = sum(ELI*r_medinc_cat_count, na.rm = TRUE),
+		tr_LI_prop17 = tr_LI_count17/tr_totalinc17,
+		tr_VLI_prop17 = tr_VLI_count17/tr_totalinc17,
+		tr_ELI_prop17 = tr_ELI_count17/tr_totalinc17
+		) %>%
+	select(GEOID, COUNTYFP, LI_val:ELI_val,tr_totalinc17:tr_ELI_prop17) %>%
+	distinct() %>%
+	ungroup()
+
+lidata <-
+	left_join(trli12, trli17, by = c("GEOID", "COUNTYFP")) %>%
+	group_by(COUNTYFP) %>%
+	mutate(
+		co_totalinc12 = sum(tr_totalinc12, na.rm = TRUE),
+		co_LI_count12 = sum(tr_LI_count12, na.rm = TRUE),
+		co_VLI_count12 = sum(tr_VLI_count12, na.rm = TRUE),
+		co_ELI_count12 = sum(tr_ELI_count12, na.rm = TRUE),
+		co_LI_prop12 = co_LI_count12/co_totalinc12,
+		co_VLI_prop12 = co_VLI_count12/co_totalinc12,
+		co_ELI_prop12 = co_ELI_count12/co_totalinc12,
+		co_LI_propmed12 = median(tr_LI_prop12, na.rm = TRUE),
+		co_VLI_propmed12 = median(tr_VLI_prop12, na.rm = TRUE),
+		co_ELI_propmed12 = median(tr_ELI_prop12, na.rm = TRUE),
+		co_totalinc17 = sum(tr_totalinc17, na.rm = TRUE),
+		co_LI_count17 = sum(tr_LI_count17, na.rm = TRUE),
+		co_VLI_count17 = sum(tr_VLI_count17, na.rm = TRUE),
+		co_ELI_count17 = sum(tr_ELI_count17, na.rm = TRUE),
+		co_LI_prop17 = co_LI_count17/co_totalinc17,
+		co_VLI_prop17 = co_VLI_count17/co_totalinc17,
+		co_ELI_prop17 = co_ELI_count17/co_totalinc17,
+		co_LI_propmed17 = median(tr_LI_prop17, na.rm = TRUE),
+		co_VLI_propmed17 = median(tr_VLI_prop17, na.rm = TRUE),
+		co_ELI_propmed17 = median(tr_ELI_prop17, na.rm = TRUE)
+		)
+
+
+
+
+# ==========================================================================
+# ==========================================================================
 # ==========================================================================
 # testbed
 
@@ -517,7 +690,53 @@ v2df %>%
 			  mean = mean(mhhincE.y, na.rm = TRUE),
 			  min = min(mhhincE.y, na.rm = TRUE),
 			  max = max(mhhincE.y, na.rm = TRUE)) %>%
-	data.frame
+	data.frame %>% 
+	arrange(desc(mean))
+
+ggplotly(
+		ggplot(v2df %>% filter(NeighType )) +
+		geom_sf(aes(fill = "NeighType")))
+
+tmap_mode("view")
+tm_basemap(leaflet::providers$CartoDB.Positron) +
+tm_shape(v2df %>% filter(NeighType == "White-Shared")) + 
+tm_fill("Scenario 22", 
+				popup.vars = c(
+							"Inc" = "mhhincE.y",
+						   "% Rent" = "tr_rentprop17",
+						   "$ Rent" = "tr_medrent17",
+						   "$ R Lag" = "tr_medrent17.lag",
+						   "$ R Gap" = "tr_rentgap",
+						   "Ch Rent" = "tr_chrent",
+						   "Ch R Lag" = "tr_chrent.lag",
+						   "% RB" = "tr_rbprop17",
+						   "% ELI" = "tr_ELI_prop17",
+						   "% Stud." = "tr_propstudent17",
+						   "----------" = "text",
+						   "N. Type" = "NeighType",
+						   "% White" = "pwhite",
+						   "% Black" = "pblack",
+						   "% Asian" = "pasian",
+						   "% Lat" = "platinx",
+						   "% Other" = "pother",
+						   "% Welf" = "pwelfare",
+						   "% Pov" = "ppoverty",
+						   "% Unemp" = "unemp",
+						   "%FHHw/C"= "pfemhhch",
+						   "----------" = "text",
+						   "SC Criteria" = "text",
+						   "----------" = "text",
+						   "Renters" = "v_renters_50p",
+						   "ELI" = "v_ELI",
+						   "RB" = "v_rb",
+						   "Ch Rent" = "dp_chrent_co",
+						   "Rent Gap" = "dp_rentgap_co"))
+
+v2df %>% 
+st_set_geometry(NULL) %>% 
+group_by(NeighType) %>% 
+summarise(sc_sum = sum(`Scenario 22`, na.rm = TRUE), count = n()) %>% data.frame() %>% arrange(NeighType)
+
 # ==========================================================================
 
 
