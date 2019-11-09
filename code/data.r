@@ -429,6 +429,7 @@ cal_nt <-
 	select(GEOID,NeighType) %>% 
 	mutate(v_poc = case_when(NeighType == "White-Asian" ~ 0,
 							 NeighType == "All White" ~ 0,
+							 NeighType == "White-Shared" ~ 0,
 							 TRUE ~ 1))	
 
 ntcheck(cal_nt)
@@ -444,6 +445,8 @@ final_df <-
 								   TRUE ~ 0),
 		v_renters_50p = case_when(tr_rentprop17 >= .5 ~ 1,
 								  TRUE ~ 0),		
+		v_renters_40p = case_when(tr_rentprop17 >= .4 ~ 1, # v2
+								  TRUE ~ 0),
 		v_renters_30p = case_when(tr_rentprop17 >= .3 ~ 1, # v2
 								  TRUE ~ 0),
 		v_ELI = case_when(tr_propstudent17 < .20 & # v2
@@ -465,6 +468,18 @@ final_df <-
 								  TRUE ~ 0),
 		dp_rentgap_10 = case_when(tr_rentgapprop > .1 ~ 1,
 								  TRUE ~ 0),
+		text = "",
+		popup_text = paste0("Tract: ", GEOID),
+		pwhite = WhiteE.y/totraceE.y,
+		pblack = BlackE.y/totraceE.y,
+		pasian = AsianE.y/totraceE.y,
+		platinx = LatinxE.y/totraceE.y,
+		pother = (totraceE.y - sum(WhiteE.y,BlackE.y,AsianE.y,LatinxE.y, na.rm = TRUE))/totraceE.y,
+		pwelfare = welfE.y/totwelfE.y,
+		ppoverty = sum(povfamhE.y, povnonfamhE.y, na.rm = TRUE)/totpovE.y,
+		unemp = unempE.y/totunempE.y,
+		pfemhhch = sum(femfamheadchE.y, femnonfamheadchE.y, na.rm = TRUE)/totfhcE.y,
+		pPOC = (totraceE.y - WhiteE.y)/totraceE.y,
 		`Scenario 01` = case_when(sum(v_renters_co, v_ELI, na.rm = TRUE) == 2 &
 						   sum(dp_chrent_co, dp_rentgap_10) >=1 ~ TRUE),
 		`Scenario 02` = case_when(sum(v_renters_co, v_ELI, na.rm = TRUE) == 2 &
@@ -529,25 +544,60 @@ final_df <-
 		`Scenario 27` = case_when(sum(v_poc, 
 									  v_renters_30p, 
 									  v_ELI, 
-									  v_rb, na.rm = TRUE) == 3 &
+									  v_rb, na.rm = TRUE) >= 3 &
 						   		  sum(dp_chrent_co, dp_rentgap_co) >=1 ~ TRUE),
 		`Scenario 28` = case_when(sum(v_poc, 
 									  v_renters_30p, 
 									  v_VLI, 
-									  v_rb, na.rm = TRUE) == 3 &
+									  v_rb, na.rm = TRUE) >= 3 &
 						   		  sum(dp_chrent_co, dp_rentgap_co) >=1 ~ TRUE),
-		text = "",
-		popup_text = paste0("Tract: ", GEOID),
-		pwhite = WhiteE.y/totraceE.y,
-		pblack = BlackE.y/totraceE.y,
-		pasian = AsianE.y/totraceE.y,
-		platinx = LatinxE.y/totraceE.y,
-		pother = (totraceE.y - sum(WhiteE.y,BlackE.y,AsianE.y,LatinxE.y, na.rm = TRUE))/totraceE.y,
-		pwelfare = welfE.y/totwelfE.y,
-		ppoverty = sum(povfamhE.y, povnonfamhE.y, na.rm = TRUE)/totpovE.y,
-		unemp = unempE.y/totunempE.y,
-		pfemhhch = sum(femfamheadchE.y, femnonfamheadchE.y, na.rm = TRUE)/totfhcE.y,
-		pPOC = (totraceE.y - WhiteE.y)/totraceE.y
+		`Scenario 29` = case_when(sum(v_poc, 
+									  v_renters_30p, 
+									  v_ELI, 
+									  v_rb, na.rm = TRUE) >= 3 &
+						   		  sum(dp_chrent_10, dp_rentgap_co) >=1 ~ TRUE),
+		`Scenario 30` = case_when(sum(v_poc, 
+									  v_renters_30p, 
+									  v_ELI, 
+									  v_rb, na.rm = TRUE) >= 3 &
+						   		  sum(dp_chrent_co, dp_rentgap_10) >=1 ~ TRUE),
+		`Scenario 31` = case_when(sum(v_poc, 
+									  v_renters_30p, 
+									  v_ELI, 
+									  v_rb, na.rm = TRUE) >= 3 &
+						   		  sum(dp_chrent_10, dp_rentgap_10) >=1 ~ TRUE),		
+		`Scenario 32` = case_when(sum(v_poc, 
+									  v_renters_30p, 
+									  v_VLI, 
+									  v_rb, na.rm = TRUE) >= 3 &
+						   		  sum(dp_chrent_10, dp_rentgap_co) >=1 ~ TRUE),
+		`Scenario 33` = case_when(sum(v_poc, 
+									  v_renters_30p, 
+									  v_VLI, 
+									  v_rb, na.rm = TRUE) >= 3 &
+						   		  sum(dp_chrent_co, dp_rentgap_10) >=1 ~ TRUE),
+		`Scenario 34` = case_when(sum(v_poc, 
+									  v_renters_30p, 
+									  v_VLI, 
+									  v_rb, na.rm = TRUE) >= 3 &
+						   		  sum(dp_chrent_10, dp_rentgap_10) >=1 ~ TRUE),		
+		`Scenario 35` = case_when(tr_propstudent17 < .20 &
+								  v_poc == 1 & 
+								  v_renters_30p == 1 & 
+								  sum(v_VLI, 
+									  v_rb, na.rm = TRUE) >= 1 ~ TRUE, 
+						   		  sum(dp_chrent_co, dp_rentgap_co) >= 1 ~ TRUE), 
+# Version 2
+		`Scenario 36` = case_when(sum(v_poc == 1,
+								  	  v_renters_40p == 1,
+								  	  v_VLI, 
+									  v_rb, na.rm = TRUE) >= 3 & 
+						   		  sum(dp_chrent_co, 
+						   		  	  dp_rentgap_co) >= 1 ~ TRUE, 
+						   		  totraceE.y >= 500 & 
+						   		  pPOC >= .3 & 
+						   		  tr_propstudent17 < .20, 
+						   		  ), 
 		) %>%
 ungroup()
 
@@ -668,6 +718,13 @@ scen25 <- sen_map2("Scenario 25", "v_renters_30p", "v_ELI", "v_rb", "dp_chrent_c
 scen26 <- sen_map2("Scenario 26", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
 scen27 <- sen_map3("Scenario 27", "v_renters_30p", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
 scen28 <- sen_map3("Scenario 28", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
+scen29 <- sen_map3("Scenario 29", "v_renters_30p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
+scen30 <- sen_map3("Scenario 30", "v_renters_30p", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
+scen31 <- sen_map3("Scenario 31", "v_renters_30p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
+scen32 <- sen_map3("Scenario 32", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
+scen33 <- sen_map3("Scenario 33", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
+scen34 <- sen_map3("Scenario 34", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
+scen35 <- sen_map3("Scenario 35", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
 
 final_df %>% 
 	pull(`Scenario 25`) %>% 
@@ -681,39 +738,65 @@ final_df %>%
 final_df %>% 
 	pull(`Scenario 28`) %>% 
 	sum(na.rm = TRUE)
+final_df %>% 
+	pull(`Scenario 29`) %>% 
+	sum(na.rm = TRUE)
+final_df %>% 
+	pull(`Scenario 30`) %>% 
+	sum(na.rm = TRUE)
+final_df %>% 
+	pull(`Scenario 31`) %>% 
+	sum(na.rm = TRUE)
+final_df %>% 
+	pull(`Scenario 32`) %>% 
+	sum(na.rm = TRUE)
+final_df %>% 
+	pull(`Scenario 33`) %>% 
+	sum(na.rm = TRUE)
+final_df %>% 
+	pull(`Scenario 34`) %>% 
+	sum(na.rm = TRUE)
 
+
+final_df
 #
 # Save maps
 # --------------------------------------------------------------------------
 
-save_map(scen01, "scen01")
-save_map(scen02, "scen02")
-save_map(scen03, "scen03")
-save_map(scen04, "scen04")
-save_map(scen05, "scen05")
-save_map(scen06, "scen06")
-save_map(scen07, "scen07")
-save_map(scen08, "scen08")
-save_map(scen09, "scen09")
-save_map(scen10, "scen10")
-save_map(scen11, "scen11")
-save_map(scen12, "scen12")
-save_map(scen13, "scen13")
-save_map(scen14, "scen14")
-save_map(scen15, "scen15")
-save_map(scen16, "scen16")
-save_map(scen17, "scen17")
-save_map(scen18, "scen18")
-save_map(scen19, "scen19")
-save_map(scen20, "scen20")
-save_map(scen21, "scen21")
-save_map(scen22, "scen22")
-save_map(scen23, "scen23")
-save_map(scen24, "scen24")
+# save_map(scen01, "scen01")
+# save_map(scen02, "scen02")
+# save_map(scen03, "scen03")
+# save_map(scen04, "scen04")
+# save_map(scen05, "scen05")
+# save_map(scen06, "scen06")
+# save_map(scen07, "scen07")
+# save_map(scen08, "scen08")
+# save_map(scen09, "scen09")
+# save_map(scen10, "scen10")
+# save_map(scen11, "scen11")
+# save_map(scen12, "scen12")
+# save_map(scen13, "scen13")
+# save_map(scen14, "scen14")
+# save_map(scen15, "scen15")
+# save_map(scen16, "scen16")
+# save_map(scen17, "scen17")
+# save_map(scen18, "scen18")
+# save_map(scen19, "scen19")
+# save_map(scen20, "scen20")
+# save_map(scen21, "scen21")
+# save_map(scen22, "scen22")
+# save_map(scen23, "scen23")
+# save_map(scen24, "scen24")
 save_map(scen25, "scen25")
 save_map(scen26, "scen26")
 save_map(scen27, "scen27")
 save_map(scen28, "scen28")
+save_map(scen29, "scen29")
+save_map(scen30, "scen30")
+save_map(scen31, "scen31")
+save_map(scen32, "scen32")
+save_map(scen33, "scen33")
+save_map(scen34, "scen34")
 
 # ==========================================================================
 # Get tract counts for each scenario
