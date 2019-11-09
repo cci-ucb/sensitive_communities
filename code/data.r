@@ -49,8 +49,7 @@ tr_data <- function(year)
 		cache_table = TRUE,
 		output = "wide",
 		year = year
-		) %>%
-	select(-ends_with("M"))
+		) 
 
 #
 # Block group data - NOT WORKING
@@ -69,8 +68,7 @@ tr_data <- function(year)
 # 		cache_table = TRUE,
 # 		output = "wide",
 # 		year = 2012
-# 		) %>%
-# 	select(-ends_with("M"))
+# 		) 
 # })
 
 #
