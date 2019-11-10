@@ -307,6 +307,14 @@ lidata <-
 		co_ELI_propmed17 = median(tr_ELI_prop17, na.rm = TRUE)
 		)
 
+#
+# Rent Burden
+# Testing: 
+# 	1. Rent burden capped at $35k
+# 	2. Rent burden by 80%, 50%, and 30% AMI
+# 	3. by rent burden at 30% and 50%
+# --------------------------------------------------------------------------
+
 
 
 #
