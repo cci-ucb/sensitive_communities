@@ -6,7 +6,7 @@ permalink: /index.html
 
 ## ***DO NOT SHARE. NOT FOR PUBLIC.***
 
-This page shows 24 mutually exclusive combinations of vulnerable population and displacement pressure used to define sensitive communities. Click on the **Scenario Link** to view the respective map. Each scenario is defined by 2 or 3 vulnerability measures and at least 1 of 2 displacement measures. The variables are defined below in the codebook followed by the map links to each scenario.
+This page shows a number of mutually exclusive combinations of vulnerable population and displacement pressures used to define sensitive communities. Click on the **Scenario Link** to view the respective map. The variables are defined below in the codebook followed by the map links to each scenario.
 
 ## Variable Codebook
 
