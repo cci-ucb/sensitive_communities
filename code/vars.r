@@ -1373,12 +1373,13 @@ dis_var <- c(
 	'totrentWHTNL' = 'B25003H_003', # Estimate!!Total!!Renter occupied TENURE (WHITE ALONE, NOT HISPANIC OR LATINO HOUSEHOLDER)
 	'tottenLAT' = 'B25003I_001', # Estimate!!Total TENURE (HISPANIC OR LATINO HOUSEHOLDER)
 	'totownLAT' = 'B25003I_002', # Estimate!!Total!!Owner occupied TENURE (HISPANIC OR LATINO HOUSEHOLDER)
-	'totrentLAT' = 'B25003I_003', # Estimate!!Total!!Renter occupied TENURE (HISPANIC OR LATINO HOUSEHOLDER)
+	'totrentLAT' = 'B25003I_003') # Estimate!!Total!!Renter occupied TENURE (HISPANIC OR LATINO HOUSEHOLDER)
 
 # ==========================================================================
 # Income by rent burden
 # ==========================================================================
 
+ir_var <- c(
 	'ir_tot' = 'B25074_001E',# Estimate!!Total	HOUSEHOLD INCOME BY GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME IN THE PAST 12 MONTHS
 	'ir_9999' = 'B25074_002E', # Estimate!!Total!!Less than $10 000	HOUSEHOLD INCOME BY GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME IN THE PAST 12 MONTHS
 	'ir19_9999' = 'B25074_003E', # Estimate!!Total!!Less than $10 000!!Less than 20.0 percent	HOUSEHOLD INCOME BY GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME IN THE PAST 12 MONTHS
@@ -1444,3 +1445,56 @@ dis_var <- c(
 	'ir_p100000.5plus' = 'B25074_063E', # Estimate!!Total!!$100 000 or more!!50.0 percent or more	HOUSEHOLD INCOME BY GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME IN THE PAST 12 MONTHS
 	'ir_p100000.x' = 'B25074_064E' # Estimate!!Total!!$100 000 or more!!Not computed	HOUSEHOLD INCOME BY GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME IN THE PAST 12 MONTHS)
 	)
+
+######
+# 2012
+# 1	B25074_001	Estimate!!Total	NA
+# 2	B25074_002	Estimate!!Total!!Less than $10,000	NA
+# 3	B25074_003	Estimate!!Total!!Less than $10,000!!Less than 20.0 percent	NA
+# 4	B25074_004	Estimate!!Total!!Less than $10,000!!20.0 to 24.9 percent	NA
+# 5	B25074_005	Estimate!!Total!!Less than $10,000!!25.0 to 29.9 percent	NA
+# 6	B25074_006	Estimate!!Total!!Less than $10,000!!30.0 to 34.9 percent	NA
+# 7	B25074_007	Estimate!!Total!!Less than $10,000!!35.0 percent or more	NA
+# 8	B25074_008	Estimate!!Total!!Less than $10,000!!Not computed	NA
+# 9	B25074_009	Estimate!!Total!!$10,000 to $19,999	NA
+# 10	B25074_010	Estimate!!Total!!$10,000 to $19,999!!Less than 20.0 percent	NA
+# 11	B25074_011	Estimate!!Total!!$10,000 to $19,999!!20.0 to 24.9 percent	NA
+# 12	B25074_012	Estimate!!Total!!$10,000 to $19,999!!25.0 to 29.9 percent	NA
+# 13	B25074_013	Estimate!!Total!!$10,000 to $19,999!!30.0 to 34.9 percent	NA
+# 14	B25074_014	Estimate!!Total!!$10,000 to $19,999!!35.0 percent or more	NA
+# 15	B25074_015	Estimate!!Total!!$10,000 to $19,999!!Not computed	NA
+# 16	B25074_016	Estimate!!Total!!$20,000 to $34,999	NA
+# 17	B25074_017	Estimate!!Total!!$20,000 to $34,999!!Less than 20.0 percent	NA
+# 18	B25074_018	Estimate!!Total!!$20,000 to $34,999!!20.0 to 24.9 percent	NA
+# 19	B25074_019	Estimate!!Total!!$20,000 to $34,999!!25.0 to 29.9 percent	NA
+# 20	B25074_020	Estimate!!Total!!$20,000 to $34,999!!30.0 to 34.9 percent	NA
+# 21	B25074_021	Estimate!!Total!!$20,000 to $34,999!!35.0 percent or more	NA
+# 22	B25074_022	Estimate!!Total!!$20,000 to $34,999!!Not computed	NA
+# 23	B25074_023	Estimate!!Total!!$35,000 to $49,999	NA
+# 24	B25074_024	Estimate!!Total!!$35,000 to $49,999!!Less than 20.0 percent	NA
+# 25	B25074_025	Estimate!!Total!!$35,000 to $49,999!!20.0 to 24.9 percent	NA
+# 26	B25074_026	Estimate!!Total!!$35,000 to $49,999!!25.0 to 29.9 percent	NA
+# 27	B25074_027	Estimate!!Total!!$35,000 to $49,999!!30.0 to 34.9 percent	NA
+# 28	B25074_028	Estimate!!Total!!$35,000 to $49,999!!35.0 percent or more	NA
+# 29	B25074_029	Estimate!!Total!!$35,000 to $49,999!!Not computed	NA
+# 30	B25074_030	Estimate!!Total!!$50,000 to $74,999	NA
+# 31	B25074_031	Estimate!!Total!!$50,000 to $74,999!!Less than 20.0 percent	NA
+# 32	B25074_032	Estimate!!Total!!$50,000 to $74,999!!20.0 to 24.9 percent	NA
+# 33	B25074_033	Estimate!!Total!!$50,000 to $74,999!!25.0 to 29.9 percent	NA
+# 34	B25074_034	Estimate!!Total!!$50,000 to $74,999!!30.0 to 34.9 percent	NA
+# 35	B25074_035	Estimate!!Total!!$50,000 to $74,999!!35.0 percent or more	NA
+# 36	B25074_036	Estimate!!Total!!$50,000 to $74,999!!Not computed	NA
+# 37	B25074_037	Estimate!!Total!!$75,000 to $99,999	NA
+# 38	B25074_038	Estimate!!Total!!$75,000 to $99,999!!Less than 20.0 percent	NA
+# 39	B25074_039	Estimate!!Total!!$75,000 to $99,999!!20.0 to 24.9 percent	NA
+# 40	B25074_040	Estimate!!Total!!$75,000 to $99,999!!25.0 to 29.9 percent	NA
+# 41	B25074_041	Estimate!!Total!!$75,000 to $99,999!!30.0 to 34.9 percent	NA
+# 42	B25074_042	Estimate!!Total!!$75,000 to $99,999!!35.0 percent or more	NA
+# 43	B25074_043	Estimate!!Total!!$75,000 to $99,999!!Not computed	NA
+# 44	B25074_044	Estimate!!Total!!$100,000 or more	NA
+# 45	B25074_045	Estimate!!Total!!$100,000 or more!!Less than 20.0 percent	NA
+# 46	B25074_046	Estimate!!Total!!$100,000 or more!!20.0 to 24.9 percent	NA
+# 47	B25074_047	Estimate!!Total!!$100,000 or more!!25.0 to 29.9 percent	NA
+# 48	B25074_048	Estimate!!Total!!$100,000 or more!!30.0 to 34.9 percent	NA
+# 49	B25074_049	Estimate!!Total!!$100,000 or more!!35.0 percent or more	NA
+# 50	B25074_050	Estimate!!Total!!$100,000 or more!!Not computed	NA

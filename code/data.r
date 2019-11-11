@@ -49,7 +49,7 @@ tr_data <- function(year)
 		cache_table = TRUE,
 		output = "wide",
 		year = year
-		) 
+		)
 
 #
 # Block group data - NOT WORKING
@@ -68,7 +68,7 @@ tr_data <- function(year)
 # 		cache_table = TRUE,
 # 		output = "wide",
 # 		year = 2012
-# 		) 
+# 		)
 # })
 
 #
@@ -187,14 +187,14 @@ trli12 <-
 					   			  r_medinc_cat >= 9999 &
 								  r_medinc_cat <= 24999 ~ r_medinc_cat - 4999,
 								  r_medinc_cat == 34999 ~ r_medinc_cat - 9999,
-								  r_medinc_cat == 49999 ~ r_medinc_cat - 14999, 
-								  r_medinc_cat == 74999 ~ r_medinc_cat - 24999, 
-								  r_medinc_cat == 99999 ~ r_medinc_cat - 24999, 
-								  r_medinc_cat == 149999 ~ r_medinc_cat - 49999, 
-								  r_medinc_cat == 150000 ~ 150000, 
+								  r_medinc_cat == 49999 ~ r_medinc_cat - 14999,
+								  r_medinc_cat == 74999 ~ r_medinc_cat - 24999,
+								  r_medinc_cat == 99999 ~ r_medinc_cat - 24999,
+								  r_medinc_cat == 149999 ~ r_medinc_cat - 49999,
+								  r_medinc_cat == 150000 ~ 150000,
 								  TRUE ~ NA_real_),
 		top_inccat = r_medinc_cat
-		) %>% 
+		) %>%
 	mutate(
 		LI = case_when(LI_val >= top_inccat ~ 1,
 					   LI_val <= top_inccat &
@@ -245,14 +245,14 @@ trli17 <-
 					   			  r_medinc_cat >= 9999 &
 								  r_medinc_cat <= 24999 ~ r_medinc_cat - 4999,
 								  r_medinc_cat == 34999 ~ r_medinc_cat - 9999,
-								  r_medinc_cat == 49999 ~ r_medinc_cat - 14999, 
-								  r_medinc_cat == 74999 ~ r_medinc_cat - 24999, 
-								  r_medinc_cat == 99999 ~ r_medinc_cat - 24999, 
-								  r_medinc_cat == 149999 ~ r_medinc_cat - 49999, 
-								  r_medinc_cat == 150000 ~ 150000, 
+								  r_medinc_cat == 49999 ~ r_medinc_cat - 14999,
+								  r_medinc_cat == 74999 ~ r_medinc_cat - 24999,
+								  r_medinc_cat == 99999 ~ r_medinc_cat - 24999,
+								  r_medinc_cat == 149999 ~ r_medinc_cat - 49999,
+								  r_medinc_cat == 150000 ~ 150000,
 								  TRUE ~ NA_real_),
 		top_inccat = r_medinc_cat
-		) %>% 	
+		) %>%
 	mutate(
 		LI = case_when(LI_val >= top_inccat ~ 1,
 					   LI_val <= top_inccat &
@@ -309,7 +309,7 @@ lidata <-
 
 #
 # Rent Burden
-# Testing: 
+# Testing:
 # 	1. Rent burden capped at $35k
 # 	2. Rent burden by 80%, 50%, and 30% AMI
 # 	3. by rent burden at 30% and 50%
@@ -431,12 +431,12 @@ ct_sf <-
 source("~/git/Functions/NeighType_Fun.R")
 
 cal_nt <-
-	ntdf(state = "CA") %>% 
-	select(GEOID,NeighType) %>% 
+	ntdf(state = "CA") %>%
+	select(GEOID,NeighType) %>%
 	mutate(v_poc = case_when(NeighType == "White-Asian" ~ 0,
 							 NeighType == "All White" ~ 0,
 							 NeighType == "White-Shared" ~ 0,
-							 TRUE ~ 1))	
+							 TRUE ~ 1))
 
 ntcheck(cal_nt)
 
@@ -450,14 +450,14 @@ final_df <-
 		v_renters_60th = case_when(rent_prank >= .6 ~ 1,
 								   TRUE ~ 0),
 		v_renters_50p = case_when(tr_rentprop17 >= .5 ~ 1,
-								  TRUE ~ 0),		
+								  TRUE ~ 0),
 		v_renters_40p = case_when(tr_rentprop17 >= .4 ~ 1, # v2
 								  TRUE ~ 0),
 		v_renters_30p = case_when(tr_rentprop17 >= .3 ~ 1, # v2
 								  TRUE ~ 0),
 		v_ELI = case_when(tr_propstudent17 < .20 & # v2
 		   				tr_ELI_prop17 > co_ELI_prop17 ~ 1,
-		   				TRUE ~ 0),		
+		   				TRUE ~ 0),
 		v_VLI = case_when(tr_propstudent17 < .20 & # v2
 		   				tr_VLI_prop17 > co_VLI_prop17 ~ 1, # v2
 		   				TRUE ~ 0),
@@ -539,71 +539,71 @@ final_df <-
 						   sum(dp_chrent_10, dp_rentgap_10) >=1 ~ TRUE),
 		`Scenario 24` = case_when(sum(v_renters_50p, v_ELI, v_rb, na.rm = TRUE) == 3 &
 						   sum(dp_chrent_10, dp_rentgap_co) >=1 ~ TRUE),
-		`Scenario 25` = case_when(sum(v_renters_30p, 
-									  v_ELI, 
+		`Scenario 25` = case_when(sum(v_renters_30p,
+									  v_ELI,
 									  v_rb, na.rm = TRUE) == 3 &
 						   		  sum(dp_chrent_co, dp_rentgap_co) >=1 ~ TRUE),
-		`Scenario 26` = case_when(sum(v_renters_30p, 
-									  v_VLI, 
+		`Scenario 26` = case_when(sum(v_renters_30p,
+									  v_VLI,
 									  v_rb, na.rm = TRUE) == 3 &
 						   		  sum(dp_chrent_co, dp_rentgap_co) >=1 ~ TRUE),
-		`Scenario 27` = case_when(sum(v_poc, 
-									  v_renters_30p, 
-									  v_ELI, 
+		`Scenario 27` = case_when(sum(v_poc,
+									  v_renters_30p,
+									  v_ELI,
 									  v_rb, na.rm = TRUE) >= 3 &
 						   		  sum(dp_chrent_co, dp_rentgap_co) >=1 ~ TRUE),
-		`Scenario 28` = case_when(sum(v_poc, 
-									  v_renters_30p, 
-									  v_VLI, 
+		`Scenario 28` = case_when(sum(v_poc,
+									  v_renters_30p,
+									  v_VLI,
 									  v_rb, na.rm = TRUE) >= 3 &
 						   		  sum(dp_chrent_co, dp_rentgap_co) >=1 ~ TRUE),
-		`Scenario 29` = case_when(sum(v_poc, 
-									  v_renters_30p, 
-									  v_ELI, 
+		`Scenario 29` = case_when(sum(v_poc,
+									  v_renters_30p,
+									  v_ELI,
 									  v_rb, na.rm = TRUE) >= 3 &
 						   		  sum(dp_chrent_10, dp_rentgap_co) >=1 ~ TRUE),
-		`Scenario 30` = case_when(sum(v_poc, 
-									  v_renters_30p, 
-									  v_ELI, 
+		`Scenario 30` = case_when(sum(v_poc,
+									  v_renters_30p,
+									  v_ELI,
 									  v_rb, na.rm = TRUE) >= 3 &
 						   		  sum(dp_chrent_co, dp_rentgap_10) >=1 ~ TRUE),
-		`Scenario 31` = case_when(sum(v_poc, 
-									  v_renters_30p, 
-									  v_ELI, 
+		`Scenario 31` = case_when(sum(v_poc,
+									  v_renters_30p,
+									  v_ELI,
 									  v_rb, na.rm = TRUE) >= 3 &
-						   		  sum(dp_chrent_10, dp_rentgap_10) >=1 ~ TRUE),		
-		`Scenario 32` = case_when(sum(v_poc, 
-									  v_renters_30p, 
-									  v_VLI, 
+						   		  sum(dp_chrent_10, dp_rentgap_10) >=1 ~ TRUE),
+		`Scenario 32` = case_when(sum(v_poc,
+									  v_renters_30p,
+									  v_VLI,
 									  v_rb, na.rm = TRUE) >= 3 &
 						   		  sum(dp_chrent_10, dp_rentgap_co) >=1 ~ TRUE),
-		`Scenario 33` = case_when(sum(v_poc, 
-									  v_renters_30p, 
-									  v_VLI, 
+		`Scenario 33` = case_when(sum(v_poc,
+									  v_renters_30p,
+									  v_VLI,
 									  v_rb, na.rm = TRUE) >= 3 &
 						   		  sum(dp_chrent_co, dp_rentgap_10) >=1 ~ TRUE),
-		`Scenario 34` = case_when(sum(v_poc, 
-									  v_renters_30p, 
-									  v_VLI, 
+		`Scenario 34` = case_when(sum(v_poc,
+									  v_renters_30p,
+									  v_VLI,
 									  v_rb, na.rm = TRUE) >= 3 &
-						   		  sum(dp_chrent_10, dp_rentgap_10) >=1 ~ TRUE),		
+						   		  sum(dp_chrent_10, dp_rentgap_10) >=1 ~ TRUE),
 		`Scenario 35` = case_when(tr_propstudent17 < .20 &
-								  v_poc == 1 & 
-								  v_renters_30p == 1 & 
-								  sum(v_VLI, 
-									  v_rb, na.rm = TRUE) >= 1 ~ TRUE, 
-						   		  sum(dp_chrent_co, dp_rentgap_co) >= 1 ~ TRUE), 
+								  v_poc == 1 &
+								  v_renters_30p == 1 &
+								  sum(v_VLI,
+									  v_rb, na.rm = TRUE) >= 1 ~ TRUE,
+						   		  sum(dp_chrent_co, dp_rentgap_co) >= 1 ~ TRUE),
 # Version 2
 		`Scenario 36` = case_when(sum(v_poc == 1,
 								  	  v_renters_40p == 1,
-								  	  v_VLI, 
-									  v_rb, na.rm = TRUE) >= 3 & 
-						   		  sum(dp_chrent_co, 
-						   		  	  dp_rentgap_co) >= 1 ~ TRUE, 
-						   		  totraceE.y >= 500 & 
-						   		  pPOC >= .3 & 
-						   		  tr_propstudent17 < .20, 
-						   		  ), 
+								  	  v_VLI,
+									  v_rb, na.rm = TRUE) >= 3 &
+						   		  sum(dp_chrent_co,
+						   		  	  dp_rentgap_co) >= 1 ~ TRUE,
+						   		  totraceE.y >= 500 &
+						   		  pPOC >= .3 &
+						   		  tr_propstudent17 < .20,
+						   		  ),
 		) %>%
 ungroup()
 
@@ -665,7 +665,7 @@ tm_shape(final_df, name = "Sensitive Communities Layer") +
 						   "----------" = "text",
 						   "SC Criteria" = "text",
 						   "----------" = "text",
-						   "POC" = "v_poc", 
+						   "POC" = "v_poc",
 						   "Renters" = renters,
 						   "LI_Cat" = eli,
 						   "RB" = rb,
@@ -732,35 +732,35 @@ scen33 <- sen_map3("Scenario 33", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_c
 scen34 <- sen_map3("Scenario 34", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
 scen35 <- sen_map3("Scenario 35", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
 
-final_df %>% 
-	pull(`Scenario 25`) %>% 
+final_df %>%
+	pull(`Scenario 25`) %>%
 	sum(na.rm = TRUE)
-final_df %>% 
-	pull(`Scenario 26`) %>% 
+final_df %>%
+	pull(`Scenario 26`) %>%
 	sum(na.rm = TRUE)
-final_df %>% 
-	pull(`Scenario 27`) %>% 
+final_df %>%
+	pull(`Scenario 27`) %>%
 	sum(na.rm = TRUE)
-final_df %>% 
-	pull(`Scenario 28`) %>% 
+final_df %>%
+	pull(`Scenario 28`) %>%
 	sum(na.rm = TRUE)
-final_df %>% 
-	pull(`Scenario 29`) %>% 
+final_df %>%
+	pull(`Scenario 29`) %>%
 	sum(na.rm = TRUE)
-final_df %>% 
-	pull(`Scenario 30`) %>% 
+final_df %>%
+	pull(`Scenario 30`) %>%
 	sum(na.rm = TRUE)
-final_df %>% 
-	pull(`Scenario 31`) %>% 
+final_df %>%
+	pull(`Scenario 31`) %>%
 	sum(na.rm = TRUE)
-final_df %>% 
-	pull(`Scenario 32`) %>% 
+final_df %>%
+	pull(`Scenario 32`) %>%
 	sum(na.rm = TRUE)
-final_df %>% 
-	pull(`Scenario 33`) %>% 
+final_df %>%
+	pull(`Scenario 33`) %>%
 	sum(na.rm = TRUE)
-final_df %>% 
-	pull(`Scenario 34`) %>% 
+final_df %>%
+	pull(`Scenario 34`) %>%
 	sum(na.rm = TRUE)
 
 
