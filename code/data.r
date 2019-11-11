@@ -9,6 +9,8 @@
 # 1. Create measure extraction functions
 # 	* need to get the tracts that fall within various pumas.
 # See: https://docs.google.com/document/d/1JvqZLnh_sZIgfrxaXPtBSJRbTEPcbx-jl_tvf5JlqiU/edit
+# https://docs.google.com/document/d/15G-sDDMfl1eFpouwWzfMhhORYGzj9uUTsxnteoOxMHo/edit
+# https://docs.google.com/document/d/14RpROPfs4F65GwmOn3r3RR9_W40CRpQa79hCjCQTGrE/edit
 # --------------------------------------------------------------------------
 
 # ==========================================================================
@@ -52,8 +54,15 @@ tr_data <- function(year)
 		)
 
 #
-# Block group data - NOT WORKING
+# Block group data
 # --------------------------------------------------------------------------
+
+unzip("~/git/sensitive_communities/data/ca_tracts_bgs.zip")
+unzip("~/git/sensitive_communities/data/rent12_bgs.csv.zip")
+bg <- st_read("~/git/sensitive_communities/data/ca_tracts_bgs/ca_tracts_bgs.shp")
+df <- st_read("~/git/sensitive_communities/data/rent12_bgs.csv")
+
+
 
 # ctys <- counties(state = "CA", cb = TRUE, class = "sf") %>%
 # pull(NAME) %>% unique()
@@ -889,6 +898,11 @@ adv_notsc <- c("06075023400","06075020900","06081611800","06081611900","06001406
 
 glimpse(final_df)
 # st_write(final_df, "~/data/sensitive_communities/final_df_v1.shp")
+
+####
+# Things to consider
+# 	- some other threshold of VLI other than the median
+# 	-
 
 # ==========================================================================
 # Map
