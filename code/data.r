@@ -59,8 +59,26 @@ tr_data <- function(year)
 
 unzip("~/git/sensitive_communities/data/ca_tracts_bgs.zip")
 unzip("~/git/sensitive_communities/data/rent12_bgs.csv.zip")
-bg <- st_read("~/git/sensitive_communities/data/ca_tracts_bgs/ca_tracts_bgs.shp")
-df <- st_read("~/git/sensitive_communities/data/rent12_bgs.csv")
+
+bg <-
+	st_read("~/git/sensitive_communities/data/ca_tracts_bgs/ca_tracts_bgs.shp") %>%
+	st_as_sf() %>%
+	st_set_geometry(NULL)
+
+bgdf12 <- fread("~/git/sensitive_communities/data/rent12_bgs.csv")
+
+
+bg12 <-
+	get_acs(
+		geography = "block group",
+		variables = dis_var,
+		state = "CA",
+		county = NULL,
+		geometry = TRUE,
+		cache_table = TRUE,
+		output = "wide",
+		year = 2017
+		)
 
 
 
