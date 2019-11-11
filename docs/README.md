@@ -14,6 +14,7 @@ This page shows 24 mutually exclusive combinations of vulnerable population and 
 *dp_\* refers to displacement pressure measures*
 
 * v_renters_co = % renter occupied units > county median,
+* v_renters_40p = % of renters is >= 40%
 * v_renters_50p = % of renters is >= 50%,
 * v_renters_60th = % of renters is >= the 60th precentile for the county,
 * v_ELI = % ELI (based off county median income) > county median for % ELI; < 25% student,
@@ -22,6 +23,78 @@ This page shows 24 mutually exclusive combinations of vulnerable population and 
 * dp_rentgap_10 = the proportional difference in median rent between local and extra local tracts is > 10%
 * dp_rentgap_co = the proportional difference in median rent between local or nearby tracts is > county median
 * dp_chrent_10 = 10% increase in median rent in local or nearby tracts is > 10%,
+
+## Version 2 maps
+Maps developed after we engaged with stakeholders and academics.
+
+### [Scenario 22](https://cci-ucb.github.io/sensitive_communities/scen22.html) (# tracts = 1,467)
+* v_renters_50p
+* v_ELI
+* v_rb
+* dp_chrent_co
+* dp_rentgap_co
+
+### [Scenario 36](https://cci-ucb.github.io/sensitive_communities/scen36.html) (# tracts = 2,905)
+* v_renters_40p
+* v_VLI
+* v_rb35k_30rb (renters making $35k or less and paying more than 30% in rent)
+* dp_chrent_co
+* dp_rentgap_co
+
+### [Scenario 37](https://cci-ucb.github.io/sensitive_communities/scen37.html) (# tracts = 2,880)
+* v_renters_40p 
+* v_VLI 
+* v_rb35k_50rb (renters making $35k or less and paying more than 50% in rent)
+* dp_chrent_co 
+* dp_rentgap_co 
+
+### [Scenario 38](https://cci-ucb.github.io/sensitive_communities/scen38.html) (# tracts = 2,944)
+* v_renters_40p
+* v_VLI
+* v_rbLI_30rb (renters making 80% AMI or less and paying more than 30% in rent)
+* dp_chrent_co
+* dp_rentgap_co
+
+### [Scenario 39](https://cci-ucb.github.io/sensitive_communities/scen39.html) (# tracts = 2,878)
+* v_renters_40p
+* v_VLI
+* v_rbLI_50rb (renters making 80% AMI or less and paying more than 50% in rent)
+* dp_chrent_co
+* dp_rentgap_co
+
+### [Scenario 40](https://cci-ucb.github.io/sensitive_communities/scen40.html) (# tracts = 2,925)
+* v_renters_40p
+* v_VLI
+* v_rbVLI_30rb (renters making 50% AMI or less and paying more than 30% in rent)
+* dp_chrent_co
+* dp_rentgap_co
+
+### [Scenario 41](https://cci-ucb.github.io/sensitive_communities/scen41.html) (# tracts = 2,886)
+* v_renters_40p
+* v_VLI
+* v_rbVLI_50rb (renters making 50% AMI or less and paying more than 50% in rent)
+* dp_chrent_co
+* dp_rentgap_co
+
+### [Scenario 42](https://cci-ucb.github.io/sensitive_communities/scen42.html) (# tracts = 2,878)
+* v_renters_40p
+* v_VLI
+* v_rbELI_30rb (renters making 30% AMI or less and paying more than 30% in rent)
+* dp_chrent_co
+* dp_rentgap_co
+
+### [Scenario 43](https://cci-ucb.github.io/sensitive_communities/scen43.html) (# tracts = 2,864)
+* v_renters_40p
+* v_VLI
+* v_rbELI_50rb (renters making 30% AMI or less and paying more than 50% in rent)
+* dp_chrent_co
+* dp_rentgap_co
+
+
+
+---
+
+## Legacy maps 
 
 ### [Scenario 01](https://cci-ucb.github.io/sensitive_communities/scen01.html) (# tracts = 2,150)
 * v_renters_co

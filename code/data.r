@@ -168,7 +168,12 @@ ri_names17 <- c(
 
 trli12 <-
 	ct@data %>%
-	select(GEOID, COUNTYFP, co_medinc.x, HHInc_TotalE.x, HHIncTenRentE.x:HHIncTenRent_151E.x) %>%
+	select(GEOID,
+		   COUNTYFP,
+		   co_medinc.x,
+		   HHInc_TotalE.x,
+		   HHIncTenRentE.x:HHIncTenRent_151E.x,
+		   -ends_with("M.x")) %>%
 	group_by(GEOID) %>%
 	mutate(
 		LI_val = co_medinc.x*.8,
@@ -223,10 +228,14 @@ trli12 <-
 	distinct() %>%
 	ungroup()
 
-
 trli17 <-
 	ct@data %>%
-	select(GEOID, COUNTYFP, co_medinc.y, HHInc_TotalE.y, HHIncTenRentE.y:HHIncTenRent_151E.y) %>%
+	select(GEOID,
+		   COUNTYFP,
+		   co_medinc.y,
+		   HHInc_TotalE.y,
+		   HHIncTenRentE.y:HHIncTenRent_151E.y,
+		   -ends_with("M.y")) %>%
 	group_by(GEOID) %>%
 	mutate(
 		LI_val = co_medinc.y*.8,
@@ -306,31 +315,6 @@ lidata <-
 		co_VLI_propmed17 = median(tr_VLI_prop17, na.rm = TRUE),
 		co_ELI_propmed17 = median(tr_ELI_prop17, na.rm = TRUE)
 		)
-
-#
-# Rent Burden
-# Testing:
-# 	1. Rent burden capped at $35k
-# 	2. Rent burden by 80%, 50%, and 30% AMI
-# 	3. by rent burden at 30% and 50%
-# --------------------------------------------------------------------------
-
-lirb17 <-
-	get_acs(
-		geography = "tract",
-		variables = ir_var,
-		state = "CA",
-		county = NULL,
-		geometry = FALSE,
-		cache_table = TRUE,
-		# output = "wide",
-		year = 2017
-		)
-
-	lirb17 %>%
-	separate(variable, c("ir_type", "value")) %>%
-	group_by(value) %>% count()
-	glimpse()
 
 #
 # Change
@@ -455,8 +439,216 @@ cal_nt <-
 
 ntcheck(cal_nt)
 
+#
+# Rent Burden by income
+# Testing:
+# 	1. Rent burden capped at $35k
+# 	2. Rent burden by 80%, 50%, and 30% AMI
+# 	3. by rent burden at 30% and 50%
+# --------------------------------------------------------------------------
+
+lirb17 <-
+	left_join(
+		get_acs(
+			geography = "tract",
+			variables = ir_var,
+			state = "CA",
+			county = NULL,
+			geometry = FALSE,
+			cache_table = TRUE,
+			# output = "wide",
+			year = 2017
+			),
+		ct_sf %>%
+			st_set_geometry(NULL) %>%
+			select(GEOID, medinc = co_medinc.y)) %>%
+	separate(variable, c("ir_type", "rb", "income")) %>%
+	left_join(.,ct_sf %>% select(GEOID, COUNTYFP))
+
+
+tot_ir <-
+	lirb17 %>%
+	filter(rb == "tot", income == "tot") %>%
+	group_by(GEOID, COUNTYFP) %>%
+	summarise(tot_ir = sum(estimate, na.rm = TRUE)) %>%
+	ungroup()
+
+irli <-
+	lirb17 %>%
+	filter(income != "tot") %>%
+	select(-ir_type) %>%
+	mutate(income = as.numeric(income),
+		   bottom_inccat = case_when(
+								income == 9999 ~ income - 9999,
+								income == 19999 ~ income - 9999,
+								income == 34999 ~ income - 14999,
+								income == 49999 ~ income - 14999,
+								income == 74999 ~ income - 24999,
+								income == 99999 ~ income - 24999,
+								income == 100000 ~ 100000,
+								TRUE ~ NA_real_
+								),
+		   top_inccat = case_when(income == 100000 ~ 200000,
+		   						 TRUE ~ income),
+		   LI_val = medinc*.8,
+		   VLI_val = medinc*.5,
+		   ELI_val = medinc*.3,
+		   LI = case_when(LI_val >= top_inccat ~ 1,
+						  LI_val <= top_inccat &
+						  LI_val >= bottom_inccat ~
+						  (LI_val - bottom_inccat)/(top_inccat - bottom_inccat),
+						  TRUE ~ 0),
+		   VLI = case_when(VLI_val >= top_inccat ~ 1,
+						   VLI_val <= top_inccat &
+						   VLI_val >= bottom_inccat ~
+						   (VLI_val - bottom_inccat)/(top_inccat - bottom_inccat),
+						   TRUE ~ 0),
+		   ELI = case_when(ELI_val >= top_inccat ~ 1,
+						   ELI_val <= top_inccat &
+						   ELI_val >= bottom_inccat ~
+						   (ELI_val - bottom_inccat)/(top_inccat - bottom_inccat),
+						   TRUE ~ 0),
+		   LI_ir_count = LI*estimate,
+		   VLI_ir_count = VLI*estimate,
+		   ELI_ir_count = ELI*estimate)
+
+#
+# Create ir tables
+# --------------------------------------------------------------------------
+
+rb30 <- c("349","399","499", "5plus")
+
+ir35k_30rb <-
+	irli %>%
+	filter(income <= 35000,
+		   rb %in% rb30) %>%
+	group_by(GEOID) %>%
+	summarise(ir35_30rb = sum(estimate, na.rm = TRUE)) %>%
+	left_join(tot_ir,.) %>%
+	mutate(ir35k_30rbp = ir35_30rb/tot_ir) %>%
+	group_by(COUNTYFP) %>%
+	mutate(ir35_30_coavg = mean(ir35k_30rbp, na.rm = TRUE),
+		   ir35_30_comed = median(ir35k_30rbp, na.rm = TRUE),
+		   v_rb35k_30rb = case_when(ir35k_30rbp > ir35_30_comed ~ 1)) %>%
+	ungroup()
+
+ir35k_50rb <-
+	irli %>%
+	filter(income <= 35000,
+		   rb == "5plus") %>%
+	group_by(GEOID) %>%
+	summarise(ir35_50rb = sum(estimate, na.rm = TRUE)) %>%
+	left_join(tot_ir,.) %>%
+	mutate(ir35_50rbp = ir35_50rb/tot_ir) %>%
+	group_by(COUNTYFP) %>%
+	mutate(ir35_50_coavg = mean(ir35_50rbp, na.rm = TRUE),
+		   ir35_50_comed = median(ir35_50rbp, na.rm = TRUE),
+		   v_rb35k_50rb = case_when(ir35_50rbp > ir35_50_comed ~ 1)) %>%
+	ungroup()
+
+irLI_30rb <-
+	irli %>%
+	filter(LI > 0,
+		   rb %in% rb30) %>%
+	group_by(GEOID) %>%
+	summarise(irLI_30rb = sum(LI_ir_count, na.rm = TRUE)) %>%
+	left_join(tot_ir,.) %>%
+	mutate(irLI_30p = irLI_30rb/tot_ir) %>%
+	group_by(COUNTYFP) %>%
+	mutate(irLI_30_coavg = mean(irLI_30p, na.rm = TRUE),
+		   irLI_30_comed = median(irLI_30p, na.rm = TRUE),
+		   v_rbLI_30rb = case_when(irLI_30p > irLI_30_comed ~ 1)) %>%
+	ungroup()
+
+irLI_50rb <-
+	irli %>%
+	filter(LI > 0,
+		   rb == "5plus") %>%
+	group_by(GEOID) %>%
+	summarise(irLI_50rb = sum(LI_ir_count, na.rm = TRUE)) %>%
+	left_join(tot_ir,.) %>%
+	mutate(irLI_50p = irLI_50rb/tot_ir) %>%
+	group_by(COUNTYFP) %>%
+	mutate(irLI_50_coavg = mean(irLI_50p, na.rm = TRUE),
+		   irLI_50_comed = median(irLI_50p, na.rm = TRUE),
+		   v_rbLI_50rb = case_when(irLI_50p > irLI_50_comed ~ 1)) %>%
+	ungroup()
+
+irVLI_30rb <-
+	irli %>%
+	filter(VLI > 0,
+		   rb %in% rb30) %>%
+	group_by(GEOID) %>%
+	summarise(irVLI_30rb = sum(LI_ir_count, na.rm = TRUE)) %>%
+	left_join(tot_ir,.) %>%
+	mutate(irVLI_30p = irVLI_30rb/tot_ir) %>%
+	group_by(COUNTYFP) %>%
+	mutate(irVLI_30_coavg = mean(irVLI_30p, na.rm = TRUE),
+		   irVLI_30_comed = median(irVLI_30p, na.rm = TRUE),
+		   v_rbVLI_30rb = case_when(irVLI_30p > irVLI_30_comed ~ 1)) %>%
+	ungroup()
+
+irVLI_50rb <-
+	irli %>%
+	filter(VLI > 0,
+		   rb == "5plus") %>%
+	group_by(GEOID) %>%
+	summarise(irVLI_50rb = sum(LI_ir_count, na.rm = TRUE)) %>%
+	left_join(tot_ir,.) %>%
+	mutate(irVLI_50p = irVLI_50rb/tot_ir) %>%
+	group_by(COUNTYFP) %>%
+	mutate(irVLI_50_coavg = mean(irVLI_50p, na.rm = TRUE),
+		   irVLI_50_comed = median(irVLI_50p, na.rm = TRUE),
+		   v_rbVLI_50rb = case_when(irVLI_50p > irVLI_50_comed ~ 1)) %>%
+	ungroup()
+
+irELI_30rb <-
+	irli %>%
+	filter(ELI > 0,
+		   rb %in% rb30) %>%
+	group_by(GEOID) %>%
+	summarise(irELI_30rb = sum(LI_ir_count, na.rm = TRUE)) %>%
+	left_join(tot_ir,.) %>%
+	mutate(irELI_30p = irELI_30rb/tot_ir) %>%
+	group_by(COUNTYFP) %>%
+	mutate(irELI_30_coavg = mean(irELI_30p, na.rm = TRUE),
+		   irELI_30_comed = median(irELI_30p, na.rm = TRUE),
+		   v_rbELI_30rb = case_when(irELI_30p > irELI_30_comed ~ 1)) %>%
+	ungroup()
+
+irELI_50rb <-
+	irli %>%
+	filter(ELI > 0,
+		   rb == "5plus") %>%
+	group_by(GEOID) %>%
+	summarise(irELI_50rb = sum(LI_ir_count, na.rm = TRUE)) %>%
+	left_join(tot_ir,.) %>%
+	mutate(irELI_50p = irELI_50rb/tot_ir) %>%
+	group_by(COUNTYFP) %>%
+	mutate(irELI_50_coavg = mean(irELI_50p, na.rm = TRUE),
+		   irELI_50_comed = median(irELI_50p, na.rm = TRUE),
+		   v_rbELI_50rb = case_when(irELI_50p > irELI_50_comed ~ 1)) %>%
+	ungroup()
+
+
+ir_df <-
+	left_join(ir35k_30rb %>% select(GEOID, ends_with("p"), starts_with("v_rb")),
+			  ir35k_50rb %>% select(GEOID, ends_with("p"), starts_with("v_rb"))) %>%
+	left_join(., irLI_30rb %>% select(GEOID, ends_with("p"), starts_with("v_rb"))) %>%
+	left_join(., irLI_50rb %>% select(GEOID, ends_with("p"), starts_with("v_rb"))) %>%
+	left_join(., irVLI_30rb %>% select(GEOID, ends_with("p"), starts_with("v_rb"))) %>%
+	left_join(., irVLI_50rb %>% select(GEOID, ends_with("p"), starts_with("v_rb"))) %>%
+	left_join(., irELI_30rb %>% select(GEOID, ends_with("p"), starts_with("v_rb"))) %>%
+	left_join(., irELI_50rb %>% select(GEOID, ends_with("p"), starts_with("v_rb"))) %>%
+	replace(is.na(.), 0)
+
+# ==========================================================================
+# Create Final DF
+# ==========================================================================
+
 final_df <-
 	left_join(ct_sf, cal_nt) %>%
+	left_join(., ir_df) %>%
 	group_by(GEOID) %>%
 	mutate(
 ## Vulnerable Population Variables ##
@@ -612,15 +804,88 @@ final_df <-
 		`Scenario 36` = case_when(sum(v_poc == 1,
 								  	  v_renters_40p == 1,
 								  	  v_VLI,
-									  v_rb, na.rm = TRUE) >= 3 &
+									  v_rb35k_30rb, na.rm = TRUE) >= 3 &
 						   		  sum(dp_chrent_co,
-						   		  	  dp_rentgap_co) >= 1 ~ TRUE,
+						   		  	  dp_rentgap_co) >= 1 &
 						   		  totraceE.y >= 500 &
 						   		  pPOC >= .3 &
-						   		  tr_propstudent17 < .20,
+						   		  tr_propstudent17 < .20 ~ TRUE
 						   		  ),
+		`Scenario 37` = case_when(sum(v_poc == 1,
+						  	  v_renters_40p == 1,
+						  	  v_VLI,
+							  v_rb35k_50rb, na.rm = TRUE) >= 3 &
+				   		  sum(dp_chrent_co,
+				   		  	  dp_rentgap_co) >= 1 &
+				   		  totraceE.y >= 500 &
+				   		  pPOC >= .3 &
+				   		  tr_propstudent17 < .20 ~ TRUE
+				   		  ),
+		`Scenario 38` = case_when(sum(v_poc == 1,
+						  	  v_renters_40p == 1,
+						  	  v_VLI,
+							  v_rbLI_30rb, na.rm = TRUE) >= 3 &
+				   		  sum(dp_chrent_co,
+				   		  	  dp_rentgap_co) >= 1 &
+				   		  totraceE.y >= 500 &
+				   		  pPOC >= .3 &
+				   		  tr_propstudent17 < .20 ~ TRUE
+				   		  ),
+		`Scenario 39` = case_when(sum(v_poc == 1,
+						  	  v_renters_40p == 1,
+						  	  v_VLI,
+							  v_rbLI_50rb, na.rm = TRUE) >= 3 &
+				   		  sum(dp_chrent_co,
+				   		  	  dp_rentgap_co) >= 1 &
+				   		  totraceE.y >= 500 &
+				   		  pPOC >= .3 &
+				   		  tr_propstudent17 < .20 ~ TRUE
+				   		  ),
+		`Scenario 40` = case_when(sum(v_poc == 1,
+						  	  v_renters_40p == 1,
+						  	  v_VLI,
+							  v_rbVLI_30rb, na.rm = TRUE) >= 3 &
+				   		  sum(dp_chrent_co,
+				   		  	  dp_rentgap_co) >= 1 &
+				   		  totraceE.y >= 500 &
+				   		  pPOC >= .3 &
+				   		  tr_propstudent17 < .20 ~ TRUE
+				   		  ),
+		`Scenario 41` = case_when(sum(v_poc == 1,
+						  	  v_renters_40p == 1,
+						  	  v_VLI,
+							  v_rbVLI_50rb, na.rm = TRUE) >= 3 &
+				   		  sum(dp_chrent_co,
+				   		  	  dp_rentgap_co) >= 1 &
+				   		  totraceE.y >= 500 &
+				   		  pPOC >= .3 &
+				   		  tr_propstudent17 < .20 ~ TRUE
+				   		  ),
+		`Scenario 42` = case_when(sum(v_poc == 1,
+						  	  v_renters_40p == 1,
+						  	  v_VLI,
+							  v_rbELI_30rb, na.rm = TRUE) >= 3 &
+				   		  sum(dp_chrent_co,
+				   		  	  dp_rentgap_co) >= 1 &
+				   		  totraceE.y >= 500 &
+				   		  pPOC >= .3 &
+				   		  tr_propstudent17 < .20 ~ TRUE
+				   		  ),
+		`Scenario 43` = case_when(sum(v_poc == 1,
+						  	  v_renters_40p == 1,
+						  	  v_VLI,
+							  v_rbELI_50rb, na.rm = TRUE) >= 3 &
+				   		  sum(dp_chrent_co,
+				   		  	  dp_rentgap_co) >= 1 &
+				   		  totraceE.y >= 500 &
+				   		  pPOC >= .3 &
+				   		  tr_propstudent17 < .20 ~ TRUE
+				   		  )
 		) %>%
 ungroup()
+
+adv_ssc <- c("06001422300","06001441923","06001403300","06041125000","06013339002","06013340001","06075015600","06075045200","06075042601","06075047701","06075042700","06085511301","06097152203","06097152000","06097153001","06097153104","06097151401","06097153200","06097151308","06041112100","06041111000","06037265700","06037265202","06037700801","06037461502","06037302401","06037302505","06037302506","06037302302","06037302201","06037302004","06037301802","06037301702","06037301900","06037301100","06037302002","06037302003","06037301206","06037301601","06037310703","06037310702","06037310701","06083000301","06083001102","06037701702","06059042313","06037701100","06037264103","06037221710","06037222200","06037221601","06037222100","06037222500","06037231300","06037231210","06037231220","06037231100","06037224600","06037224420","06037189800","06037189904","06037190100","06037190700","06037190802","06065044807","06065044509","06067006900","06067006800","06067006702","06067006701","06067006202","06067005505","06067005506","06067005510","06067005601","06067005602","06067006002","06067007413","06067007504","06067007301","06067007601","06067006003","06067007414","06067007423","06067007501","06067008133","06067007701","06067005903","06067007019","06067007015")
+adv_notsc <- c("06075023400","06075020900","06081611800","06081611900","06001406000","06075026003","06075010600","06075011700","06075011800","06075012301","06075012501","06075012502","06075015900","06075023001","06075023102","06075023103","06075023200","06075023300","06075023400","06075025701","06075025702","06075025800","06075026001","06075026003","06075026301","06075026303","06075033203","06075033204","06075035202","06075047701","06075047902","06075060502","06019000300","06047000304","06047000301","06099002503","06037462100","06037234600","06037234700","06037234800","06037234300","06047000203","06047000201","06089012101","06063000501","06023001000","06029004101","06029006304","06029006202","06037219500","06037234200","06037234300","06037234000","06037231400","06001407300","06001409000","06001401700","06013376000","06095250801","06055201006","06055201005","06055201007","06001408500","06001408400","06037209401","06037208902","06037208801","06037224320","06037224310","06037212202","06037206031","06037204700","06037204120","06037203710","06037203800","06037203600","06037204920","06037203900","06037532603","06037532604","06037532606","06037533202","06037534501","06037534502","06037535607","06037540300","06037540501","06037535605","06037535803","06037535802","06037535901","06037535902","06037536104","06037540101","06037540102","06037541700","06037542000","06037541802","06037540000","06037542104","06037540600","06037542401","06037542200","06037570404","06037543201","06037543100","06037543000","06037542900","06037542800","06037541002","06037291220","06037542602","06037541001","06037291210","06037541100","06037541200","06037541300","06037553200","06037553300","06037554103","06037553100","06037554105","06037554002","06037554001","06037554101","06037554301","06037554201","06037188300","06037188100","06019002602","06019003600","06019002100","06019004207","06019004404","06065045604")
 
 glimpse(final_df)
 # st_write(final_df, "~/data/sensitive_communities/final_df_v1.shp")
@@ -635,15 +900,8 @@ glimpse(final_df)
 
 tmap_mode("view")
 
-sen_map1 <- function(scen, renters, eli, rb, chrent, rentgap)
+sen_map1 <- function(scen, renters, li, lirb, rb, chrent, rentgap)
 tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
-# tm_shape(transit,
-# 		 name = "Transit Rich Areas Layer") +
-# 	tm_polygons("FID",
-# 				palette= "Greys",
-# 				alpha = .5,
-# 				label = "Transit Rich Areas",
-# 				title = "") +
 tm_shape(final_df, name = "Sensitive Communities Layer") +
 	tm_polygons(scen,
 			palette = c("#FF6633","#FF6633"),
@@ -654,7 +912,8 @@ tm_shape(final_df, name = "Sensitive Communities Layer") +
 			colorNA = NULL,
 			title = "",
 			id = "popup_text",
-			popup.vars = c("Tot HH" = "tottenE.y",
+			popup.vars = c("Tot Pop" = "totraceE.y"
+						   "Tot HH" = "tottenE.y",
 						   "% Rent" = "tr_rentprop17",
 						   "$ Rent" = "tr_medrent17",
 						   "$ R Lag" = "tr_medrent17.lag",
@@ -662,6 +921,7 @@ tm_shape(final_df, name = "Sensitive Communities Layer") +
 						   "Ch Rent" = "tr_chrent",
 						   "Ch R Lag" = "tr_chrent.lag",
 						   "% RB" = "tr_rbprop17",
+						   "% inc x rb " = lirb,
 						   "% ELI" = "tr_ELI_prop17",
 						   "% VLI" = "tr_VLI_prop17",
 						   "% Stud." = "tr_propstudent17",
@@ -682,22 +942,22 @@ tm_shape(final_df, name = "Sensitive Communities Layer") +
 						   "----------" = "text",
 						   "POC" = "v_poc",
 						   "Renters" = renters,
-						   "LI_Cat" = eli,
+						   "LI_Cat" = li,
 						   "RB" = rb,
 						   "Ch Rent" = chrent,
 						   "Rent Gap" = rentgap
 						   ),
 			popup.format = list(digits=2)) +
 	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .5) +
-	tm_layout(title = paste0(scen, ": ",renters,", ", eli, ", ", chrent, ", ", rentgap))
+	tm_layout(title = paste0(scen, ": ",renters,", ", li, ", ", chrent, ", ", rentgap))
 
-sen_map2 <- function(scen, renters, eli, rb, chrent, rentgap)
-	sen_map1(scen, renters, eli, rb, chrent, rentgap) +
-	tm_layout(title = paste0(scen, ": ",renters,", ", eli, ", ", rb, ", ", chrent, ", ", rentgap))
+sen_map2 <- function(scen, renters, li, lirb, rb, chrent, rentgap)
+	sen_map1(scen, renters, li, lirb, rb, chrent, rentgap) +
+	tm_layout(title = paste0(scen, ": ",renters,", ", li, ", ", rb, ", ", chrent, ", ", rentgap))
 
-sen_map3 <- function(scen, renters, eli, rb, chrent, rentgap)
-	sen_map1(scen, renters, eli, rb, chrent, rentgap) +
-	tm_layout(title = paste0(scen, ": v_POC, ",renters,", ", eli, ", ", rb, ", ", chrent, ", ", rentgap))
+sen_map3 <- function(scen, renters, li, lirb, rb, chrent, rentgap)
+	sen_map1(scen, renters, li, lirb, rb, chrent, rentgap) +
+	tm_layout(title = paste0(scen, ": v_POC, ",renters,", ", li, ", ", rb, ", ", chrent, ", ", rentgap))
 
 save_map <- function(x,y)
 	tmap_save(x, paste0("~/git/sensitive_communities/docs/", y, ".html"))
@@ -735,47 +995,53 @@ save_map <- function(x,y)
 # scen22 <- sen_map2("Scenario 22", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
 # scen23 <- sen_map2("Scenario 23", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
 # scen24 <- sen_map2("Scenario 24", "v_renters_50p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
-scen25 <- sen_map2("Scenario 25", "v_renters_30p", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
-scen26 <- sen_map2("Scenario 26", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
-scen27 <- sen_map3("Scenario 27", "v_renters_30p", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
-scen28 <- sen_map3("Scenario 28", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
-scen29 <- sen_map3("Scenario 29", "v_renters_30p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
-scen30 <- sen_map3("Scenario 30", "v_renters_30p", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
-scen31 <- sen_map3("Scenario 31", "v_renters_30p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
-scen32 <- sen_map3("Scenario 32", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
-scen33 <- sen_map3("Scenario 33", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
-scen34 <- sen_map3("Scenario 34", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
-scen35 <- sen_map3("Scenario 35", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
+# scen25 <- sen_map2("Scenario 25", "v_renters_30p", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
+# scen26 <- sen_map2("Scenario 26", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
+# scen27 <- sen_map3("Scenario 27", "v_renters_30p", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
+# scen28 <- sen_map3("Scenario 28", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
+# scen29 <- sen_map3("Scenario 29", "v_renters_30p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
+# scen30 <- sen_map3("Scenario 30", "v_renters_30p", "v_ELI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
+# scen31 <- sen_map3("Scenario 31", "v_renters_30p", "v_ELI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
+# scen32 <- sen_map3("Scenario 32", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_10", "dp_rentgap_co")
+# scen33 <- sen_map3("Scenario 33", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_co", "dp_rentgap_10")
+# scen34 <- sen_map3("Scenario 34", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_10", "dp_rentgap_10")
+# scen35 <- sen_map3("Scenario 35", "v_renters_30p", "v_VLI", "v_rb", "dp_chrent_co", "dp_rentgap_co")
+
+# V2
+scen36 <- sen_map3("Scenario 36", "v_renters_40p", "v_VLI", "ir35k_30rbp", "v_rb35k_30rb", "dp_chrent_co", "dp_rentgap_co")
+scen37 <- sen_map3("Scenario 37", "v_renters_40p", "v_VLI", "ir35_50rbp", "v_rb35k_50rb", "dp_chrent_co", "dp_rentgap_co")
+scen38 <- sen_map3("Scenario 38", "v_renters_40p", "v_VLI", "irLI_30p", "v_rbLI_30rb", "dp_chrent_co", "dp_rentgap_co")
+scen39 <- sen_map3("Scenario 39", "v_renters_40p", "v_VLI", "irLI_50p", "v_rbLI_50rb", "dp_chrent_co", "dp_rentgap_co")
+scen40 <- sen_map3("Scenario 40", "v_renters_40p", "v_VLI", "irVLI_30p", "v_rbVLI_30rb", "dp_chrent_co", "dp_rentgap_co")
+scen41 <- sen_map3("Scenario 41", "v_renters_40p", "v_VLI", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co")
+scen42 <- sen_map3("Scenario 42", "v_renters_40p", "v_VLI", "irELI_30p", "v_rbELI_30rb", "dp_chrent_co", "dp_rentgap_co")
+scen43 <- sen_map3("Scenario 43", "v_renters_40p", "v_VLI", "irELI_50p", "v_rbELI_50rb", "dp_chrent_co", "dp_rentgap_co")
+
+
 
 final_df %>%
-	pull(`Scenario 25`) %>%
+	pull(`Scenario 36`) %>%
 	sum(na.rm = TRUE)
 final_df %>%
-	pull(`Scenario 26`) %>%
+	pull(`Scenario 37`) %>%
 	sum(na.rm = TRUE)
 final_df %>%
-	pull(`Scenario 27`) %>%
+	pull(`Scenario 38`) %>%
 	sum(na.rm = TRUE)
 final_df %>%
-	pull(`Scenario 28`) %>%
+	pull(`Scenario 39`) %>%
 	sum(na.rm = TRUE)
 final_df %>%
-	pull(`Scenario 29`) %>%
+	pull(`Scenario 40`) %>%
 	sum(na.rm = TRUE)
 final_df %>%
-	pull(`Scenario 30`) %>%
+	pull(`Scenario 41`) %>%
 	sum(na.rm = TRUE)
 final_df %>%
-	pull(`Scenario 31`) %>%
+	pull(`Scenario 42`) %>%
 	sum(na.rm = TRUE)
 final_df %>%
-	pull(`Scenario 32`) %>%
-	sum(na.rm = TRUE)
-final_df %>%
-	pull(`Scenario 33`) %>%
-	sum(na.rm = TRUE)
-final_df %>%
-	pull(`Scenario 34`) %>%
+	pull(`Scenario 43`) %>%
 	sum(na.rm = TRUE)
 
 
@@ -808,16 +1074,24 @@ final_df
 # save_map(scen22, "scen22")
 # save_map(scen23, "scen23")
 # save_map(scen24, "scen24")
-save_map(scen25, "scen25")
-save_map(scen26, "scen26")
-save_map(scen27, "scen27")
-save_map(scen28, "scen28")
-save_map(scen29, "scen29")
-save_map(scen30, "scen30")
-save_map(scen31, "scen31")
-save_map(scen32, "scen32")
-save_map(scen33, "scen33")
-save_map(scen34, "scen34")
+# save_map(scen25, "scen25")
+# save_map(scen26, "scen26")
+# save_map(scen27, "scen27")
+# save_map(scen28, "scen28")
+# save_map(scen29, "scen29")
+# save_map(scen30, "scen30")
+# save_map(scen31, "scen31")
+# save_map(scen32, "scen32")
+# save_map(scen33, "scen33")
+# save_map(scen34, "scen34")
+save_map(scen36, "scen36")
+save_map(scen37, "scen37")
+save_map(scen38, "scen38")
+save_map(scen39, "scen39")
+save_map(scen40, "scen40")
+save_map(scen41, "scen41")
+save_map(scen42, "scen42")
+save_map(scen43, "scen43")
 
 # ==========================================================================
 # Get tract counts for each scenario
