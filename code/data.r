@@ -315,7 +315,22 @@ lidata <-
 # 	3. by rent burden at 30% and 50%
 # --------------------------------------------------------------------------
 
+lirb17 <-
+	get_acs(
+		geography = "tract",
+		variables = ir_var,
+		state = "CA",
+		county = NULL,
+		geometry = FALSE,
+		cache_table = TRUE,
+		# output = "wide",
+		year = 2017
+		)
 
+	lirb17 %>%
+	separate(variable, c("ir_type", "value")) %>%
+	group_by(value) %>% count()
+	glimpse()
 
 #
 # Change
