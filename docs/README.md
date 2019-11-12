@@ -24,7 +24,8 @@ This page shows a number of mutually exclusive combinations of vulnerable popula
 * dp_rentgap_co = the proportional difference in median rent between local or nearby tracts is > county median
 * dp_chrent_10 = 10% increase in median rent in local or nearby tracts is > 10%,
 
-## Version 3 maps - Criters = VLI & 2:3 for POC, Renters, RB & 1:2 Change rent or rent gap. 
+## Version 3 maps - 
+**Criteria = VLI & 2:3 for POC, Renters, RB & 1:2 Change rent or rent gap.** 
 
 ### [Scenario 44](https://cci-ucb.github.io/sensitive_communities/scen44.html) (# tracts = 2,522)
 * v_renters_40p
