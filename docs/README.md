@@ -28,60 +28,84 @@ This page shows a number of mutually exclusive combinations of vulnerable popula
 **Criteria = VLI & 2:3 for POC, Renters, RB & 1:2 Change rent or rent gap.** 
 
 ### [Scenario 44](https://cci-ucb.github.io/sensitive_communities/scen44.html) (# tracts = 2,522)
-* v_renters_40p
-* v_VLI
-* v_rb35k_30rb (renters making $35k or less and paying more than 30% in rent)
-* dp_chrent_co
-* dp_rentgap_co
+* v_VLI == 1
+* 2 out of 3
+	* vPOC
+	* v_renters_40p
+	* v_rb35k_30rb (renters making $35k or less and paying more than 30% in rent)
+* 1 out of 2
+	* dp_chrent_co
+	* dp_rentgap_co
 
-### [Scenario 45](https://cci-ucb.github.io/sensitive_communities/scen45.html) (# tracts = 2,468)
-* v_renters_40p 
-* v_VLI 
-* v_rb35k_50rb (renters making $35k or less and paying more than 50% in rent)
-* dp_chrent_co 
-* dp_rentgap_co 
+### [Scenario 45](https://cci-ucb.github.io/sensitive_communities/scen45.html) (# tracts = 2,468) 
+* v_VLI  == 1
+* 2 out of 3
+	* vPOC
+	* v_renters_40p
+	* v_rb35k_50rb (renters making $35k or less and paying more than 50% in rent)
+* 1 out of 2
+	* dp_chrent_co 
+	* dp_rentgap_co 
 
 ### [Scenario 46](https://cci-ucb.github.io/sensitive_communities/scen46.html) (# tracts = 2,479)
-* v_renters_40p
-* v_VLI
-* v_rbLI_30rb (renters making 80% AMI or less and paying more than 30% in rent)
-* dp_chrent_co
-* dp_rentgap_co
+* v_VLI == 1
+* 2 out of 3
+	* vPOC
+	* v_renters_40p
+	* v_rbLI_30rb (renters making 80% AMI or less and paying more than 30% in rent)
+* 1 out of 2
+	* dp_chrent_co
+	* dp_rentgap_co
 
 ### [Scenario 47](https://cci-ucb.github.io/sensitive_communities/scen47.html) (# tracts = 2,459)
-* v_renters_40p
-* v_VLI
-* v_rbLI_50rb (renters making 80% AMI or less and paying more than 50% in rent)
-* dp_chrent_co
-* dp_rentgap_co
+* v_VLI == 1
+* 2 out of 3
+	* vPOC
+	* v_renters_40p
+	* v_rbLI_50rb (renters making 80% AMI or less and paying more than 50% in rent)
+* 1 out of 2
+	* dp_chrent_co
+	* dp_rentgap_co
 
 ### [Scenario 48](https://cci-ucb.github.io/sensitive_communities/scen48.html) (# tracts = 2,508)
-* v_renters_40p
-* v_VLI
-* v_rbVLI_30rb (renters making 50% AMI or less and paying more than 30% in rent)
-* dp_chrent_co
-* dp_rentgap_co
+* v_VLI == 1
+* 2 out of 3
+	* vPOC
+	* v_renters_40p
+	* v_rbVLI_30rb (renters making 50% AMI or less and paying more than 30% in rent)
+* 1 out of 2
+	* dp_chrent_co
+	* dp_rentgap_co
 
 ### [Scenario 49](https://cci-ucb.github.io/sensitive_communities/scen49.html) (# tracts = 2,463)
-* v_renters_40p
-* v_VLI
-* v_rbVLI_50rb (renters making 50% AMI or less and paying more than 50% in rent)
-* dp_chrent_co
-* dp_rentgap_co
+* v_VLI == 1
+* 2 out of 3
+	* vPOC
+	* v_renters_40p
+	* v_rbVLI_50rb (renters making 50% AMI or less and paying more than 50% in rent)
+* 1 out of 2
+	* dp_chrent_co
+	* dp_rentgap_co
 
 ### [Scenario 50](https://cci-ucb.github.io/sensitive_communities/scen50.html) (# tracts = 2,508)
-* v_renters_40p
-* v_VLI
-* v_rbELI_30rb (renters making 30% AMI or less and paying more than 30% in rent)
-* dp_chrent_co
-* dp_rentgap_co
+* v_VLI == 1
+* 2 out of 3
+	* vPOC
+	* v_renters_40p
+	* v_rbELI_30rb (renters making 30% AMI or less and paying more than 30% in rent)
+* 1 out of 2
+	* dp_chrent_co
+	* dp_rentgap_co
 
 ### [Scenario 51](https://cci-ucb.github.io/sensitive_communities/scen51.html) (# tracts = 2,449)
-* v_renters_40p
-* v_VLI
-* v_rbELI_50rb (renters making 30% AMI or less and paying more than 50% in rent)
-* dp_chrent_co
-* dp_rentgap_co
+* v_VLI == 1
+* 2 out of 3
+	* vPOC
+	* v_renters_40p
+	* v_rbELI_50rb (renters making 30% AMI or less and paying more than 50% in rent)
+* 1 out of 2
+	* dp_chrent_co
+	* dp_rentgap_co
 
 
 
