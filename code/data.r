@@ -54,31 +54,30 @@ tr_data <- function(year)
 		)
 
 #
-# Block group data
+# Block group data - no income table so foregoing BG's now. 
 # --------------------------------------------------------------------------
 
-unzip("~/git/sensitive_communities/data/ca_tracts_bgs.zip")
-unzip("~/git/sensitive_communities/data/rent12_bgs.csv.zip")
+# unzip("~/git/sensitive_communities/data/ca_tracts_bgs.zip")
+# unzip("~/git/sensitive_communities/data/rent12_bgs.csv.zip")
 
-bg <-
-	st_read("~/git/sensitive_communities/data/ca_tracts_bgs/ca_tracts_bgs.shp") %>%
-	st_as_sf() %>%
-	st_set_geometry(NULL)
+# bg <-
+# 	st_read("~/git/sensitive_communities/data/ca_tracts_bgs/ca_tracts_bgs.shp") %>%
+# 	st_as_sf() %>%
+# 	st_set_geometry(NULL)
 
-bgdf12 <- fread("~/git/sensitive_communities/data/rent12_bgs.csv")
+# bgdf12 <- fread("~/git/sensitive_communities/data/rent12_bgs.csv")
 
-
-bg12 <-
-	get_acs(
-		geography = "block group",
-		variables = dis_var,
-		state = "CA",
-		county = NULL,
-		geometry = TRUE,
-		cache_table = TRUE,
-		output = "wide",
-		year = 2017
-		)
+# bg12 <-
+# 	get_acs(
+# 		geography = "block group",
+# 		variables = dis_var,
+# 		state = "CA",
+# 		county = NULL,
+# 		geometry = TRUE,
+# 		cache_table = TRUE,
+# 		output = "wide",
+# 		year = 2017
+# 		)
 
 
 
@@ -828,8 +827,8 @@ final_df <-
 									  v_rb, na.rm = TRUE) >= 1 ~ TRUE,
 						   		  sum(dp_chrent_co, dp_rentgap_co) >= 1 ~ TRUE),
 # Version 2
-		`Scenario 36` = case_when(sum(v_poc == 1,
-								  	  v_renters_40p == 1,
+		`Scenario 36` = case_when(sum(v_poc,
+								  	  v_renters_40p,
 								  	  v_VLI,
 									  v_rb35k_30rb, na.rm = TRUE) >= 3 &
 						   		  sum(dp_chrent_co,
@@ -838,8 +837,8 @@ final_df <-
 						   		  pPOC >= .3 &
 						   		  tr_propstudent17 < .20 ~ TRUE
 						   		  ),
-		`Scenario 37` = case_when(sum(v_poc == 1,
-						  	  v_renters_40p == 1,
+		`Scenario 37` = case_when(sum(v_poc,
+						  	  v_renters_40p,
 						  	  v_VLI,
 							  v_rb35k_50rb, na.rm = TRUE) >= 3 &
 				   		  sum(dp_chrent_co,
@@ -848,8 +847,8 @@ final_df <-
 				   		  pPOC >= .3 &
 				   		  tr_propstudent17 < .20 ~ TRUE
 				   		  ),
-		`Scenario 38` = case_when(sum(v_poc == 1,
-						  	  v_renters_40p == 1,
+		`Scenario 38` = case_when(sum(v_poc,
+						  	  v_renters_40p,
 						  	  v_VLI,
 							  v_rbLI_30rb, na.rm = TRUE) >= 3 &
 				   		  sum(dp_chrent_co,
@@ -858,8 +857,8 @@ final_df <-
 				   		  pPOC >= .3 &
 				   		  tr_propstudent17 < .20 ~ TRUE
 				   		  ),
-		`Scenario 39` = case_when(sum(v_poc == 1,
-						  	  v_renters_40p == 1,
+		`Scenario 39` = case_when(sum(v_poc,
+						  	  v_renters_40p,
 						  	  v_VLI,
 							  v_rbLI_50rb, na.rm = TRUE) >= 3 &
 				   		  sum(dp_chrent_co,
@@ -868,8 +867,8 @@ final_df <-
 				   		  pPOC >= .3 &
 				   		  tr_propstudent17 < .20 ~ TRUE
 				   		  ),
-		`Scenario 40` = case_when(sum(v_poc == 1,
-						  	  v_renters_40p == 1,
+		`Scenario 40` = case_when(sum(v_poc,
+						  	  v_renters_40p,
 						  	  v_VLI,
 							  v_rbVLI_30rb, na.rm = TRUE) >= 3 &
 				   		  sum(dp_chrent_co,
@@ -878,8 +877,8 @@ final_df <-
 				   		  pPOC >= .3 &
 				   		  tr_propstudent17 < .20 ~ TRUE
 				   		  ),
-		`Scenario 41` = case_when(sum(v_poc == 1,
-						  	  v_renters_40p == 1,
+		`Scenario 41` = case_when(sum(v_poc,
+						  	  v_renters_40p,
 						  	  v_VLI,
 							  v_rbVLI_50rb, na.rm = TRUE) >= 3 &
 				   		  sum(dp_chrent_co,
@@ -888,8 +887,8 @@ final_df <-
 				   		  pPOC >= .3 &
 				   		  tr_propstudent17 < .20 ~ TRUE
 				   		  ),
-		`Scenario 42` = case_when(sum(v_poc == 1,
-						  	  v_renters_40p == 1,
+		`Scenario 42` = case_when(sum(v_poc,
+						  	  v_renters_40p,
 						  	  v_VLI,
 							  v_rbELI_30rb, na.rm = TRUE) >= 3 &
 				   		  sum(dp_chrent_co,
@@ -898,10 +897,91 @@ final_df <-
 				   		  pPOC >= .3 &
 				   		  tr_propstudent17 < .20 ~ TRUE
 				   		  ),
-		`Scenario 43` = case_when(sum(v_poc == 1,
-						  	  v_renters_40p == 1,
+		`Scenario 43` = case_when(sum(v_poc,
+						  	  v_renters_40p,
 						  	  v_VLI,
 							  v_rbELI_50rb, na.rm = TRUE) >= 3 &
+				   		  sum(dp_chrent_co,
+				   		  	  dp_rentgap_co) >= 1 &
+				   		  totraceE.y >= 500 &
+				   		  pPOC >= .3 &
+				   		  tr_propstudent17 < .20 ~ TRUE
+				   		  ), 
+# With VLI must
+		`Scenario 44` = case_when(v_VLI == 1 & 
+								  sum(v_poc,
+								  	  v_renters_40p,
+									  v_rb35k_30rb, na.rm = TRUE) >= 2 &
+						   		  sum(dp_chrent_co,
+						   		  	  dp_rentgap_co) >= 1 &
+						   		  totraceE.y >= 500 &
+						   		  pPOC >= .3 &
+						   		  tr_propstudent17 < .20 ~ TRUE
+						   		  ),
+		`Scenario 45` = case_when(v_VLI == 1 & 
+								  sum(v_poc,
+						  	  v_renters_40p,
+							  v_rb35k_50rb, na.rm = TRUE) >= 2 &
+				   		  sum(dp_chrent_co,
+				   		  	  dp_rentgap_co) >= 1 &
+				   		  totraceE.y >= 500 &
+				   		  pPOC >= .3 &
+				   		  tr_propstudent17 < .20 ~ TRUE
+				   		  ),
+		`Scenario 46` = case_when(v_VLI == 1 & 
+								  sum(v_poc,
+						  	  v_renters_40p,
+							  v_rbLI_30rb, na.rm = TRUE) >= 2 &
+				   		  sum(dp_chrent_co,
+				   		  	  dp_rentgap_co) >= 1 &
+				   		  totraceE.y >= 500 &
+				   		  pPOC >= .3 &
+				   		  tr_propstudent17 < .20 ~ TRUE
+				   		  ),
+		`Scenario 47` = case_when(v_VLI == 1 & 
+								  sum(v_poc,
+						  	  v_renters_40p,
+							  v_rbLI_50rb, na.rm = TRUE) >= 2 &
+				   		  sum(dp_chrent_co,
+				   		  	  dp_rentgap_co) >= 1 &
+				   		  totraceE.y >= 500 &
+				   		  pPOC >= .3 &
+				   		  tr_propstudent17 < .20 ~ TRUE
+				   		  ),
+		`Scenario 48` = case_when(v_VLI == 1 & 
+								  sum(v_poc,
+						  	  v_renters_40p,
+							  v_rbVLI_30rb, na.rm = TRUE) >= 2 &
+				   		  sum(dp_chrent_co,
+				   		  	  dp_rentgap_co) >= 1 &
+				   		  totraceE.y >= 500 &
+				   		  pPOC >= .3 &
+				   		  tr_propstudent17 < .20 ~ TRUE
+				   		  ),
+		`Scenario 49` = case_when(v_VLI == 1 & 
+								  sum(v_poc,
+						  	  v_renters_40p,
+							  v_rbVLI_50rb, na.rm = TRUE) >= 2 &
+				   		  sum(dp_chrent_co,
+				   		  	  dp_rentgap_co) >= 1 &
+				   		  totraceE.y >= 500 &
+				   		  pPOC >= .3 &
+				   		  tr_propstudent17 < .20 ~ TRUE
+				   		  ),
+		`Scenario 50` = case_when(v_VLI == 1 & 
+								  sum(v_poc,
+						  	  v_renters_40p,
+							  v_rbELI_30rb, na.rm = TRUE) >= 2 &
+				   		  sum(dp_chrent_co,
+				   		  	  dp_rentgap_co) >= 1 &
+				   		  totraceE.y >= 500 &
+				   		  pPOC >= .3 &
+				   		  tr_propstudent17 < .20 ~ TRUE
+				   		  ),
+		`Scenario 51` = case_when(v_VLI == 1 & 
+								  sum(v_poc,
+						  	  v_renters_40p,
+							  v_rbELI_50rb, na.rm = TRUE) >= 2 &
 				   		  sum(dp_chrent_co,
 				   		  	  dp_rentgap_co) >= 1 &
 				   		  totraceE.y >= 500 &
@@ -1048,6 +1128,14 @@ scen40 <- sen_map3("Scenario 40", "v_renters_40p", "v_VLI", "irVLI_30p", "v_rbVL
 scen41 <- sen_map3("Scenario 41", "v_renters_40p", "v_VLI", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co")
 scen42 <- sen_map3("Scenario 42", "v_renters_40p", "v_VLI", "irELI_30p", "v_rbELI_30rb", "dp_chrent_co", "dp_rentgap_co")
 scen43 <- sen_map3("Scenario 43", "v_renters_40p", "v_VLI", "irELI_50p", "v_rbELI_50rb", "dp_chrent_co", "dp_rentgap_co")
+scen44 <- sen_map3("Scenario 44", "v_renters_40p", "v_VLI", "ir35k_30rbp", "v_rb35k_30rb", "dp_chrent_co", "dp_rentgap_co")
+scen45 <- sen_map3("Scenario 45", "v_renters_40p", "v_VLI", "ir35_50rbp", "v_rb35k_50rb", "dp_chrent_co", "dp_rentgap_co")
+scen46 <- sen_map3("Scenario 46", "v_renters_40p", "v_VLI", "irLI_30p", "v_rbLI_30rb", "dp_chrent_co", "dp_rentgap_co")
+scen47 <- sen_map3("Scenario 47", "v_renters_40p", "v_VLI", "irLI_50p", "v_rbLI_50rb", "dp_chrent_co", "dp_rentgap_co")
+scen48 <- sen_map3("Scenario 48", "v_renters_40p", "v_VLI", "irVLI_30p", "v_rbVLI_30rb", "dp_chrent_co", "dp_rentgap_co")
+scen49 <- sen_map3("Scenario 49", "v_renters_40p", "v_VLI", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co")
+scen50 <- sen_map3("Scenario 50", "v_renters_40p", "v_VLI", "irELI_30p", "v_rbELI_30rb", "dp_chrent_co", "dp_rentgap_co")
+scen51 <- sen_map3("Scenario 51", "v_renters_40p", "v_VLI", "irELI_50p", "v_rbELI_50rb", "dp_chrent_co", "dp_rentgap_co")
 
 
 
@@ -1074,6 +1162,30 @@ final_df %>%
 	sum(na.rm = TRUE)
 final_df %>%
 	pull(`Scenario 43`) %>%
+	sum(na.rm = TRUE)
+final_df %>%
+	pull(`Scenario 44`) %>%
+	sum(na.rm = TRUE)
+final_df %>%
+	pull(`Scenario 45`) %>%
+	sum(na.rm = TRUE)
+final_df %>%
+	pull(`Scenario 46`) %>%
+	sum(na.rm = TRUE)
+final_df %>%
+	pull(`Scenario 47`) %>%
+	sum(na.rm = TRUE)
+final_df %>%
+	pull(`Scenario 48`) %>%
+	sum(na.rm = TRUE)
+final_df %>%
+	pull(`Scenario 49`) %>%
+	sum(na.rm = TRUE)
+final_df %>%
+	pull(`Scenario 50`) %>%
+	sum(na.rm = TRUE)
+final_df %>%
+	pull(`Scenario 51`) %>%
 	sum(na.rm = TRUE)
 
 
@@ -1124,6 +1236,15 @@ save_map(scen40, "scen40")
 save_map(scen41, "scen41")
 save_map(scen42, "scen42")
 save_map(scen43, "scen43")
+
+save_map(scen44, "scen44")
+save_map(scen45, "scen45")
+save_map(scen46, "scen46")
+save_map(scen47, "scen47")
+save_map(scen48, "scen48")
+save_map(scen49, "scen49")
+save_map(scen50, "scen50")
+save_map(scen51, "scen51")
 
 # ==========================================================================
 # Get tract counts for each scenario
