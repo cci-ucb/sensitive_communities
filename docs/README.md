@@ -36,6 +36,9 @@ This page shows a number of mutually exclusive combinations of vulnerable popula
 * 1 out of 2
 	* dp_chrent_co
 	* dp_rentgap_co
+* POC >= .3
+* Population >= 500
+* % students < .2
 
 ### [Scenario 45](https://cci-ucb.github.io/sensitive_communities/scen45.html) (# tracts = 2,468) 
 * v_VLI  == 1
@@ -46,6 +49,9 @@ This page shows a number of mutually exclusive combinations of vulnerable popula
 * 1 out of 2
 	* dp_chrent_co 
 	* dp_rentgap_co 
+* POC >= .3
+* Population >= 500
+* % students < .2
 
 ### [Scenario 46](https://cci-ucb.github.io/sensitive_communities/scen46.html) (# tracts = 2,479)
 * v_VLI == 1
@@ -56,6 +62,9 @@ This page shows a number of mutually exclusive combinations of vulnerable popula
 * 1 out of 2
 	* dp_chrent_co
 	* dp_rentgap_co
+* POC >= .3
+* Population >= 500
+* % students < .2
 
 ### [Scenario 47](https://cci-ucb.github.io/sensitive_communities/scen47.html) (# tracts = 2,459)
 * v_VLI == 1
@@ -66,6 +75,9 @@ This page shows a number of mutually exclusive combinations of vulnerable popula
 * 1 out of 2
 	* dp_chrent_co
 	* dp_rentgap_co
+* POC >= .3
+* Population >= 500
+* % students < .2
 
 ### [Scenario 48](https://cci-ucb.github.io/sensitive_communities/scen48.html) (# tracts = 2,508)
 * v_VLI == 1
@@ -76,6 +88,9 @@ This page shows a number of mutually exclusive combinations of vulnerable popula
 * 1 out of 2
 	* dp_chrent_co
 	* dp_rentgap_co
+* POC >= .3
+* Population >= 500
+* % students < .2
 
 ### [Scenario 49](https://cci-ucb.github.io/sensitive_communities/scen49.html) (# tracts = 2,463)
 * v_VLI == 1
@@ -86,6 +101,9 @@ This page shows a number of mutually exclusive combinations of vulnerable popula
 * 1 out of 2
 	* dp_chrent_co
 	* dp_rentgap_co
+* POC >= .3
+* Population >= 500
+* % students < .2
 
 ### [Scenario 50](https://cci-ucb.github.io/sensitive_communities/scen50.html) (# tracts = 2,508)
 * v_VLI == 1
@@ -96,6 +114,9 @@ This page shows a number of mutually exclusive combinations of vulnerable popula
 * 1 out of 2
 	* dp_chrent_co
 	* dp_rentgap_co
+* POC >= .3
+* Population >= 500
+* % students < .2
 
 ### [Scenario 51](https://cci-ucb.github.io/sensitive_communities/scen51.html) (# tracts = 2,449)
 * v_VLI == 1
@@ -106,6 +127,9 @@ This page shows a number of mutually exclusive combinations of vulnerable popula
 * 1 out of 2
 	* dp_chrent_co
 	* dp_rentgap_co
+* POC >= .3
+* Population >= 500
+* % students < .2
 
 
 
