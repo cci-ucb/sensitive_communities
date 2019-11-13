@@ -1013,7 +1013,7 @@ final_df <-
 				   		  pPOC >= .3 &
 				   		  tr_propstudent17 < .20 ~ TRUE
 				   		  ),
-		`sc52_tier1` = case_when(v_VLI_med == 1 &
+		sc52_tier1 = case_when(v_VLI_med == 1 &
 								 sum(v_poc,
 									 v_renters_40p,
 									 v_rbLI_50rb, na.rm = TRUE) >= 2 &
@@ -1022,36 +1022,42 @@ final_df <-
 								 totraceE.y >= 500 &
 								 pPOC >= .3 &
 								 tr_propstudent17 < .20 ~ "Heightened Sensitivity"),
-		`sc52_tier2` = case_when(v_VLI_med == 1 &
+		sc52_tier2 = case_when(v_VLI_med == 1 &
 								 sum(v_poc,
-										v_renters_40p,
-										v_rbLI_50rb, na.rm = TRUE) >= 2 &
-									totraceE.y >= 500 &
-									pPOC >= .3 &
-									tr_propstudent17 < .20 ~ "Vulnerable"),
-		`sc52_tier3PV` = case_when(v_VLI_med == 1 &
+									 v_renters_40p,
+									 v_rbLI_50rb, na.rm = TRUE) >= 2 &
+								 totraceE.y >= 500 &
+								 pPOC >= .3 &
+								 tr_propstudent17 < .20 ~ "Vulnerable"),
+		sc52_tier3PV = case_when(v_VLI_med == 1 &
 								   v_poc == 1 &
 								   totraceE.y >= 500 &
-								   tr_propstudent17 < .20 ~ "Some Vulnerability - POC+VLI"),
-		`sc52_tier3PRB` = case_when(v_poc == 1 &
+								   tr_propstudent17 < .20 ~
+								   "Some Vulnerability - POC+VLI"),
+		sc52_tier3PRB = case_when(v_poc == 1 &
 								   v_rbVLI_50rb == 1 &
 								   totraceE.y >= 500 &
-								   tr_propstudent17 < .20 ~ "Some Vulnerability - POC+RB"),
-		`sc52_tier3PR` = case_when(v_poc == 1 &
-								   v_renters_40p == 1,
+								   tr_propstudent17 < .20 ~
+								   "Some Vulnerability - POC+RB"),
+		sc52_tier3PR = case_when(v_poc == 1 &
+								   v_renters_40p == 1 &
 								   totraceE.y >= 500 &
-								   tr_propstudent17 < .20 ~ "Some Vulnerability - POC+Renters"),
-		`sc52_tier3VLI` = case_when(v_VLI_med == 1 &
+								   tr_propstudent17 < .20 ~
+								   "Some Vulnerability - POC+Renters"),
+		sc52_tier3VLI = case_when(v_VLI_med == 1 &
 								    totraceE.y >= 500 &
-								    tr_propstudent17 < .20 ~ "Some Vulnerability - VLI Alone"),
-		`sc52_tier3RBV` = case_when(v_VLI_med == 1 &
+								    tr_propstudent17 < .20 ~
+								    "Some Vulnerability - VLI Alone"),
+		sc52_tier3RBV = case_when(v_VLI_med == 1 &
 									v_rbVLI_50rb == 1 &
 								    totraceE.y >= 500 &
-								    tr_propstudent17 < .20 ~ "Some Vulnerability - VLI+RB"),
+								    tr_propstudent17 < .20 ~
+								    "Some Vulnerability - VLI+RB"),
 		`sc52_tier3RV` = case_when(v_VLI_med == 1 &
 								   v_rbVLI_50rb == 1 &
 								   totraceE.y >= 500 &
-								   tr_propstudent17 < .20 ~ "Some Vulnerability - Renter+VLI")
+								   tr_propstudent17 < .20 ~
+								   "Some Vulnerability - Renter+VLI")
 		) %>%
 ungroup()
 
@@ -1106,15 +1112,16 @@ sen_map1 <- function(scen, renters, li, lirb, rb, chrent, rentgap)
 tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
 tm_shape(final_df, name = "Sensitive Communities Layer") +
 	tm_polygons(scen,
-			palette = c("#FF6633","#FF6633"),
+			# palette = c("#FF6633","#FF6633"),
+			palette = c("#e41a1c","#e41a1c"),
 			label = "Sensitive Communities",
-			alpha = .5,
+			alpha = .9,
 			border.alpha = .15,
 			border.color = "gray",
 			colorNA = NULL,
 			title = "",
 			id = "popup_text",
-			popup.vars = c("Tot Pop" = "totraceE.y"
+			popup.vars = c("Tot Pop" = "totraceE.y",
 						   "Tot HH" = "tottenE.y",
 						   "% Rent" = "tr_rentprop17",
 						   "$ Rent" = "tr_medrent17",
@@ -1150,7 +1157,7 @@ tm_shape(final_df, name = "Sensitive Communities Layer") +
 						   "Rent Gap" = rentgap
 						   ),
 			popup.format = list(digits=2)) +
-	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .5) +
+	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9) +
 	tm_layout(title = paste0(scen, ": ",renters,", ", li, ", ", chrent, ", ", rentgap))
 
 sen_map2 <- function(scen, renters, li, lirb, rb, chrent, rentgap)
@@ -1159,6 +1166,110 @@ sen_map2 <- function(scen, renters, li, lirb, rb, chrent, rentgap)
 
 sen_map3 <- function(scen, renters, li, lirb, rb, chrent, rentgap)
 	sen_map1(scen, renters, li, lirb, rb, chrent, rentgap) +
+	tm_layout(title = paste0(scen, ": v_POC, ",renters,", ", li, ", ", rb, ", ", chrent, ", ", rentgap))
+
+sen_map4 <- function(scen,
+					 renters,
+					 li,
+					 lirb,
+					 rb,
+					 chrent,
+					 rentgap,
+					 t2,
+					 t3,
+					 t3title)
+	sen_map1(scen, renters, li, lirb, rb, chrent, rentgap) +
+			tm_shape(final_df, name = "Tier 2 - Vulnerable Communities") +
+			tm_polygons(t2,
+			palette = c("#377eb8","#377eb8"),
+			label = "Tier 2 - Vulnerable Communities",
+			alpha = .9,
+			border.alpha = .15,
+			border.color = "gray",
+			colorNA = NULL,
+			title = "",
+			id = "popup_text",
+			popup.vars = c("Tot Pop" = "totraceE.y",
+						   "Tot HH" = "tottenE.y",
+						   "% Rent" = "tr_rentprop17",
+						   "$ Rent" = "tr_medrent17",
+						   "$ R Lag" = "tr_medrent17.lag",
+						   "$ R Gap" = "tr_rentgap",
+						   "Ch Rent" = "tr_chrent",
+						   "Ch R Lag" = "tr_chrent.lag",
+						   "% RB" = "tr_rbprop17",
+						   "% inc x rb " = lirb,
+						   "% ELI" = "tr_ELI_prop17",
+						   "% VLI" = "tr_VLI_prop17",
+						   "% Stud." = "tr_propstudent17",
+						   "----------" = "text",
+						   "Neigh." = "NeighType",
+						   "% White" = "pwhite",
+						   "% Black" = "pblack",
+						   "% Asian" = "pasian",
+						   "% Lat" = "platinx",
+						   "% Other" = "pother",
+						   "% POC" = "pPOC",
+						   "% Welf" = "pwelfare",
+						   "% Pov" = "ppoverty",
+						   "% Unemp" = "unemp",
+						   "%FHHw/C"= "pfemhhch",
+						   "----------" = "text",
+						   "SC Criteria" = "text",
+						   "----------" = "text",
+						   "POC" = "v_poc",
+						   "Renters" = renters,
+						   "LI_Cat" = li,
+						   "RB" = rb,
+						   "Ch Rent" = chrent,
+						   "Rent Gap" = rentgap
+						   ),
+			popup.format = list(digits=2)) +
+			tm_shape(final_df, name = t3title) +
+			tm_polygons(t3,
+			palette = c("#4daf4a","#4daf4a"),
+			label = t3title,
+			alpha = .9,
+			border.alpha = .15,
+			border.color = "gray",
+			colorNA = NULL,
+			title = "",
+			id = "popup_text",
+			popup.vars = c("Tot Pop" = "totraceE.y",
+						   "Tot HH" = "tottenE.y",
+						   "% Rent" = "tr_rentprop17",
+						   "$ Rent" = "tr_medrent17",
+						   "$ R Lag" = "tr_medrent17.lag",
+						   "$ R Gap" = "tr_rentgap",
+						   "Ch Rent" = "tr_chrent",
+						   "Ch R Lag" = "tr_chrent.lag",
+						   "% RB" = "tr_rbprop17",
+						   "% inc x rb " = lirb,
+						   "% ELI" = "tr_ELI_prop17",
+						   "% VLI" = "tr_VLI_prop17",
+						   "% Stud." = "tr_propstudent17",
+						   "----------" = "text",
+						   "Neigh." = "NeighType",
+						   "% White" = "pwhite",
+						   "% Black" = "pblack",
+						   "% Asian" = "pasian",
+						   "% Lat" = "platinx",
+						   "% Other" = "pother",
+						   "% POC" = "pPOC",
+						   "% Welf" = "pwelfare",
+						   "% Pov" = "ppoverty",
+						   "% Unemp" = "unemp",
+						   "%FHHw/C"= "pfemhhch",
+						   "----------" = "text",
+						   "SC Criteria" = "text",
+						   "----------" = "text",
+						   "POC" = "v_poc",
+						   "Renters" = renters,
+						   "LI_Cat" = li,
+						   "RB" = rb,
+						   "Ch Rent" = chrent,
+						   "Rent Gap" = rentgap
+						   )) +
 	tm_layout(title = paste0(scen, ": v_POC, ",renters,", ", li, ", ", rb, ", ", chrent, ", ", rentgap))
 
 save_map <- function(x,y)
@@ -1228,6 +1339,13 @@ scen50 <- sen_map3("Scenario 50", "v_renters_40p", "v_VLI", "irELI_30p", "v_rbEL
 scen51 <- sen_map3("Scenario 51", "v_renters_40p", "v_VLI", "irELI_50p", "v_rbELI_50rb", "dp_chrent_co", "dp_rentgap_co")
 scen52 <- sen_map3("Scenario 52", "v_renters_40p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co")
 scen53 <- sen_map3("Scenario 53", "v_renters_50p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co")
+
+tsc52pv <- sen_map4("sc52_tier1", "v_renters_40p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co", "sc52_tier2","sc52_tier3PV","Tier 3 - POC + VLI")
+tsc52prb <- sen_map4("sc52_tier1", "v_renters_40p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co", "sc52_tier2","sc52_tier3PRB","Tier 3 - POC + Rent Burden (Inc x RB)")
+tsc52pr <- sen_map4("sc52_tier1", "v_renters_40p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co", "sc52_tier2","sc52_tier3PR","Tier 3 - POC + Renters")
+tsc52v <- sen_map4("sc52_tier1", "v_renters_40p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co", "sc52_tier2","sc52_tier3VLI", "Tier 3 - VLI Alone")
+tsc52vrb <- sen_map4("sc52_tier1", "v_renters_40p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co", "sc52_tier2","sc52_tier3RBV","Tier 3 - VLI + Rent Burden (inc x rb)")
+tsc52vr <- sen_map4("sc52_tier1", "v_renters_40p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co", "sc52_tier2", "sc52_tier3RV", "Tier 3 - VLI + Renters")
 
 
 final_df %>%
@@ -1340,6 +1458,14 @@ save_map(scen49, "scen49")
 save_map(scen50, "scen50")
 save_map(scen51, "scen51")
 save_map(scen52, "scen52")
+
+# Saving tier maps
+save_map(tsc52pv, "tsc52pv")
+save_map(tsc52prb, "tsc52prb")
+save_map(tsc52pr, "tsc52pr")
+save_map(tsc52v, "tsc52v")
+save_map(tsc52vrb, "tsc52vrb")
+save_map(tsc52vr, "tsc52vr")
 
 # ==========================================================================
 # Get tract counts for each scenario
