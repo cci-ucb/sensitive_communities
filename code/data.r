@@ -21,7 +21,7 @@ options(scipen = 10) # avoid scientific notation
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(data.table, plotly, spdep, tidyverse, tigris, tidycensus, tmap)
 
-# Cache downloaded tiger files 
+# Cache downloaded tiger files
 options(tigris_use_cache = TRUE)
 
 # ==========================================================================
@@ -39,8 +39,52 @@ transit <- st_read("~/git/sensitive_communities/data/TransitRichAreas4326/Transi
 # Census Variables
 # --------------------------------------------------------------------------
 
-sc_vars <- 
-c('totrent' = 'B25003_003', 'totten' = 'B25003_001', 'colenroll' = 'B14007_017', 'proenroll' = 'B14007_018', 'totenroll' = 'B14007_001', 'rb_55' = 'B25070_010', 'rb_tot' = 'B25070_001', 'medrent' = 'B25064_001', 'totrace' = 'B03002_001','White' = 'B03002_003','Black' = 'B03002_004','Asian' = 'B03002_006','Latinx' = 'B03002_012','totwelf' = 'B19057_001', 'welf' = 'B19057_002','povfamh' = 'B17017_003','povnonfamh' = 'B17017_020','totpov' = 'B17017_001', 'unemp' = 'B23025_005', 'totunemp' = 'B23025_001', 'femfamheadch' = 'B11005_007', 'femnonfamheadch' = 'B11005_010', 'totfhc' = 'B11005_001', 'mhhinc' = 'B19013_001', 'rb_34.9' = 'B25070_007', 'rb_39.9' = 'B25070_008', 'rb_49.9' = 'B25070_009', 'rb_55' = 'B25070_010', 'toted' = 'B15003_001', 'bach' = 'B15003_022', 'mas' = 'B15003_023', 'pro' = 'B15003_024', 'doc' = 'B15003_025', 'HHIncTenRent' = 'B25118_014', 'HHIncTenRent_5' = 'B25118_015', 'HHIncTenRent_10' = 'B25118_016', 'HHIncTenRent_15' = 'B25118_017', 'HHIncTenRent_20' = 'B25118_018', 'HHIncTenRent_25' = 'B25118_019', 'HHIncTenRent_35' = 'B25118_020', 'HHIncTenRent_50' = 'B25118_021', 'HHIncTenRent_75' = 'B25118_022', 'HHIncTenRent_100' = 'B25118_023', 'HHIncTenRent_150' = 'B25118_024', 'HHIncTenRent_151' = 'B25118_025') 
+sc_vars <-
+c('totrent' = 'B25003_003',
+'totten' = 'B25003_001',
+'colenroll' = 'B14007_017',
+'proenroll' = 'B14007_018',
+'totenroll' = 'B14007_001',
+'rb_55' = 'B25070_010',
+'rb_tot' = 'B25070_001',
+'medrent' = 'B25064_001',
+'totrace' = 'B03002_001',
+'White' = 'B03002_003',
+'Black' = 'B03002_004',
+'Asian' = 'B03002_006',
+'Latinx' = 'B03002_012',
+'totwelf' = 'B19057_001',
+'welf' = 'B19057_002',
+'povfamh' = 'B17017_003',
+'povnonfamh' = 'B17017_020',
+'totpov' = 'B17017_001',
+'unemp' = 'B23025_005',
+'totunemp' = 'B23025_001',
+'femfamheadch' = 'B11005_007',
+'femnonfamheadch' = 'B11005_010',
+'totfhc' = 'B11005_001',
+'mhhinc' = 'B19013_001',
+'rb_34.9' = 'B25070_007',
+'rb_39.9' = 'B25070_008',
+'rb_49.9' = 'B25070_009',
+'rb_55' = 'B25070_010',
+'toted' = 'B15003_001',
+'bach' = 'B15003_022',
+'mas' = 'B15003_023',
+'pro' = 'B15003_024',
+'doc' = 'B15003_025',
+'HHIncTenRent' = 'B25118_014',
+'HHIncTenRent_5' = 'B25118_015',
+'HHIncTenRent_10' = 'B25118_016',
+'HHIncTenRent_15' = 'B25118_017',
+'HHIncTenRent_20' = 'B25118_018',
+'HHIncTenRent_25' = 'B25118_019',
+'HHIncTenRent_35' = 'B25118_020',
+'HHIncTenRent_50' = 'B25118_021',
+'HHIncTenRent_75' = 'B25118_022',
+'HHIncTenRent_100' = 'B25118_023',
+'HHIncTenRent_150' = 'B25118_024',
+'HHIncTenRent_151' = 'B25118_025')
 
 # source("~/git/sensitive_communities/code/vars.r") ### Replace ###
 
@@ -59,16 +103,15 @@ county_acsdata <- function(year, vars)
 		cache_table = TRUE,
 		output = "wide",
 		year = year
-		) 
+		)
 
 # Build county data
 co_data <-
-	left_join(county_acsdata(2012, c('medrent' = 'B25064_001')), 
+	left_join(county_acsdata(2012, c('medrent' = 'B25064_001')),
 			  county_acsdata(2017, sc_vars), by = "GEOID") %>%
 	group_by(GEOID) %>%
 	summarise(
-		co_medinc = case_when(mhhincM/mhhincE >= .4 ~ NA_real_, 
-							  TRUE ~ mhhincE),
+		co_medinc = mhhincE,
 		co_li = co_medinc*.8,
 		co_vli = co_medinc*.5,
 		co_eli = co_medinc*.3,
@@ -78,8 +121,7 @@ co_data <-
 		co_medrent = medrentE.y,
 		co_toted = totedE,
 		co_bachplus = sum(bachE, masE, proE, docE),
-		co_meded = median(co_bachplus/co_toted)
-		)
+		co_meded = median(co_bachplus/co_toted))
 
 #
 # Tract data
@@ -97,11 +139,26 @@ tr_data <- function(year, vars)
 		county = NULL,
 		geometry = FALSE,
 		cache_table = TRUE,
-		output = "wide",
+		# output = "wide",
 		year = year
 		)
 
-### LEFT OFF HERE ### Editing and adding MOE edits
+tr_df17 <-
+	tr_data(2017, sc_vars)
+
+test <-
+	tr_df17 %>%
+	group_by(GEOID) %>%
+	mutate(est.adj = case_when(moe/estimate >= .4 ~ NA_real_,
+	# mutate(est.adj = case_when((moe/1.645)/estimate >= .6 ~ NA_real_,
+	# mutate(est.adj = (moe/1.645)/estimate),
+							   TRUE ~ estimate)) %>%
+	select(-moe, -estimate) %>%
+	spread(variable, est.adj) %>% summary()
+
+							    %>%
+	summary()
+
 
 # create county join ID
 ct@data <-
@@ -114,6 +171,10 @@ ct@data <-
 	left_join(.,tr_data(2012, c('medrent' = 'B25064_001')), by = "GEOID") %>%
 	left_join(.,tr_data(2017, sc_vars), by = "GEOID")
 
+test <-
+	ct@data %>%
+
+
 # ==========================================================================
 # Create variables
 # ==========================================================================
@@ -123,17 +184,17 @@ ct@data <-
 # --------------------------------------------------------------------------
 
 ri_names17 <- c(
-	'HHIncTenRent_5E.y' = 4999, # Renter occupied!!Less than $5,000
-	'HHIncTenRent_10E.y' = 9999, # Renter occupied!!$5,000 to $9,999
-	'HHIncTenRent_15E.y' = 14999, # Renter occupied!!$10,000 to $14,999
-	'HHIncTenRent_20E.y' = 19999, # Renter occupied!!$15,000 to $19,999
-	'HHIncTenRent_25E.y' = 24999, # Renter occupied!!$20,000 to $24,999 #
-	'HHIncTenRent_35E.y' = 34999, # Renter occupied!!$25,000 to $34,999
-	'HHIncTenRent_50E.y' = 49999, # Renter occupied!!$35,000 to $49,999
-	'HHIncTenRent_75E.y' = 74999, # Renter occupied!!$50,000 to $74,999
-	'HHIncTenRent_100E.y' = 99999, # Renter occupied!!$75,000 to $99,999
-	'HHIncTenRent_150E.y' = 149999, # Renter occupied!!$100,000 to $149,999
-	'HHIncTenRent_151E.y' = 150000 # Renter occupied!!$150,000 or more
+	'HHIncTenRent_5E' = 4999, # Renter occupied!!Less than $5,000
+	'HHIncTenRent_10E' = 9999, # Renter occupied!!$5,000 to $9,999
+	'HHIncTenRent_15E' = 14999, # Renter occupied!!$10,000 to $14,999
+	'HHIncTenRent_20E' = 19999, # Renter occupied!!$15,000 to $19,999
+	'HHIncTenRent_25E' = 24999, # Renter occupied!!$20,000 to $24,999 #
+	'HHIncTenRent_35E' = 34999, # Renter occupied!!$25,000 to $34,999
+	'HHIncTenRent_50E' = 49999, # Renter occupied!!$35,000 to $49,999
+	'HHIncTenRent_75E' = 74999, # Renter occupied!!$50,000 to $74,999
+	'HHIncTenRent_100E' = 99999, # Renter occupied!!$75,000 to $99,999
+	'HHIncTenRent_150E' = 149999, # Renter occupied!!$100,000 to $149,999
+	'HHIncTenRent_151E' = 150000 # Renter occupied!!$150,000 or more
 	)
 
 
@@ -142,22 +203,18 @@ lidata <-
 	select(GEOID,
 		   COUNTYFP,
 		   co_medinc,
-		   HHInc_TotalE,
-		   HHIncTenRentE:HHIncTenRent_151E,
-		   -ends_with("M.y")) %>%
+		   HHIncTenRentE:HHIncTenRent_151E) %>%
+
 	group_by(GEOID) %>%
 	mutate(
-		LI_val = co_medinc.y*.8,
-		VLI_val = co_medinc.y*.5,
-		ELI_val = co_medinc.y*.3
-		) %>%
+		LI_val = co_medinc*.8,
+		VLI_val = co_medinc*.5,
+		ELI_val = co_medinc*.3) %>%
 	gather(
 		r_medinc_cat,
 		r_medinc_cat_count,
-		HHIncTenRent_5E.y:HHIncTenRent_151E.y
-		) %>%
-	mutate_at(vars(r_medinc_cat), ~ri_names17
-		) %>%
+		HHIncTenRent_5E:HHIncTenRent_151E) %>% group_by(r_medinc_cat) %>% count()
+	mutate_at(vars(r_medinc_cat), ~ri_names17) %>%
 	mutate(
 		bottom_inccat = case_when(r_medinc_cat <= 4999 ~ r_medinc_cat - 4999,
 					   			  r_medinc_cat >= 9999 &
@@ -169,8 +226,7 @@ lidata <-
 								  r_medinc_cat == 149999 ~ r_medinc_cat - 49999,
 								  r_medinc_cat == 150000 ~ 150000,
 								  TRUE ~ NA_real_),
-		top_inccat = r_medinc_cat
-		) %>%
+		top_inccat = r_medinc_cat) %>%
 	mutate(
 		LI = case_when(LI_val >= top_inccat ~ 1,
 					   LI_val <= top_inccat &
@@ -193,8 +249,7 @@ lidata <-
 		tr_ELI_count17 = sum(ELI*r_medinc_cat_count, na.rm = TRUE),
 		tr_LI_prop17 = tr_LI_count17/tr_totalinc17,
 		tr_VLI_prop17 = tr_VLI_count17/tr_totalinc17,
-		tr_ELI_prop17 = tr_ELI_count17/tr_totalinc17
-		) %>%
+		tr_ELI_prop17 = tr_ELI_count17/tr_totalinc17) %>%
 	select(GEOID, COUNTYFP, LI_val:ELI_val,tr_totalinc17:tr_ELI_prop17) %>%
 	distinct() %>%
 	group_by(COUNTYFP) %>%
@@ -218,8 +273,7 @@ lidata <-
 		co_ELI_prop17 = co_ELI_count17/co_totalinc17,
 		co_LI_propmed17 = median(tr_LI_prop17, na.rm = TRUE),
 		co_VLI_propmed17 = median(tr_VLI_prop17, na.rm = TRUE),
-		co_ELI_propmed17 = median(tr_ELI_prop17, na.rm = TRUE)
-		)
+		co_ELI_propmed17 = median(tr_ELI_prop17, na.rm = TRUE))
 
 #
 # Change
@@ -230,7 +284,7 @@ ct@data <-
 	left_join(ct@data, lidata, by = c("GEOID", "COUNTYFP")) %>%
 	group_by(GEOID) %>%
 	mutate(
-		tr_propstudent17 = sum(colenrollE.y, proenrollE.y)/totenrollE.y,
+		tr_propstudent17 = sum(colenrollE, proenrollE)/totenrollE,
 		tr_rentprop12 = totrentE.x/tottenE.x,
 		tr_rentprop17 = totrentE.y/tottenE.y,
 		tr_rbprop12 = sum(rb_55E.x, na.rm = TRUE)/rb_totE.x,
@@ -366,7 +420,7 @@ lirb17 <-
 			),
 		ct_sf %>%
 			st_set_geometry(NULL) %>%
-			select(GEOID, medinc = co_medinc.y)) %>%
+			select(GEOID, medinc = co_medinc)) %>%
 	separate(variable, c("ir_type", "rb", "income")) %>%
 	left_join(.,ct_sf %>% select(GEOID, COUNTYFP))
 
