@@ -2,16 +2,8 @@
 # Develop data for displacement and vulnerability measures
 # Initial Author: Tim Thomas
 # Created: 2019.10.13
+# 1.0 code: 2019.11.14
 # ==========================================================================
-
-#
-# Tasks
-# 1. Create measure extraction functions
-# 	* need to get the tracts that fall within various pumas.
-# See: https://docs.google.com/document/d/1JvqZLnh_sZIgfrxaXPtBSJRbTEPcbx-jl_tvf5JlqiU/edit
-# https://docs.google.com/document/d/15G-sDDMfl1eFpouwWzfMhhORYGzj9uUTsxnteoOxMHo/edit
-# https://docs.google.com/document/d/14RpROPfs4F65GwmOn3r3RR9_W40CRpQa79hCjCQTGrE/edit
-# --------------------------------------------------------------------------
 
 # ==========================================================================
 # Libraries
@@ -21,121 +13,95 @@
 # Load packages and install them if they're not installed.
 # --------------------------------------------------------------------------
 
+# Clear the session
+rm(list = ls())
+options(scipen = 10) # avoid scientific notation
+
+# load packages
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(data.table, plotly, spdep, tidyverse, tigris, tidycensus, tmap)
 
+# Cache downloaded tiger files 
 options(tigris_use_cache = TRUE)
 
 # ==========================================================================
 # Data
 # ==========================================================================
 
-rm(list = ls())
-options(scipen = 10) # avoid scientific notation
-
 #
-# State tract data
+# Transit Rich Areas
 # --------------------------------------------------------------------------
 
-# Load variables list
-source("~/git/sensitive_communities/code/vars.r")
-
-# Download CA tract data for select variables
-tr_data <- function(year)
-	get_acs(
-		geography = "tract",
-		variables = dis_var,
-		state = "CA",
-		county = NULL,
-		geometry = FALSE,
-		cache_table = TRUE,
-		output = "wide",
-		year = year
-		)
+unzip("~/git/sensitive_communities/data/TransitRichAreas4326.zip")
+transit <- st_read("~/git/sensitive_communities/data/TransitRichAreas4326/Transit Rich Areas 4326.shp")
 
 #
-# Block group data - no income table so foregoing BG's now.
+# Census Variables
 # --------------------------------------------------------------------------
 
-# unzip("~/git/sensitive_communities/data/ca_tracts_bgs.zip")
-# unzip("~/git/sensitive_communities/data/rent12_bgs.csv.zip")
+sc_vars <- 
+c('totrent' = 'B25003_003', 'totten' = 'B25003_001', 'colenroll' = 'B14007_017', 'proenroll' = 'B14007_018', 'totenroll' = 'B14007_001', 'rb_55' = 'B25070_010', 'rb_tot' = 'B25070_001', 'medrent' = 'B25064_001', 'totrace' = 'B03002_001','White' = 'B03002_003','Black' = 'B03002_004','Asian' = 'B03002_006','Latinx' = 'B03002_012','totwelf' = 'B19057_001', 'welf' = 'B19057_002','povfamh' = 'B17017_003','povnonfamh' = 'B17017_020','totpov' = 'B17017_001', 'unemp' = 'B23025_005', 'totunemp' = 'B23025_001', 'femfamheadch' = 'B11005_007', 'femnonfamheadch' = 'B11005_010', 'totfhc' = 'B11005_001', 'mhhinc' = 'B19013_001', 'rb_34.9' = 'B25070_007', 'rb_39.9' = 'B25070_008', 'rb_49.9' = 'B25070_009', 'rb_55' = 'B25070_010', 'toted' = 'B15003_001', 'bach' = 'B15003_022', 'mas' = 'B15003_023', 'pro' = 'B15003_024', 'doc' = 'B15003_025', 'HHIncTenRent' = 'B25118_014', 'HHIncTenRent_5' = 'B25118_015', 'HHIncTenRent_10' = 'B25118_016', 'HHIncTenRent_15' = 'B25118_017', 'HHIncTenRent_20' = 'B25118_018', 'HHIncTenRent_25' = 'B25118_019', 'HHIncTenRent_35' = 'B25118_020', 'HHIncTenRent_50' = 'B25118_021', 'HHIncTenRent_75' = 'B25118_022', 'HHIncTenRent_100' = 'B25118_023', 'HHIncTenRent_150' = 'B25118_024', 'HHIncTenRent_151' = 'B25118_025') 
 
-# bg <-
-# 	st_read("~/git/sensitive_communities/data/ca_tracts_bgs/ca_tracts_bgs.shp") %>%
-# 	st_as_sf() %>%
-# 	st_set_geometry(NULL)
-
-# bgdf12 <- fread("~/git/sensitive_communities/data/rent12_bgs.csv")
-
-# bg12 <-
-# 	get_acs(
-# 		geography = "block group",
-# 		variables = dis_var,
-# 		state = "CA",
-# 		county = NULL,
-# 		geometry = TRUE,
-# 		cache_table = TRUE,
-# 		output = "wide",
-# 		year = 2017
-# 		)
-
-
-
-# ctys <- counties(state = "CA", cb = TRUE, class = "sf") %>%
-# pull(NAME) %>% unique()
-
-# bgs12 <- map_df(ctys, function(cty) {
-# 	get_acs(
-# 		geography = "block group",
-# 		variables = dis_var,
-# 		state = "CA",
-# 		county = "Alameda",
-# 		geometry = FALSE,
-# 		cache_table = TRUE,
-# 		output = "wide",
-# 		year = 2012
-# 		)
-# })
+# source("~/git/sensitive_communities/code/vars.r") ### Replace ###
 
 #
 # County data
 # --------------------------------------------------------------------------
 
-county_acsdata <- function(year)
+# County data extraction function
+county_acsdata <- function(year, vars)
 	get_acs(
 		geography = "county",
-		variables = dis_var,
+		variables = vars,
 		state = "CA",
 		county = NULL,
 		geometry = FALSE,
 		cache_table = TRUE,
 		output = "wide",
 		year = year
-		) %>%
+		) 
+
+# Build county data
+co_data <-
+	left_join(county_acsdata(2012, c('medrent' = 'B25064_001')), 
+			  county_acsdata(2017, sc_vars), by = "GEOID") %>%
 	group_by(GEOID) %>%
 	summarise(
-		co_medinc = mhhincE,
+		co_medinc = case_when(mhhincM/mhhincE >= .4 ~ NA_real_, 
+							  TRUE ~ mhhincE),
 		co_li = co_medinc*.8,
 		co_vli = co_medinc*.5,
 		co_eli = co_medinc*.3,
 		co_rentprop = totrentE/tottenE,
 		co_rb30 = (rb_34.9E+rb_39.9E+rb_49.9E+rb_55E)/rb_totE,
 		co_rb50 = rb_55E/rb_totE,
-		co_medrent = medrentE,
+		co_medrent = medrentE.y,
 		co_toted = totedE,
 		co_bachplus = sum(bachE, masE, proE, docE),
 		co_meded = median(co_bachplus/co_toted)
 		)
 
-co_data <-
-	left_join(county_acsdata(2012), county_acsdata(2017), by = "GEOID")
-
 #
-# Download CA tracts as ESRI shapefiles with no data (will join below)
+# Tract data
 # --------------------------------------------------------------------------
 
-# Download shapefile
-ct <- tracts(state = "CA", cb = TRUE)
+# Download tract shapefile
+ct <- tracts(state = "CA", cb = TRUE) # cb option pulls a smaller shapefile
+
+# Tract data extraction
+tr_data <- function(year, vars)
+	get_acs(
+		geography = "tract",
+		variables = vars,
+		state = "CA",
+		county = NULL,
+		geometry = FALSE,
+		cache_table = TRUE,
+		output = "wide",
+		year = year
+		)
+
+### LEFT OFF HERE ### Editing and adding MOE edits
 
 # create county join ID
 ct@data <-
@@ -145,37 +111,16 @@ ct@data <-
 # Join County and ACS tract data to ct shapefile
 ct@data <-
 	left_join(ct@data, co_data, by = c("county" = "GEOID")) %>%
-	left_join(.,tr_data(2012), by = "GEOID") %>%
-	left_join(.,tr_data(2017), by = "GEOID")
-
-#
-# Transit Rich Areas
-# --------------------------------------------------------------------------
-
-unzip("~/git/sensitive_communities/data/TransitRichAreas4326.zip")
-transit <- st_read("~/git/sensitive_communities/data/TransitRichAreas4326/Transit Rich Areas 4326.shp")
+	left_join(.,tr_data(2012, c('medrent' = 'B25064_001')), by = "GEOID") %>%
+	left_join(.,tr_data(2017, sc_vars), by = "GEOID")
 
 # ==========================================================================
 # Create variables
 # ==========================================================================
 
-# ==========================================================================
-# Change income to renter income
-# ==========================================================================
-
-ri_names12 <- c(
-	'HHIncTenRent_5E.x' = 4999, # Renter occupied!!Less than $5,000
-	'HHIncTenRent_10E.x' = 9999, # Renter occupied!!$5,000 to $9,999
-	'HHIncTenRent_15E.x' = 14999, # Renter occupied!!$10,000 to $14,999
-	'HHIncTenRent_20E.x' = 19999, # Renter occupied!!$15,000 to $19,999
-	'HHIncTenRent_25E.x' = 24999, # Renter occupied!!$20,000 to $24,999
-	'HHIncTenRent_35E.x' = 34999, # Renter occupied!!$25,000 to $34,999
-	'HHIncTenRent_50E.x' = 49999, # Renter occupied!!$35,000 to $49,999
-	'HHIncTenRent_75E.x' = 74999, # Renter occupied!!$50,000 to $74,999
-	'HHIncTenRent_100E.x' = 99999, # Renter occupied!!$75,000 to $99,999
-	'HHIncTenRent_150E.x' = 149999, # Renter occupied!!$100,000 to $149,999
-	'HHIncTenRent_151E.x' = 150000 # Renter occupied!!$150,000 or more
-	)
+#
+# Low income categories
+# --------------------------------------------------------------------------
 
 ri_names17 <- c(
 	'HHIncTenRent_5E.y' = 4999, # Renter occupied!!Less than $5,000
@@ -192,75 +137,13 @@ ri_names17 <- c(
 	)
 
 
-trli12 <-
+lidata <-
 	ct@data %>%
 	select(GEOID,
 		   COUNTYFP,
-		   co_medinc.x,
-		   HHInc_TotalE.x,
-		   HHIncTenRentE.x:HHIncTenRent_151E.x,
-		   -ends_with("M.x")) %>%
-	group_by(GEOID) %>%
-	mutate(
-		LI_val = co_medinc.x*.8,
-		VLI_val = co_medinc.x*.5,
-		ELI_val = co_medinc.x*.3
-		) %>%
-	gather(
-		r_medinc_cat,
-		r_medinc_cat_count,
-		HHIncTenRent_5E.x:HHIncTenRent_151E.x
-		) %>%
-	mutate_at(vars(r_medinc_cat), ~ri_names12
-		) %>%
-	mutate(
-		bottom_inccat = case_when(r_medinc_cat <= 4999 ~ r_medinc_cat - 4999,
-					   			  r_medinc_cat >= 9999 &
-								  r_medinc_cat <= 24999 ~ r_medinc_cat - 4999,
-								  r_medinc_cat == 34999 ~ r_medinc_cat - 9999,
-								  r_medinc_cat == 49999 ~ r_medinc_cat - 14999,
-								  r_medinc_cat == 74999 ~ r_medinc_cat - 24999,
-								  r_medinc_cat == 99999 ~ r_medinc_cat - 24999,
-								  r_medinc_cat == 149999 ~ r_medinc_cat - 49999,
-								  r_medinc_cat == 150000 ~ 150000,
-								  TRUE ~ NA_real_),
-		top_inccat = r_medinc_cat
-		) %>%
-	mutate(
-		LI = case_when(LI_val >= top_inccat ~ 1,
-					   LI_val <= top_inccat &
-		   			   LI_val >= bottom_inccat ~
-	   				   (LI_val - bottom_inccat)/(top_inccat - bottom_inccat),
-		   			   TRUE ~ 0),
-		VLI = case_when(VLI_val >= top_inccat ~ 1,
-					 	VLI_val <= top_inccat &
-			   			VLI_val >= bottom_inccat ~
-						(VLI_val - bottom_inccat)/(top_inccat - bottom_inccat),
-						TRUE ~ 0),
-		ELI = case_when(ELI_val >= top_inccat ~ 1,
-			 		    ELI_val <= top_inccat &
-						ELI_val >= bottom_inccat ~
-						(ELI_val - bottom_inccat)/(top_inccat - bottom_inccat),
-						TRUE ~ 0),
-		tr_totalinc12 = sum(r_medinc_cat_count, na.rm = TRUE),
-		tr_LI_count12 = sum(LI*r_medinc_cat_count, na.rm = TRUE),
-		tr_VLI_count12 = sum(VLI*r_medinc_cat_count, na.rm = TRUE),
-		tr_ELI_count12 = sum(ELI*r_medinc_cat_count, na.rm = TRUE),
-		tr_LI_prop12 = tr_LI_count12/tr_totalinc12,
-		tr_VLI_prop12 = tr_VLI_count12/tr_totalinc12,
-		tr_ELI_prop12 = tr_ELI_count12/tr_totalinc12
-		) %>%
-	select(GEOID, COUNTYFP, LI_val:ELI_val, tr_totalinc12:tr_ELI_prop12) %>%
-	distinct() %>%
-	ungroup()
-
-trli17 <-
-	ct@data %>%
-	select(GEOID,
-		   COUNTYFP,
-		   co_medinc.y,
-		   HHInc_TotalE.y,
-		   HHIncTenRentE.y:HHIncTenRent_151E.y,
+		   co_medinc,
+		   HHInc_TotalE,
+		   HHIncTenRentE:HHIncTenRent_151E,
 		   -ends_with("M.y")) %>%
 	group_by(GEOID) %>%
 	mutate(
@@ -314,10 +197,6 @@ trli17 <-
 		) %>%
 	select(GEOID, COUNTYFP, LI_val:ELI_val,tr_totalinc17:tr_ELI_prop17) %>%
 	distinct() %>%
-	ungroup()
-
-lidata <-
-	left_join(trli12, trli17, by = c("GEOID", "COUNTYFP")) %>%
 	group_by(COUNTYFP) %>%
 	mutate(
 		co_totalinc12 = sum(tr_totalinc12, na.rm = TRUE),
@@ -458,7 +337,7 @@ source("~/git/Functions/NeighType_Fun.R")
 cal_nt <-
 	ntdf(state = "CA") %>%
 	select(GEOID,NeighType) %>%
-	mutate(v_poc = case_when(NeighType == "White-Asian" ~ 0,
+	mutate(v_poc = case_when(# NeighType == "White-Asian" ~ 0,
 							 NeighType == "All White" ~ 0,
 							 NeighType == "White-Shared" ~ 0,
 							 TRUE ~ 1))
@@ -691,9 +570,9 @@ final_df <-
 		v_ELI = case_when(tr_propstudent17 < .20 & # v2
 		   				tr_ELI_prop17 > co_ELI_prop17 ~ 1,
 		   				TRUE ~ 0),
-		v_VLI = case_when(tr_propstudent17 < .20 & # v2
-		   				tr_VLI_prop17 > co_VLI_prop17 ~ 1, # v2
-		   				TRUE ~ 0),
+		# v_VLI = case_when(tr_propstudent17 < .20 & # v2
+		#    				tr_VLI_prop17 > co_VLI_prop17 ~ 1, # v2
+		#    				TRUE ~ 0),
 		v_VLI_med = case_when(tr_propstudent17 < .20 & # v2
 		   				tr_VLI_prop17 > co_VLI_propmed17 ~ 1, # v2
 		   				TRUE ~ 0),
@@ -722,6 +601,7 @@ final_df <-
 		unemp = unempE.y/totunempE.y,
 		pfemhhch = sum(femfamheadchE.y, femnonfamheadchE.y, na.rm = TRUE)/totfhcE.y,
 		pPOC = (totraceE.y - WhiteE.y)/totraceE.y,
+
 # 		`Scenario 01` = case_when(sum(v_renters_co, v_ELI, na.rm = TRUE) == 2 &
 # 						   sum(dp_chrent_co, dp_rentgap_10) >=1 ~ TRUE),
 # 		`Scenario 02` = case_when(sum(v_renters_co, v_ELI, na.rm = TRUE) == 2 &
@@ -769,10 +649,10 @@ final_df <-
 
 # 		`Scenario 21` = case_when(sum(v_renters_50p, v_ELI, v_rb, na.rm = TRUE) == 3 &
 # 						   sum(dp_chrent_co, dp_rentgap_10) >=1 ~ TRUE),
-# 		`Scenario 22` = case_when(sum(v_renters_50p,
-# 						`			  v_ELI,
-# 									  v_rb, na.rm = TRUE) == 3 &
-# 						   sum(dp_chrent_co, dp_rentgap_co) >=1 ~ TRUE),
+		`Scenario 22` = case_when(sum(v_renters_50p,
+									  v_ELI,
+									  v_rb, na.rm = TRUE) == 3 &
+						   sum(dp_chrent_co, dp_rentgap_co) >=1 ~ TRUE),
 # 		`Scenario 23` = case_when(sum(v_renters_50p, v_ELI, v_rb, na.rm = TRUE) == 3 &
 # 						   sum(dp_chrent_10, dp_rentgap_10) >=1 ~ TRUE),
 # 		`Scenario 24` = case_when(sum(v_renters_50p, v_ELI, v_rb, na.rm = TRUE) == 3 &
@@ -1003,6 +883,15 @@ final_df <-
 				   		  pPOC >= .3 &
 				   		  tr_propstudent17 < .20 ~ TRUE
 				   		  ),
+		`Scenario 52b` = case_when(v_VLI_med == 1 &
+								  sum(v_renters_40p,
+							  v_rbVLI_50rb, na.rm = TRUE) >= 1 &
+				   		  sum(dp_chrent_co,
+				   		  	  dp_rentgap_co) >= 1 &
+				   		  totraceE.y >= 500 &
+				   		  pPOC >= .3 &
+				   		  tr_propstudent17 < .20 ~ TRUE
+				   		  ),
 		`Scenario 53` = case_when(v_VLI_med == 1 &
 								  sum(v_poc,
 						  	  v_renters_50p,
@@ -1013,75 +902,40 @@ final_df <-
 				   		  pPOC >= .3 &
 				   		  tr_propstudent17 < .20 ~ TRUE
 				   		  ),
-		sc52_tier1 = case_when(v_VLI_med == 1 &
-								 sum(v_poc,
-									 v_renters_40p,
-									 v_rbLI_50rb, na.rm = TRUE) >= 2 &
-								 sum(dp_chrent_co,
-									 dp_rentgap_co) >= 1 &
-								 totraceE.y >= 500 &
-								 pPOC >= .3 &
-								 tr_propstudent17 < .20 ~ "Heightened Sensitivity"),
-		sc52_tier2 = case_when(v_VLI_med == 1 &
-								 sum(v_poc,
-									 v_renters_40p,
-									 v_rbLI_50rb, na.rm = TRUE) >= 2 &
-								 totraceE.y >= 500 &
-								 pPOC >= .3 &
-								 tr_propstudent17 < .20 ~ "Vulnerable"),
-		sc52_tier3PV = case_when(v_VLI_med == 1 &
-								   v_poc == 1 &
-								   totraceE.y >= 500 &
-								   tr_propstudent17 < .20 ~
-								   "Some Vulnerability - POC+VLI"),
-		sc52_tier3PRB = case_when(v_poc == 1 &
-								   v_rbVLI_50rb == 1 &
-								   totraceE.y >= 500 &
-								   tr_propstudent17 < .20 ~
-								   "Some Vulnerability - POC+RB"),
-		sc52_tier3PR = case_when(v_poc == 1 &
-								   v_renters_40p == 1 &
-								   totraceE.y >= 500 &
-								   tr_propstudent17 < .20 ~
-								   "Some Vulnerability - POC+Renters"),
-		sc52_tier3VLI = case_when(v_VLI_med == 1 &
-								    totraceE.y >= 500 &
-								    tr_propstudent17 < .20 ~
-								    "Some Vulnerability - VLI Alone"),
-		sc52_tier3RBV = case_when(v_VLI_med == 1 &
-									v_rbVLI_50rb == 1 &
-								    totraceE.y >= 500 &
-								    tr_propstudent17 < .20 ~
-								    "Some Vulnerability - VLI+RB"),
-		`sc52_tier3RV` = case_when(v_VLI_med == 1 &
-								   v_rbVLI_50rb == 1 &
-								   totraceE.y >= 500 &
-								   tr_propstudent17 < .20 ~
-								   "Some Vulnerability - Renter+VLI")
+		tier1 = case_when(v_VLI_med == 1 &
+						  sum(v_poc,
+							  v_renters_40p,
+							  v_rbLI_50rb, na.rm = TRUE) >= 2 &
+						  sum(dp_chrent_co,
+							  dp_rentgap_co) >= 1 &
+						  totraceE.y >= 500 &
+						  pPOC >= .3 &
+						  tr_propstudent17 < .20 ~ "Heightened Sensitivity"),
+		tier2 = case_when(v_VLI_med == 1 &
+						  sum(v_poc,
+							  v_renters_40p,
+							  v_rbLI_50rb, na.rm = TRUE) >= 2 &
+						  totraceE.y >= 500 &
+						  pPOC >= .3 &
+						  tr_propstudent17 < .20 ~ "Vulnerable"),
+		tier3 = case_when(sum(v_poc, v_VLI_med, na.rm = TRUE) == 2 |
+						  sum(v_poc, v_rbLI_50rb, na.rm = TRUE) == 2|
+						  sum(v_poc, v_renters_40p, na.rm = TRUE) == 2|
+						  v_VLI_med == 1 |
+						  sum(v_VLI_med, v_rbLI_50rb, na.rm = TRUE) == 2|
+						  sum(v_VLI_med, v_renters_40p, na.rm = TRUE) == 2 ~ "Some Vulnerability")
 		) %>%
 ungroup()
 
+# fwrite(final_df %>% st_set_geometry(NULL), file = "~/data/temp/191114_scdata.csv")
 
-# Issues:
-# 	1. should we use median of medians for county medians?
-#
+final_df %>%
+	select(pPOC) %>% hist(pPOC)
+hist(final_df$pPOC)
 
-# POC+Renter
-# VLI alone
-# POC+Renter
-# RB+VLI
-# Renter+VLI
-
-
-
-
-
-
-#
-# Tiers
-# --------------------------------------------------------------------------
-
-
+ggplot(data = final_df, aes(pPOC, tr_VLI_prop17)) +
+	geom_point() +
+	geom_smooth()
 
 #
 # Advocate highlights
@@ -1168,18 +1022,64 @@ sen_map3 <- function(scen, renters, li, lirb, rb, chrent, rentgap)
 	sen_map1(scen, renters, li, lirb, rb, chrent, rentgap) +
 	tm_layout(title = paste0(scen, ": v_POC, ",renters,", ", li, ", ", rb, ", ", chrent, ", ", rentgap))
 
-sen_map4 <- function(scen,
+sen_map4 <- function(t1,
+					 t2_df,
+					 t2,
+					 t3_df,
+					 t3,
 					 renters,
 					 li,
 					 lirb,
 					 rb,
 					 chrent,
-					 rentgap,
-					 t2,
-					 t3,
-					 t3title)
-	sen_map1(scen, renters, li, lirb, rb, chrent, rentgap) +
-			tm_shape(final_df, name = "Tier 2 - Vulnerable Communities") +
+					 rentgap)
+tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
+			tm_shape(t3_df, name = "Tier 3 - Some Vulnerability") +
+			tm_polygons(t3,
+			palette = c("#4daf4a","#4daf4a"),
+			label = "Tier 3 - Some Vulnerability",
+			alpha = .9,
+			border.alpha = .15,
+			border.color = "gray",
+			colorNA = NULL,
+			title = "",
+			id = "popup_text",
+			popup.vars = c("Tot Pop" = "totraceE.y",
+						   "Tot HH" = "tottenE.y",
+						   "% Rent" = "tr_rentprop17",
+						   "$ Rent" = "tr_medrent17",
+						   "$ R Lag" = "tr_medrent17.lag",
+						   "$ R Gap" = "tr_rentgap",
+						   "Ch Rent" = "tr_chrent",
+						   "Ch R Lag" = "tr_chrent.lag",
+						   "% RB" = "tr_rbprop17",
+						   "% inc x rb " = lirb,
+						   "% ELI" = "tr_ELI_prop17",
+						   "% VLI" = "tr_VLI_prop17",
+						   "% Stud." = "tr_propstudent17",
+						   "----------" = "text",
+						   "Neigh." = "NeighType",
+						   "% White" = "pwhite",
+						   "% Black" = "pblack",
+						   "% Asian" = "pasian",
+						   "% Lat" = "platinx",
+						   "% Other" = "pother",
+						   "% POC" = "pPOC",
+						   "% Welf" = "pwelfare",
+						   "% Pov" = "ppoverty",
+						   "% Unemp" = "unemp",
+						   "%FHHw/C"= "pfemhhch",
+						   "----------" = "text",
+						   "SC Criteria" = "text",
+						   "----------" = "text",
+						   "POC" = "v_poc",
+						   "Renters" = renters,
+						   "LI_Cat" = li,
+						   "RB" = rb,
+						   "Ch Rent" = chrent,
+						   "Rent Gap" = rentgap
+						   )) +
+			tm_shape(t2_df, name = "Tier 2 - Vulnerable Communities") +
 			tm_polygons(t2,
 			palette = c("#377eb8","#377eb8"),
 			label = "Tier 2 - Vulnerable Communities",
@@ -1225,10 +1125,11 @@ sen_map4 <- function(scen,
 						   "Rent Gap" = rentgap
 						   ),
 			popup.format = list(digits=2)) +
-			tm_shape(final_df, name = t3title) +
-			tm_polygons(t3,
-			palette = c("#4daf4a","#4daf4a"),
-			label = t3title,
+	tm_shape(final_df, name = "Sensitive Communities Layer") +
+	tm_polygons(t1,
+			# palette = c("#FF6633","#FF6633"),
+			palette = c("#e41a1c","#e41a1c"),
+			label = "Sensitive Communities",
 			alpha = .9,
 			border.alpha = .15,
 			border.color = "gray",
@@ -1269,8 +1170,10 @@ sen_map4 <- function(scen,
 						   "RB" = rb,
 						   "Ch Rent" = chrent,
 						   "Rent Gap" = rentgap
-						   )) +
-	tm_layout(title = paste0(scen, ": v_POC, ",renters,", ", li, ", ", rb, ", ", chrent, ", ", rentgap))
+						   ),
+			popup.format = list(digits=2)) +
+	tm_layout(title = paste0("Scenario 52: v_POC, ",renters,", ", li, ", ", rb, ", ", chrent, ", ", rentgap)) +
+	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
 
 save_map <- function(x,y)
 	tmap_save(x, paste0("~/git/sensitive_communities/docs/", y, ".html"))
@@ -1340,12 +1243,28 @@ scen51 <- sen_map3("Scenario 51", "v_renters_40p", "v_VLI", "irELI_50p", "v_rbEL
 scen52 <- sen_map3("Scenario 52", "v_renters_40p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co")
 scen53 <- sen_map3("Scenario 53", "v_renters_50p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co")
 
-tsc52pv <- sen_map4("sc52_tier1", "v_renters_40p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co", "sc52_tier2","sc52_tier3PV","Tier 3 - POC + VLI")
-tsc52prb <- sen_map4("sc52_tier1", "v_renters_40p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co", "sc52_tier2","sc52_tier3PRB","Tier 3 - POC + Rent Burden (Inc x RB)")
-tsc52pr <- sen_map4("sc52_tier1", "v_renters_40p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co", "sc52_tier2","sc52_tier3PR","Tier 3 - POC + Renters")
-tsc52v <- sen_map4("sc52_tier1", "v_renters_40p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co", "sc52_tier2","sc52_tier3VLI", "Tier 3 - VLI Alone")
-tsc52vrb <- sen_map4("sc52_tier1", "v_renters_40p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co", "sc52_tier2","sc52_tier3RBV","Tier 3 - VLI + Rent Burden (inc x rb)")
-tsc52vr <- sen_map4("sc52_tier1", "v_renters_40p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co", "sc52_tier2", "sc52_tier3RV", "Tier 3 - VLI + Renters")
+t2_df <-
+	final_df %>%
+	filter(tier2 == "Vulnerable")
+
+t3_df <-
+	final_df %>%
+	filter(tier3 == "Some Vulnerability")
+
+
+tiermap1 <-
+	sen_map4(t1 = "tier1",
+			 t2_df = t2_df,
+			 t2 = "tier2",
+			 t3_df = t3_df,
+			 t3 = "tier3",
+			 renters = "v_renters_40p",
+			 li = "v_VLI_med",
+			 lirb = "irLI_50p",
+			 rb = "v_rbLI_50rb",
+			 chrent = "dp_chrent_co",
+			 rentgap = "dp_rentgap_co")
+
 
 
 final_df %>%
@@ -1397,6 +1316,12 @@ final_df %>%
 	pull(`Scenario 51`) %>%
 	sum(na.rm = TRUE)
 final_df %>%
+	pull(`Scenario 52`) %>%
+	sum(na.rm = TRUE)
+final_df %>%
+	pull(`Scenario 52b`) %>%
+	sum(na.rm = TRUE)
+final_df %>%
 	pull(`Scenario 53`) %>%
 	sum(na.rm = TRUE)
 
@@ -1440,24 +1365,24 @@ final_df
 # save_map(scen32, "scen32")
 # save_map(scen33, "scen33")
 # save_map(scen34, "scen34")
-save_map(scen36, "scen36")
-save_map(scen37, "scen37")
-save_map(scen38, "scen38")
-save_map(scen39, "scen39")
-save_map(scen40, "scen40")
-save_map(scen41, "scen41")
-save_map(scen42, "scen42")
-save_map(scen43, "scen43")
+# save_map(scen36, "scen36")
+# save_map(scen37, "scen37")
+# save_map(scen38, "scen38")
+# save_map(scen39, "scen39")
+# save_map(scen40, "scen40")
+# save_map(scen41, "scen41")
+# save_map(scen42, "scen42")
+# save_map(scen43, "scen43")
 
-save_map(scen44, "scen44")
-save_map(scen45, "scen45")
-save_map(scen46, "scen46")
-save_map(scen47, "scen47")
-save_map(scen48, "scen48")
-save_map(scen49, "scen49")
-save_map(scen50, "scen50")
-save_map(scen51, "scen51")
-save_map(scen52, "scen52")
+# save_map(scen44, "scen44")
+# save_map(scen45, "scen45")
+# save_map(scen46, "scen46")
+# save_map(scen47, "scen47")
+# save_map(scen48, "scen48")
+# save_map(scen49, "scen49")
+# save_map(scen50, "scen50")
+# save_map(scen51, "scen51")
+# save_map(scen52, "scen52")
 
 # Saving tier maps
 save_map(tsc52pv, "tsc52pv")
@@ -1466,6 +1391,7 @@ save_map(tsc52pr, "tsc52pr")
 save_map(tsc52v, "tsc52v")
 save_map(tsc52vrb, "tsc52vrb")
 save_map(tsc52vr, "tsc52vr")
+save_map(tiermap1, "tiermap1")
 
 # ==========================================================================
 # Get tract counts for each scenario
