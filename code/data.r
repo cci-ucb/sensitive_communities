@@ -28,6 +28,16 @@ options(tigris_use_cache = TRUE)
 # Data
 # ==========================================================================
 
+###
+# Measures
+# 	% VLI (<50% AMI) > county median for % VLI; and < 20% student
+# 	% renter occupied units > 40%
+# 	% rent burdened LI renters (<80% AMI) (above 30% of income spent on rent) > county median
+# 	>30% POC, and POC neighborhood type (not All White, White Shared, or White-Asian)
+# 	∆ rent: % Change in median rent > median for county or change in extralocal rent> county median
+# 	rent gap: Difference > county median difference
+###
+
 #
 # Transit Rich Areas
 # --------------------------------------------------------------------------
@@ -40,97 +50,139 @@ transit <- st_read("~/git/sensitive_communities/data/TransitRichAreas4326/Transi
 # --------------------------------------------------------------------------
 
 sc_vars <-
-c('totrent' = 'B25003_003',
-'totten' = 'B25003_001',
-'colenroll' = 'B14007_017',
-'proenroll' = 'B14007_018',
-'totenroll' = 'B14007_001',
-'rb_55' = 'B25070_010',
-'rb_tot' = 'B25070_001',
-'medrent' = 'B25064_001',
-'totrace' = 'B03002_001',
-'White' = 'B03002_003',
-'Black' = 'B03002_004',
-'Asian' = 'B03002_006',
-'Latinx' = 'B03002_012',
-'totwelf' = 'B19057_001',
-'welf' = 'B19057_002',
-'povfamh' = 'B17017_003',
-'povnonfamh' = 'B17017_020',
-'totpov' = 'B17017_001',
-'unemp' = 'B23025_005',
-'totunemp' = 'B23025_001',
-'femfamheadch' = 'B11005_007',
-'femnonfamheadch' = 'B11005_010',
-'totfhc' = 'B11005_001',
-'mhhinc' = 'B19013_001',
-'rb_34.9' = 'B25070_007',
-'rb_39.9' = 'B25070_008',
-'rb_49.9' = 'B25070_009',
-'rb_55' = 'B25070_010',
-'toted' = 'B15003_001',
-'bach' = 'B15003_022',
-'mas' = 'B15003_023',
-'pro' = 'B15003_024',
-'doc' = 'B15003_025',
-'HHIncTenRent' = 'B25118_014',
-'HHIncTenRent_5' = 'B25118_015',
-'HHIncTenRent_10' = 'B25118_016',
-'HHIncTenRent_15' = 'B25118_017',
-'HHIncTenRent_20' = 'B25118_018',
-'HHIncTenRent_25' = 'B25118_019',
-'HHIncTenRent_35' = 'B25118_020',
-'HHIncTenRent_50' = 'B25118_021',
-'HHIncTenRent_75' = 'B25118_022',
-'HHIncTenRent_100' = 'B25118_023',
-'HHIncTenRent_150' = 'B25118_024',
-'HHIncTenRent_151' = 'B25118_025')
+c(
+### AMI Variables
+	'HHInc_Total' = 'B19001_001', # Total HOUSEHOLD INCOME
+	'HHInc_10' = 'B19001_002', # Less than $10,000 HOUSEHOLD INCOME
+	'HHInc_15' = 'B19001_003', # $10,000 to $14,999 HOUSEHOLD INCOME
+	'HHInc_20' = 'B19001_004', # $15,000 to $19,999 HOUSEHOLD INCOME
+	'HHInc_25' = 'B19001_005', # $20,000 to $24,999 HOUSEHOLD INCOME
+	'HHInc_30' = 'B19001_006', # $25,000 to $29,999 HOUSEHOLD INCOME
+	'HHInc_35' = 'B19001_007', # $30,000 to $34,999 HOUSEHOLD INCOME
+	'HHInc_40' = 'B19001_008', # $35,000 to $39,999 HOUSEHOLD INCOME
+	'HHInc_45' = 'B19001_009', # $40,000 to $44,999 HOUSEHOLD INCOME
+	'HHInc_50' = 'B19001_010', # $45,000 to $49,999 HOUSEHOLD INCOME
+	'HHInc_60' = 'B19001_011', # $50,000 to $59,999 HOUSEHOLD INCOME
+	'HHInc_75' = 'B19001_012', # $60,000 to $74,999 HOUSEHOLD INCOME
+	'HHInc_100' = 'B19001_013', # $75,000 to $99,999 HOUSEHOLD INCOME
+	'HHInc_125' = 'B19001_014', # $100,000 to $124,999 HOUSEHOLD INCOME
+	'HHInc_150' = 'B19001_015', # $125,000 to $149,999 HOUSEHOLD INCOME
+	'HHInc_200' = 'B19001_016', # $150,000 to $199,999 HOUSEHOLD INCOME
+	'HHInc_250' = 'B19001_017', # $200,000 or more HOUSEHOLD INCOME
+### Renting household variables
+	'totten' = 'B25003_001', # Total # households
+	'totrent' = 'B25003_003', # total # renting households
+### POC variables
+	'race_tot' = 'B03002_001',
+	'race_White' = 'B03002_003',
+	'race_Black' = 'B03002_004',
+	'race_Asian' = 'B03002_006',
+	'race_Latinx' = 'B03002_012',
+### Median Rent
+	'medrent' = 'B25064_001',
+### Students
+	'st_totenroll' = 'B14007_001',
+	'st_colenroll' = 'B14007_017',
+	'st_proenroll' = 'B14007_018',
+### Additional Pop-up Variables
+	# Overall rent-burden
+	'rb_tot' = 'B25070_001',
+	'rb_34.9' = 'B25070_007',
+	'rb_39.9' = 'B25070_008',
+	'rb_49.9' = 'B25070_009',
+	'rb_55' = 'B25070_010',
+	# On public assistance
+	'welf_tot' = 'B19057_001',
+	'welf' = 'B19057_002',
+	# Poverty
+	'pov_tot' = 'B17017_001',
+	'pov_famh' = 'B17017_003',
+	'pov_nonfamh' = 'B17017_020',
+	# Unemployed
+	'unemp_tot' = 'B23025_001',
+	'unemp' = 'B23025_005',
+	# female headed households
+	'fhh_tot' = 'B11005_001',
+	'fhh_famheadch' = 'B11005_007',
+	'fhh_nonfamheadch' = 'B11005_010',
+	# Median household income
+	'mhhinc' = 'B19013_001')
 
-# source("~/git/sensitive_communities/code/vars.r") ### Replace ###
-
-#
-# County data
-# --------------------------------------------------------------------------
-
-# County data extraction function
-county_acsdata <- function(year, vars)
-	get_acs(
-		geography = "county",
-		variables = vars,
-		state = "CA",
-		county = NULL,
-		geometry = FALSE,
-		cache_table = TRUE,
-		output = "wide",
-		year = year
-		)
-
-# Build county data
-co_data <-
-	left_join(county_acsdata(2012, c('medrent' = 'B25064_001')),
-			  county_acsdata(2017, sc_vars), by = "GEOID") %>%
-	group_by(GEOID) %>%
-	summarise(
-		co_medinc = mhhincE,
-		co_li = co_medinc*.8,
-		co_vli = co_medinc*.5,
-		co_eli = co_medinc*.3,
-		co_rentprop = totrentE/tottenE,
-		co_rb30 = (rb_34.9E+rb_39.9E+rb_49.9E+rb_55E)/rb_totE,
-		co_rb50 = rb_55E/rb_totE,
-		co_medrent = medrentE.y,
-		co_toted = totedE,
-		co_bachplus = sum(bachE, masE, proE, docE),
-		co_meded = median(co_bachplus/co_toted))
+# Rent burden by LI status
+ir_var <- c(
+	'ir_tot_tot' = 'B25074_001',# Estimate!!Total
+	'ir_tot_9999' = 'B25074_002', # Estimate!!Total!!Less than $10 000
+	'ir_19_9999' = 'B25074_003', # Estimate!!Total!!Less than $10 000!!Less than 20.0 percent
+	'ir_249_9999' = 'B25074_004', # Estimate!!Total!!Less than $10 000!!20.0 to 24.9 percent
+	'ir_299_9999' = 'B25074_005', # Estimate!!Total!!Less than $10 000!!25.0 to 29.9 percent
+	'ir_349_9999' = 'B25074_006', # Estimate!!Total!!Less than $10 000!!30.0 to 34.9 percent
+	'ir_399_9999' = 'B25074_007', # Estimate!!Total!!Less than $10 000!!35.0 to 39.9 percent
+	'ir_499_9999' = 'B25074_008', # Estimate!!Total!!Less than $10 000!!40.0 to 49.9 percent
+	'ir_5plus_9999' = 'B25074_009', # Estimate!!Total!!Less than $10 000!!50.0 percent or more
+	'ir_x_9999' = 'B25074_010', # Estimate!!Total!!Less than $10 000!!Not computed
+	'ir_tot_19999' = 'B25074_011', # Estimate!!Total!!$10 000 to $19 999
+	'ir_19_19999' = 'B25074_012', # Estimate!!Total!!$10 000 to $19 999!!Less than 20.0 percent
+	'ir_249_19999' = 'B25074_013', # Estimate!!Total!!$10 000 to $19 999!!20.0 to 24.9 percent
+	'ir_299_19999' = 'B25074_014', # Estimate!!Total!!$10 000 to $19 999!!25.0 to 29.9 percent
+	'ir_349_19999' = 'B25074_015', # Estimate!!Total!!$10 000 to $19 999!!30.0 to 34.9 percent
+	'ir_399_19999' = 'B25074_016', # Estimate!!Total!!$10 000 to $19 999!!35.0 to 39.9 percent
+	'ir_499_19999' = 'B25074_017', # Estimate!!Total!!$10 000 to $19 999!!40.0 to 49.9 percent
+	'ir_5plus_19999' = 'B25074_018', # Estimate!!Total!!$10 000 to $19 999!!50.0 percent or more
+	'ir_x_19999' = 'B25074_019', # Estimate!!Total!!$10 000 to $19 999!!Not computed
+	'ir_tot_34999' = 'B25074_020', # Estimate!!Total!!$20 000 to $34 999
+	'ir_19_34999' = 'B25074_021', # Estimate!!Total!!$20 000 to $34 999!!Less than 20.0 percent
+	'ir_249_34999' = 'B25074_022', # Estimate!!Total!!$20 000 to $34 999!!20.0 to 24.9 percent
+	'ir_299_34999' = 'B25074_023', # Estimate!!Total!!$20 000 to $34 999!!25.0 to 29.9 percent
+	'ir_349_34999' = 'B25074_024', # Estimate!!Total!!$20 000 to $34 999!!30.0 to 34.9 percent
+	'ir_399_34999' = 'B25074_025', # Estimate!!Total!!$20 000 to $34 999!!35.0 to 39.9 percent
+	'ir_499_34999' = 'B25074_026', # Estimate!!Total!!$20 000 to $34 999!!40.0 to 49.9 percent
+	'ir_5plus_34999' = 'B25074_027', # Estimate!!Total!!$20 000 to $34 999!!50.0 percent or more
+	'ir_x_34999' = 'B25074_028', # Estimate!!Total!!$20 000 to $34 999!!Not computed
+	'ir_tot_49999' = 'B25074_029', # Estimate!!Total!!$35 000 to $49 999
+	'ir_19_49999' = 'B25074_030', # Estimate!!Total!!$35 000 to $49 999!!Less than 20.0 percent
+	'ir_249_49999' = 'B25074_031', # Estimate!!Total!!$35 000 to $49 999!!20.0 to 24.9 percent
+	'ir_299_49999' = 'B25074_032', # Estimate!!Total!!$35 000 to $49 999!!25.0 to 29.9 percent
+	'ir_349_49999' = 'B25074_033', # Estimate!!Total!!$35 000 to $49 999!!30.0 to 34.9 percent
+	'ir_399_49999' = 'B25074_034', # Estimate!!Total!!$35 000 to $49 999!!35.0 to 39.9 percent
+	'ir_499_49999' = 'B25074_035', # Estimate!!Total!!$35 000 to $49 999!!40.0 to 49.9 percent
+	'ir_5plus_49999' = 'B25074_036', # Estimate!!Total!!$35 000 to $49 999!!50.0 percent or more
+	'ir_x_49999' = 'B25074_037', # Estimate!!Total!!$35 000 to $49 999!!Not computed
+	'ir_tot_74999' = 'B25074_038', # Estimate!!Total!!$50 000 to $74 999
+	'ir_19_74999' = 'B25074_039', # Estimate!!Total!!$50 000 to $74 999!!Less than 20.0 percent
+	'ir_249_74999' = 'B25074_040', # Estimate!!Total!!$50 000 to $74 999!!20.0 to 24.9 percent
+	'ir_299_74999' = 'B25074_041', # Estimate!!Total!!$50 000 to $74 999!!25.0 to 29.9 percent
+	'ir_349_74999' = 'B25074_042', # Estimate!!Total!!$50 000 to $74 999!!30.0 to 34.9 percent
+	'ir_399_74999' = 'B25074_043', # Estimate!!Total!!$50 000 to $74 999!!35.0 to 39.9 percent
+	'ir_499_74999' = 'B25074_044', # Estimate!!Total!!$50 000 to $74 999!!40.0 to 49.9 percent
+	'ir_5plus_74999' = 'B25074_045', # Estimate!!Total!!$50 000 to $74 999!!50.0 percent or more
+	'ir_x_74999' = 'B25074_046', # Estimate!!Total!!$50 000 to $74 999!!Not computed
+	'ir_tot_99999' = 'B25074_047', # Estimate!!Total!!$75 000 to $99 999
+	'ir_19_99999' = 'B25074_048', # Estimate!!Total!!$75 000 to $99 999!!Less than 20.0 percent
+	'ir_249_99999' = 'B25074_049', # Estimate!!Total!!$75 000 to $99 999!!20.0 to 24.9 percent
+	'ir_299_99999' = 'B25074_050', # Estimate!!Total!!$75 000 to $99 999!!25.0 to 29.9 percent
+	'ir_349_99999' = 'B25074_051', # Estimate!!Total!!$75 000 to $99 999!!30.0 to 34.9 percent
+	'ir_399_99999' = 'B25074_052', # Estimate!!Total!!$75 000 to $99 999!!35.0 to 39.9 percent
+	'ir_499_99999' = 'B25074_053', # Estimate!!Total!!$75 000 to $99 999!!40.0 to 49.9 percent
+	'ir_5plus_99999' = 'B25074_054', # Estimate!!Total!!$75 000 to $99 999!!50.0 percent or more
+	'ir_x_99999' = 'B25074_055', # Estimate!!Total!!$75 000 to $99 999!!Not computed
+	'ir_tot_100000' = 'B25074_056', # Estimate!!Total!!$100 000 or more
+	'ir_19_100000' = 'B25074_057', # Estimate!!Total!!$100 000 or more!!Less than 20.0 percent
+	'ir_249_100000' = 'B25074_058', # Estimate!!Total!!$100 000 or more!!20.0 to 24.9 percent
+	'ir_299_100000' = 'B25074_059', # Estimate!!Total!!$100 000 or more!!25.0 to 29.9 percent
+	'ir_349_100000' = 'B25074_060', # Estimate!!Total!!$100 000 or more!!30.0 to 34.9 percent
+	'ir_399_100000' = 'B25074_061', # Estimate!!Total!!$100 000 or more!!35.0 to 39.9 percent
+	'ir_499_100000' = 'B25074_062', # Estimate!!Total!!$100 000 or more!!40.0 to 49.9 percent
+	'ir_5plus_100000' = 'B25074_063', # Estimate!!Total!!$100 000 or more!!50.0 percent or more
+	'ir_x_100000' = 'B25074_064' # Estimate!!Total!!$100 000 or more!!Not computed
+	)
 
 #
 # Tract data
 # --------------------------------------------------------------------------
 
-# Download tract shapefile
-ct <- tracts(state = "CA", cb = TRUE) # cb option pulls a smaller shapefile
+	ct <- tracts(state = "CA", cb = TRUE) # cb option downloads a smaller shapefile
 
-# Tract data extraction
+### Tract data extraction
 tr_data <- function(year, vars)
 	get_acs(
 		geography = "tract",
@@ -140,25 +192,80 @@ tr_data <- function(year, vars)
 		geometry = FALSE,
 		cache_table = TRUE,
 		# output = "wide",
-		year = year
+		year = year,
+		keep_geo_vars = TRUE
 		)
 
 tr_df17 <-
 	tr_data(2017, sc_vars)
 
-test <-
+#
+# Tract data quality (based on renting hh's)
+# --------------------------------------------------------------------------
+poor_dq <-
 	tr_df17 %>%
+	filter(variable == "totrent") %>%
 	group_by(GEOID) %>%
-	mutate(est.adj = case_when(moe/estimate >= .4 ~ NA_real_,
-	# mutate(est.adj = case_when((moe/1.645)/estimate >= .6 ~ NA_real_,
-	# mutate(est.adj = (moe/1.645)/estimate),
+	mutate(quality = case_when((moe/estimate) >= .4 ~ NA_real_,
 							   TRUE ~ estimate)) %>%
-	select(-moe, -estimate) %>%
-	spread(variable, est.adj) %>% summary()
+	filter(is.na(quality)) %>%
+	select(GEOID) %>%
+	distinct() %>%
+	pull()
 
-							    %>%
-	summary()
+#
+# Select tracts
+# --------------------------------------------------------------------------
 
+df <-
+	tr_df17 %>%
+	filter(!GEOID %in% poor_dq) %>%
+	select(-moe) %>%
+	spread(variable, estimate)
+
+#
+# VLI data
+# --------------------------------------------------------------------------
+
+inc_names17 <- c(
+	'HHInc_10' = 9999, # Less than $10,000 HOUSEHOLD INCOME
+	'HHInc_15' = 14999, # $10,000 to $14,999 HOUSEHOLD INCOME
+	'HHInc_20' = 19999, # $15,000 to $19,999 HOUSEHOLD INCOME
+	'HHInc_25' = 24999, # $20,000 to $24,999 HOUSEHOLD INCOME
+	'HHInc_30' = 29999, # $25,000 to $29,999 HOUSEHOLD INCOME
+	'HHInc_35' = 34999, # $30,000 to $34,999 HOUSEHOLD INCOME
+	'HHInc_40' = 39999, # $35,000 to $39,999 HOUSEHOLD INCOME
+	'HHInc_45' = 44999, # $40,000 to $44,999 HOUSEHOLD INCOME
+	'HHInc_50' = 49999, # $45,000 to $49,999 HOUSEHOLD INCOME
+	'HHInc_60' = 59999, # $50,000 to $59,999 HOUSEHOLD INCOME
+	'HHInc_75' = 74999, # $60,000 to $74,999 HOUSEHOLD INCOME
+	'HHInc_100' = 99999, # $75,000 to $99,999 HOUSEHOLD INCOME
+	'HHInc_125' = 124999, # $100,000 to $124,999 HOUSEHOLD INCOME
+	'HHInc_150' = 149999, # $125,000 to $149,999 HOUSEHOLD INCOME
+	'HHInc_200' = 199999, # $150,000 to $199,999 HOUSEHOLD INCOME
+	'HHInc_250' = 200000, # $200,000 or more HOUSEHOLD INCOME
+	)
+
+
+vli <-
+	df %>%
+	group_by(GEOID) %>%
+	mutate(LI_val = .8*mhhinc,
+		   VLI_val = .5*mhhinc,
+		   ELI_val = .3*mhhinc) %>%
+	gather(medinc_cat, medinc_count, HHInc_10:HHInc_250) %>%
+	mutate_at(vars(medinc_cat), ~inc_names17) %>%
+	################
+	### LEFT OFF ###
+	################
+	mutate(bottom_inccat = case_when(medinc_cat <= 49999 ~ medinc_cat - 4999)
+		)
+
+
+	tr_df17 %>%
+	select(-moe) %>%
+	spread(variable, estimate) %>%
+	group_by()
 
 # create county join ID
 ct@data <-
@@ -184,17 +291,17 @@ test <-
 # --------------------------------------------------------------------------
 
 ri_names17 <- c(
-	'HHIncTenRent_5E' = 4999, # Renter occupied!!Less than $5,000
-	'HHIncTenRent_10E' = 9999, # Renter occupied!!$5,000 to $9,999
-	'HHIncTenRent_15E' = 14999, # Renter occupied!!$10,000 to $14,999
-	'HHIncTenRent_20E' = 19999, # Renter occupied!!$15,000 to $19,999
-	'HHIncTenRent_25E' = 24999, # Renter occupied!!$20,000 to $24,999 #
-	'HHIncTenRent_35E' = 34999, # Renter occupied!!$25,000 to $34,999
-	'HHIncTenRent_50E' = 49999, # Renter occupied!!$35,000 to $49,999
-	'HHIncTenRent_75E' = 74999, # Renter occupied!!$50,000 to $74,999
-	'HHIncTenRent_100E' = 99999, # Renter occupied!!$75,000 to $99,999
-	'HHIncTenRent_150E' = 149999, # Renter occupied!!$100,000 to $149,999
-	'HHIncTenRent_151E' = 150000 # Renter occupied!!$150,000 or more
+	'HHIncTenRent_5' = 4999, # Renter occupied!!Less than $5,000
+	'HHIncTenRent_10' = 9999, # Renter occupied!!$5,000 to $9,999
+	'HHIncTenRent_15' = 14999, # Renter occupied!!$10,000 to $14,999
+	'HHIncTenRent_20' = 19999, # Renter occupied!!$15,000 to $19,999
+	'HHIncTenRent_25' = 24999, # Renter occupied!!$20,000 to $24,999 #
+	'HHIncTenRent_35' = 34999, # Renter occupied!!$25,000 to $34,999
+	'HHIncTenRent_50' = 49999, # Renter occupied!!$35,000 to $49,999
+	'HHIncTenRent_75' = 74999, # Renter occupied!!$50,000 to $74,999
+	'HHIncTenRent_100' = 99999, # Renter occupied!!$75,000 to $99,999
+	'HHIncTenRent_150' = 149999, # Renter occupied!!$100,000 to $149,999
+	'HHIncTenRent_151' = 150000 # Renter occupied!!$150,000 or more
 	)
 
 
@@ -213,7 +320,7 @@ lidata <-
 	gather(
 		r_medinc_cat,
 		r_medinc_cat_count,
-		HHIncTenRent_5E:HHIncTenRent_151E) %>% group_by(r_medinc_cat) %>% count()
+		HHIncTenRent_5E:HHIncTenRent_151E) %>%
 	mutate_at(vars(r_medinc_cat), ~ri_names17) %>%
 	mutate(
 		bottom_inccat = case_when(r_medinc_cat <= 4999 ~ r_medinc_cat - 4999,
