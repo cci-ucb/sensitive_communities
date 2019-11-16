@@ -197,7 +197,10 @@ tr_data <- function(year, vars)
 		)
 
 tr_df17 <-
-	tr_data(2017, sc_vars)
+	tr_data(2017, sc_vars) %>% 
+	mutate(COUNTY = substr(GEOID, 1, 5))
+
+glimpse(tr_df17)
 
 #
 # Tract data quality (based on renting hh's)
@@ -211,7 +214,7 @@ poor_dq <-
 	filter(is.na(quality)) %>%
 	select(GEOID) %>%
 	distinct() %>%
-	pull()
+	pull() 
 
 #
 # Select tracts
@@ -228,159 +231,77 @@ df <-
 # --------------------------------------------------------------------------
 
 inc_names17 <- c(
-	'HHInc_10' = 9999, # Less than $10,000 HOUSEHOLD INCOME
-	'HHInc_15' = 14999, # $10,000 to $14,999 HOUSEHOLD INCOME
+	'HHInc_10' = 9999, # Less than $10,000 HOUSEHOLD INCOME 9999
+	'HHInc_15' = 14999, # $10,000 to $14,999 HOUSEHOLD INCOME 
 	'HHInc_20' = 19999, # $15,000 to $19,999 HOUSEHOLD INCOME
 	'HHInc_25' = 24999, # $20,000 to $24,999 HOUSEHOLD INCOME
 	'HHInc_30' = 29999, # $25,000 to $29,999 HOUSEHOLD INCOME
 	'HHInc_35' = 34999, # $30,000 to $34,999 HOUSEHOLD INCOME
 	'HHInc_40' = 39999, # $35,000 to $39,999 HOUSEHOLD INCOME
 	'HHInc_45' = 44999, # $40,000 to $44,999 HOUSEHOLD INCOME
-	'HHInc_50' = 49999, # $45,000 to $49,999 HOUSEHOLD INCOME
-	'HHInc_60' = 59999, # $50,000 to $59,999 HOUSEHOLD INCOME
+	'HHInc_50' = 49999, # $45,000 to $49,999 HOUSEHOLD INCOME 4999
+	'HHInc_60' = 59999, # $50,000 to $59,999 HOUSEHOLD INCOME 9999
 	'HHInc_75' = 74999, # $60,000 to $74,999 HOUSEHOLD INCOME
 	'HHInc_100' = 99999, # $75,000 to $99,999 HOUSEHOLD INCOME
 	'HHInc_125' = 124999, # $100,000 to $124,999 HOUSEHOLD INCOME
-	'HHInc_150' = 149999, # $125,000 to $149,999 HOUSEHOLD INCOME
+	'HHInc_150' = 149999, # $125,000 to $149,999 HOUSEHOLD INCOME 24999
 	'HHInc_200' = 199999, # $150,000 to $199,999 HOUSEHOLD INCOME
-	'HHInc_250' = 200000, # $200,000 or more HOUSEHOLD INCOME
+	'HHInc_250' = 249999 # $200,000 or more HOUSEHOLD INCOME 49999
 	)
 
+### Note, for the county median of medians, we exclude the tracts that are omitted by the MOE cut. The numbers should be close but this will tweak the median if we were to include all counties rather than our select counties. 
 
-vli <-
+df_vli <-
 	df %>%
-	group_by(GEOID) %>%
-	mutate(LI_val = .8*mhhinc,
-		   VLI_val = .5*mhhinc,
-		   ELI_val = .3*mhhinc) %>%
-	gather(medinc_cat, medinc_count, HHInc_10:HHInc_250) %>%
-	mutate_at(vars(medinc_cat), ~inc_names17) %>%
-	################
-	### LEFT OFF ###
-	################
-	mutate(bottom_inccat = case_when(medinc_cat <= 49999 ~ medinc_cat - 4999)
-		)
-
-
-	tr_df17 %>%
-	select(-moe) %>%
-	spread(variable, estimate) %>%
-	group_by()
-
-# create county join ID
-ct@data <-
-	ct@data %>%
-	mutate(county = paste0(STATEFP, COUNTYFP))
-
-# Join County and ACS tract data to ct shapefile
-ct@data <-
-	left_join(ct@data, co_data, by = c("county" = "GEOID")) %>%
-	left_join(.,tr_data(2012, c('medrent' = 'B25064_001')), by = "GEOID") %>%
-	left_join(.,tr_data(2017, sc_vars), by = "GEOID")
-
-test <-
-	ct@data %>%
-
-
-# ==========================================================================
-# Create variables
-# ==========================================================================
-
-#
-# Low income categories
-# --------------------------------------------------------------------------
-
-ri_names17 <- c(
-	'HHIncTenRent_5' = 4999, # Renter occupied!!Less than $5,000
-	'HHIncTenRent_10' = 9999, # Renter occupied!!$5,000 to $9,999
-	'HHIncTenRent_15' = 14999, # Renter occupied!!$10,000 to $14,999
-	'HHIncTenRent_20' = 19999, # Renter occupied!!$15,000 to $19,999
-	'HHIncTenRent_25' = 24999, # Renter occupied!!$20,000 to $24,999 #
-	'HHIncTenRent_35' = 34999, # Renter occupied!!$25,000 to $34,999
-	'HHIncTenRent_50' = 49999, # Renter occupied!!$35,000 to $49,999
-	'HHIncTenRent_75' = 74999, # Renter occupied!!$50,000 to $74,999
-	'HHIncTenRent_100' = 99999, # Renter occupied!!$75,000 to $99,999
-	'HHIncTenRent_150' = 149999, # Renter occupied!!$100,000 to $149,999
-	'HHIncTenRent_151' = 150000 # Renter occupied!!$150,000 or more
-	)
-
-
-lidata <-
-	ct@data %>%
-	select(GEOID,
-		   COUNTYFP,
-		   co_medinc,
-		   HHIncTenRentE:HHIncTenRent_151E) %>%
-
-	group_by(GEOID) %>%
-	mutate(
-		LI_val = co_medinc*.8,
-		VLI_val = co_medinc*.5,
-		ELI_val = co_medinc*.3) %>%
-	gather(
-		r_medinc_cat,
-		r_medinc_cat_count,
-		HHIncTenRent_5E:HHIncTenRent_151E) %>%
-	mutate_at(vars(r_medinc_cat), ~ri_names17) %>%
-	mutate(
-		bottom_inccat = case_when(r_medinc_cat <= 4999 ~ r_medinc_cat - 4999,
-					   			  r_medinc_cat >= 9999 &
-								  r_medinc_cat <= 24999 ~ r_medinc_cat - 4999,
-								  r_medinc_cat == 34999 ~ r_medinc_cat - 9999,
-								  r_medinc_cat == 49999 ~ r_medinc_cat - 14999,
-								  r_medinc_cat == 74999 ~ r_medinc_cat - 24999,
-								  r_medinc_cat == 99999 ~ r_medinc_cat - 24999,
-								  r_medinc_cat == 149999 ~ r_medinc_cat - 49999,
-								  r_medinc_cat == 150000 ~ 150000,
+	select(GEOID, 
+		   COUNTY, 
+		   mhhinc, 
+		   HHInc_10:HHInc_75) %>% 
+	group_by(COUNTY) %>% 
+	mutate(co_mhhinc = median(mhhinc, na.rm = TRUE),
+		   co_LI_val = .8*co_mhhinc,
+		   co_VLI_val = .5*co_mhhinc,
+		   co_ELI_val = .3*co_mhhinc) %>%
+	group_by(GEOID) %>% 
+	gather(medinc_cat, medinc_count, HHInc_10:HHInc_75) %>%
+	mutate_at(vars(medinc_cat), ~ inc_names17) %>%
+	mutate(bottom_inccat = case_when(medinc_cat == 9999 ~ medinc_cat - 9999, 
+									 medinc_cat > 9999 & 
+									 medinc_cat <= 49999 ~ medinc_cat - 4999, 
+									 medinc_cat == 59999 ~ medinc_cat - 9999, 
+									 medinc_cat > 59999 & 
+									 medinc_cat <= 149999 ~ medinc_cat - 24999, 
+									 medinc_cat >= 199999 ~ medinc_cat - 49999,
 								  TRUE ~ NA_real_),
-		top_inccat = r_medinc_cat) %>%
-	mutate(
-		LI = case_when(LI_val >= top_inccat ~ 1,
-					   LI_val <= top_inccat &
-					   LI_val >= bottom_inccat ~
-			   		   (LI_val - bottom_inccat)/(top_inccat - bottom_inccat),
+		top_inccat = medinc_cat,
+		LI = case_when(co_LI_val >= top_inccat ~ 1,
+					   co_LI_val <= top_inccat &
+					   co_LI_val >= bottom_inccat ~
+			   		   (co_LI_val - bottom_inccat)/(top_inccat - bottom_inccat),
 			   		   TRUE ~ 0),
-		VLI = case_when(VLI_val >= top_inccat ~ 1,
-					    VLI_val <= top_inccat &
-			   			VLI_val >= bottom_inccat ~
-			   			(VLI_val - bottom_inccat)/(top_inccat - bottom_inccat),
+		VLI = case_when(co_VLI_val >= top_inccat ~ 1,
+					    co_VLI_val <= top_inccat &
+			   			co_VLI_val >= bottom_inccat ~
+			   			(co_VLI_val - bottom_inccat)/(top_inccat - bottom_inccat),
 			   			TRUE ~ 0),
-		ELI = case_when(ELI_val >= top_inccat ~ 1,
-						ELI_val <= top_inccat &
-						ELI_val >= bottom_inccat ~
-						(ELI_val - bottom_inccat)/(top_inccat - bottom_inccat),
-						TRUE ~ 0),
-		tr_totalinc17 = sum(r_medinc_cat_count, na.rm = TRUE),
-		tr_LI_count17 = sum(LI*r_medinc_cat_count, na.rm = TRUE),
-		tr_VLI_count17 = sum(VLI*r_medinc_cat_count, na.rm = TRUE),
-		tr_ELI_count17 = sum(ELI*r_medinc_cat_count, na.rm = TRUE),
-		tr_LI_prop17 = tr_LI_count17/tr_totalinc17,
-		tr_VLI_prop17 = tr_VLI_count17/tr_totalinc17,
-		tr_ELI_prop17 = tr_ELI_count17/tr_totalinc17) %>%
-	select(GEOID, COUNTYFP, LI_val:ELI_val,tr_totalinc17:tr_ELI_prop17) %>%
-	distinct() %>%
-	group_by(COUNTYFP) %>%
-	mutate(
-		co_totalinc12 = sum(tr_totalinc12, na.rm = TRUE),
-		co_LI_count12 = sum(tr_LI_count12, na.rm = TRUE),
-		co_VLI_count12 = sum(tr_VLI_count12, na.rm = TRUE),
-		co_ELI_count12 = sum(tr_ELI_count12, na.rm = TRUE),
-		co_LI_prop12 = co_LI_count12/co_totalinc12,
-		co_VLI_prop12 = co_VLI_count12/co_totalinc12,
-		co_ELI_prop12 = co_ELI_count12/co_totalinc12,
-		co_LI_propmed12 = median(tr_LI_prop12, na.rm = TRUE),
-		co_VLI_propmed12 = median(tr_VLI_prop12, na.rm = TRUE),
-		co_ELI_propmed12 = median(tr_ELI_prop12, na.rm = TRUE),
-		co_totalinc17 = sum(tr_totalinc17, na.rm = TRUE),
-		co_LI_count17 = sum(tr_LI_count17, na.rm = TRUE),
-		co_VLI_count17 = sum(tr_VLI_count17, na.rm = TRUE),
-		co_ELI_count17 = sum(tr_ELI_count17, na.rm = TRUE),
-		co_LI_prop17 = co_LI_count17/co_totalinc17,
-		co_VLI_prop17 = co_VLI_count17/co_totalinc17,
-		co_ELI_prop17 = co_ELI_count17/co_totalinc17,
-		co_LI_propmed17 = median(tr_LI_prop17, na.rm = TRUE),
-		co_VLI_propmed17 = median(tr_VLI_prop17, na.rm = TRUE),
-		co_ELI_propmed17 = median(tr_ELI_prop17, na.rm = TRUE))
+		ELI = case_when(co_ELI_val >= top_inccat ~ 1,
+						co_ELI_val <= top_inccat &
+						co_ELI_val >= bottom_inccat ~
+						(co_ELI_val - bottom_inccat)/(top_inccat - bottom_inccat),
+						TRUE ~ 0)) %>% 
+	group_by(GEOID) %>%  
+	mutate(tr_totinc_count = sum(medinc_count, na.rm = TRUE), 
+		   tr_LI_prop = sum(LI*medinc_count, na.rm = TRUE)/tr_totinc_count, 
+		   tr_VLI_prop = sum(VLI*medinc_count, na.rm = TRUE)/tr_totinc_count, 
+		   tr_ELI_prop = sum(ELI*medinc_count, na.rm = TRUE)/tr_totinc_count) %>% 
+	select(GEOID:co_ELI_val, tr_totinc_count:tr_ELI_prop) %>% 
+	distinct() %>% 
+	left_join(df, .)
+
+glimpse(df_vli)
+
+
+#### LEFT OFF HERE ####
 
 #
 # Change
@@ -486,10 +407,6 @@ ct_sf <-
 	ungroup()
 
 # ==========================================================================
-# Categorize tracts
-# ==========================================================================
-
-# ==========================================================================
 # Create Neighborhood Typologies
 # ==========================================================================
 
@@ -506,11 +423,7 @@ cal_nt <-
 ntcheck(cal_nt)
 
 #
-# Rent Burden by income
-# Testing:
-# 	1. Rent burden capped at $35k
-# 	2. Rent burden by 80%, 50%, and 30% AMI
-# 	3. by rent burden at 30% and 50%
+# Rent Burden by income for renters
 # --------------------------------------------------------------------------
 
 lirb17 <-
@@ -525,21 +438,20 @@ lirb17 <-
 			# output = "wide",
 			year = 2017
 			),
-		ct_sf %>%
-			st_set_geometry(NULL) %>%
-			select(GEOID, medinc = co_medinc)) %>%
-	separate(variable, c("ir_type", "rb", "income")) %>%
-	left_join(.,ct_sf %>% select(GEOID, COUNTYFP))
+		df_vli %>%
+			select(GEOID, COUNTY, co_mhhinc)) %>% 
+	separate(variable, c("ir_type", "rb", "income"))
+
 
 
 tot_ir <-
 	lirb17 %>%
-	filter(rb == "tot", income == "tot") %>%
-	group_by(GEOID, COUNTYFP) %>%
+	filter(rb == "tot", income == "tot", !GEOID %in% poor_dq) %>%
+	group_by(GEOID, COUNTY) %>%
 	summarise(tot_ir = sum(estimate, na.rm = TRUE)) %>%
 	ungroup()
 
-irli <-
+df_irli <-
 	lirb17 %>%
 	filter(income != "tot") %>%
 	select(-ir_type) %>%
@@ -556,157 +468,39 @@ irli <-
 								),
 		   top_inccat = case_when(income == 100000 ~ 200000,
 		   						 TRUE ~ income),
-		   LI_val = medinc*.8,
-		   VLI_val = medinc*.5,
-		   ELI_val = medinc*.3,
-		   LI = case_when(LI_val >= top_inccat ~ 1,
-						  LI_val <= top_inccat &
-						  LI_val >= bottom_inccat ~
-						  (LI_val - bottom_inccat)/(top_inccat - bottom_inccat),
+		   co_LI_val = co_mhhinc*.8,
+		   co_VLI_val = co_mhhinc*.5,
+		   co_ELI_val = co_mhhinc*.3,
+		   LI = case_when(co_LI_val >= top_inccat ~ 1,
+						  co_LI_val <= top_inccat &
+						  co_LI_val >= bottom_inccat ~
+						  (co_LI_val - bottom_inccat)/(top_inccat - bottom_inccat),
 						  TRUE ~ 0),
-		   VLI = case_when(VLI_val >= top_inccat ~ 1,
-						   VLI_val <= top_inccat &
-						   VLI_val >= bottom_inccat ~
-						   (VLI_val - bottom_inccat)/(top_inccat - bottom_inccat),
+		   VLI = case_when(co_VLI_val >= top_inccat ~ 1,
+						   co_VLI_val <= top_inccat &
+						   co_VLI_val >= bottom_inccat ~
+						   (co_VLI_val - bottom_inccat)/(top_inccat - bottom_inccat),
 						   TRUE ~ 0),
-		   ELI = case_when(ELI_val >= top_inccat ~ 1,
-						   ELI_val <= top_inccat &
-						   ELI_val >= bottom_inccat ~
-						   (ELI_val - bottom_inccat)/(top_inccat - bottom_inccat),
+		   ELI = case_when(co_ELI_val >= top_inccat ~ 1,
+						   co_ELI_val <= top_inccat &
+						   co_ELI_val >= bottom_inccat ~
+						   (co_ELI_val - bottom_inccat)/(top_inccat - bottom_inccat),
 						   TRUE ~ 0),
-		   LI_ir_count = LI*estimate,
-		   VLI_ir_count = VLI*estimate,
-		   ELI_ir_count = ELI*estimate)
-
-#
-# Create ir tables
-# --------------------------------------------------------------------------
-
-rb30 <- c("349","399","499", "5plus")
-
-ir35k_30rb <-
-	irli %>%
-	filter(income <= 35000,
-		   rb %in% rb30) %>%
-	group_by(GEOID) %>%
-	summarise(ir35_30rb = sum(estimate, na.rm = TRUE)) %>%
-	left_join(tot_ir,.) %>%
-	mutate(ir35k_30rbp = ir35_30rb/tot_ir) %>%
-	group_by(COUNTYFP) %>%
-	mutate(ir35_30_coavg = mean(ir35k_30rbp, na.rm = TRUE),
-		   ir35_30_comed = median(ir35k_30rbp, na.rm = TRUE),
-		   v_rb35k_30rb = case_when(ir35k_30rbp > ir35_30_comed ~ 1)) %>%
-	ungroup()
-
-ir35k_50rb <-
-	irli %>%
-	filter(income <= 35000,
-		   rb == "5plus") %>%
-	group_by(GEOID) %>%
-	summarise(ir35_50rb = sum(estimate, na.rm = TRUE)) %>%
-	left_join(tot_ir,.) %>%
-	mutate(ir35_50rbp = ir35_50rb/tot_ir) %>%
-	group_by(COUNTYFP) %>%
-	mutate(ir35_50_coavg = mean(ir35_50rbp, na.rm = TRUE),
-		   ir35_50_comed = median(ir35_50rbp, na.rm = TRUE),
-		   v_rb35k_50rb = case_when(ir35_50rbp > ir35_50_comed ~ 1)) %>%
-	ungroup()
-
-irLI_30rb <-
-	irli %>%
+		   tr_LI_ir_count = LI*estimate,
+		   tr_VLI_ir_count = VLI*estimate,
+		   tr_ELI_ir_count = ELI*estimate) %>% 
 	filter(LI > 0,
-		   rb %in% rb30) %>%
+		   rb %in% c("349","399","499", "5plus")) %>%
 	group_by(GEOID) %>%
-	summarise(irLI_30rb = sum(LI_ir_count, na.rm = TRUE)) %>%
+	summarise(tr_irLI_30rb_ct = sum(tr_LI_ir_count, na.rm = TRUE)) %>%
 	left_join(tot_ir,.) %>%
-	mutate(irLI_30p = irLI_30rb/tot_ir) %>%
-	group_by(COUNTYFP) %>%
-	mutate(irLI_30_coavg = mean(irLI_30p, na.rm = TRUE),
-		   irLI_30_comed = median(irLI_30p, na.rm = TRUE),
-		   v_rbLI_30rb = case_when(irLI_30p > irLI_30_comed ~ 1)) %>%
-	ungroup()
-
-irLI_50rb <-
-	irli %>%
-	filter(LI > 0,
-		   rb == "5plus") %>%
-	group_by(GEOID) %>%
-	summarise(irLI_50rb = sum(LI_ir_count, na.rm = TRUE)) %>%
-	left_join(tot_ir,.) %>%
-	mutate(irLI_50p = irLI_50rb/tot_ir) %>%
-	group_by(COUNTYFP) %>%
-	mutate(irLI_50_coavg = mean(irLI_50p, na.rm = TRUE),
-		   irLI_50_comed = median(irLI_50p, na.rm = TRUE),
-		   v_rbLI_50rb = case_when(irLI_50p > irLI_50_comed ~ 1)) %>%
-	ungroup()
-
-irVLI_30rb <-
-	irli %>%
-	filter(VLI > 0,
-		   rb %in% rb30) %>%
-	group_by(GEOID) %>%
-	summarise(irVLI_30rb = sum(LI_ir_count, na.rm = TRUE)) %>%
-	left_join(tot_ir,.) %>%
-	mutate(irVLI_30p = irVLI_30rb/tot_ir) %>%
-	group_by(COUNTYFP) %>%
-	mutate(irVLI_30_coavg = mean(irVLI_30p, na.rm = TRUE),
-		   irVLI_30_comed = median(irVLI_30p, na.rm = TRUE),
-		   v_rbVLI_30rb = case_when(irVLI_30p > irVLI_30_comed ~ 1)) %>%
-	ungroup()
-
-irVLI_50rb <-
-	irli %>%
-	filter(VLI > 0,
-		   rb == "5plus") %>%
-	group_by(GEOID) %>%
-	summarise(irVLI_50rb = sum(LI_ir_count, na.rm = TRUE)) %>%
-	left_join(tot_ir,.) %>%
-	mutate(irVLI_50p = irVLI_50rb/tot_ir) %>%
-	group_by(COUNTYFP) %>%
-	mutate(irVLI_50_coavg = mean(irVLI_50p, na.rm = TRUE),
-		   irVLI_50_comed = median(irVLI_50p, na.rm = TRUE),
-		   v_rbVLI_50rb = case_when(irVLI_50p > irVLI_50_comed ~ 1)) %>%
-	ungroup()
-
-irELI_30rb <-
-	irli %>%
-	filter(ELI > 0,
-		   rb %in% rb30) %>%
-	group_by(GEOID) %>%
-	summarise(irELI_30rb = sum(LI_ir_count, na.rm = TRUE)) %>%
-	left_join(tot_ir,.) %>%
-	mutate(irELI_30p = irELI_30rb/tot_ir) %>%
-	group_by(COUNTYFP) %>%
-	mutate(irELI_30_coavg = mean(irELI_30p, na.rm = TRUE),
-		   irELI_30_comed = median(irELI_30p, na.rm = TRUE),
-		   v_rbELI_30rb = case_when(irELI_30p > irELI_30_comed ~ 1)) %>%
-	ungroup()
-
-irELI_50rb <-
-	irli %>%
-	filter(ELI > 0,
-		   rb == "5plus") %>%
-	group_by(GEOID) %>%
-	summarise(irELI_50rb = sum(LI_ir_count, na.rm = TRUE)) %>%
-	left_join(tot_ir,.) %>%
-	mutate(irELI_50p = irELI_50rb/tot_ir) %>%
-	group_by(COUNTYFP) %>%
-	mutate(irELI_50_coavg = mean(irELI_50p, na.rm = TRUE),
-		   irELI_50_comed = median(irELI_50p, na.rm = TRUE),
-		   v_rbELI_50rb = case_when(irELI_50p > irELI_50_comed ~ 1)) %>%
-	ungroup()
-
-
-ir_df <-
-	left_join(ir35k_30rb %>% select(GEOID, ends_with("p"), starts_with("v_rb")),
-			  ir35k_50rb %>% select(GEOID, ends_with("p"), starts_with("v_rb"))) %>%
-	left_join(., irLI_30rb %>% select(GEOID, ends_with("p"), starts_with("v_rb"))) %>%
-	left_join(., irLI_50rb %>% select(GEOID, ends_with("p"), starts_with("v_rb"))) %>%
-	left_join(., irVLI_30rb %>% select(GEOID, ends_with("p"), starts_with("v_rb"))) %>%
-	left_join(., irVLI_50rb %>% select(GEOID, ends_with("p"), starts_with("v_rb"))) %>%
-	left_join(., irELI_30rb %>% select(GEOID, ends_with("p"), starts_with("v_rb"))) %>%
-	left_join(., irELI_50rb %>% select(GEOID, ends_with("p"), starts_with("v_rb"))) %>%
-	replace(is.na(.), 0)
+	mutate(tr_irLI_30p = tr_irLI_30rb_ct/tot_ir) %>%
+	group_by(COUNTY) %>%
+	mutate(co_irLI_30_med = median(tr_irLI_30p, na.rm = TRUE),
+		   v_rbLI_30rb = case_when(tr_irLI_30p > co_irLI_30_med ~ 1, 
+		   						   TRUE ~ 0)) %>%
+	ungroup() %>% 
+	left_join(***********, .)
 
 # ==========================================================================
 # Create Final DF
