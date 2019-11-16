@@ -205,7 +205,7 @@ glimpse(tr_df17)
 #
 # Tract data quality (based on renting hh's)
 # --------------------------------------------------------------------------
-poor_dq <-
+low_dq <-
 	tr_df17 %>%
 	filter(variable == "totrent") %>%
 	group_by(GEOID) %>%
@@ -222,7 +222,7 @@ poor_dq <-
 
 df <-
 	tr_df17 %>%
-	filter(!GEOID %in% poor_dq) %>%
+	filter(!GEOID %in% low_dq) %>%
 	select(-moe) %>%
 	spread(variable, estimate)
 
@@ -300,13 +300,18 @@ df_vli <-
 
 glimpse(df_vli)
 
-
-#### LEFT OFF HERE ####
-
 #
 # Change
 # --------------------------------------------------------------------------
 
+df_chr <- 
+	left_join(df_vli, 
+			  tr_data(2012, c('medrent12' = 'B25064_001')) %>% 
+			  	select(-moe) %>% 
+			  	spread(variable, estimate)) %>% 
+	mutate(tr_chrent = medrent - medrent12) %>% 
+
+	### left off ###
 
 ct@data <-
 	left_join(ct@data, lidata, by = c("GEOID", "COUNTYFP")) %>%
