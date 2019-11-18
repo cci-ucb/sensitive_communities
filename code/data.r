@@ -258,9 +258,9 @@ df_vli <-
 		   co_LI_val = .8*co_mhhinc,
 		   co_VLI_val = .5*co_mhhinc,
 		   co_ELI_val = .3*co_mhhinc) %>%
-	group_by(GEOID) %>%
+	ungroup() %>%
 	gather(medinc_cat, medinc_count, HHInc_10:HHInc_75) %>%
-	mutate_at(vars(medinc_cat), ~ inc_names17) %>%
+	mutate(medinc_cat = recode(medinc_cat, !!!inc_names17)) %>%
 	mutate(bottom_inccat = case_when(medinc_cat == 9999 ~ medinc_cat - 9999,
 									 medinc_cat > 9999 &
 									 medinc_cat <= 49999 ~ medinc_cat - 4999,
@@ -287,11 +287,17 @@ df_vli <-
 						TRUE ~ 0)) %>%
 	group_by(GEOID) %>%
 	mutate(tr_totinc_count = sum(medinc_count, na.rm = TRUE),
-		   tr_LI_prop = sum(LI*medinc_count, na.rm = TRUE)/tr_totinc_count,
-		   tr_VLI_prop = sum(VLI*medinc_count, na.rm = TRUE)/tr_totinc_count,
-		   tr_ELI_prop = sum(ELI*medinc_count, na.rm = TRUE)/tr_totinc_count) %>%
+		   tr_LI_count = sum(LI*medinc_count, na.rm = TRUE),
+		   tr_VLI_count = sum(VLI*medinc_count, na.rm = TRUE),
+		   tr_ELI_count = sum(ELI*medinc_count, na.rm = TRUE),
+		   tr_LI_prop = tr_LI_count/tr_totinc_count,
+		   tr_VLI_prop = tr_VLI_count/tr_totinc_count,
+		   tr_ELI_prop = tr_ELI_count/tr_totinc_count) %>%
 	select(GEOID:co_ELI_val, tr_totinc_count:tr_ELI_prop) %>%
 	distinct()
+
+df_vli %>%
+	filter(GEOID == "06001401600")
 
 #
 # Rent Burden by income for renters
@@ -424,7 +430,7 @@ ct@data <-
 	kern1 <- knn2nb(knearneigh(coords, k = 1), row.names=IDs)
 	dist <- unlist(nbdists(kern1, coords)); summary(dist)
 	max_1nn <- max(dist)
-	dist_nb <- dnearneigh(coords, d1=0, d2 = .5*max_1nn, row.names = IDs)
+	dist_nb <- dnearneigh(coords, d1=0, d2 = .1*max_1nn, row.names = IDs)
 	spdep::set.ZeroPolicyOption(TRUE)
 	spdep::set.ZeroPolicyOption(TRUE)
 	dists <- nbdists(dist_nb, coordinates(ct))
@@ -442,6 +448,23 @@ ct@data <-
 #
 # Develop variables
 # --------------------------------------------------------------------------
+
+## California places
+	big_city <-
+		fread("~/git/sensitive_communities/data/ca_place.csv") %>%
+		mutate(city = case_when(cplace %in% c("Los Angeles",
+											  "San Francisco",
+											  "Oakland",
+											  "San Jose",
+											  "Fresno",
+											  "San Diego",
+											  "Sacramento",
+											  "Long Beach") ~ 1,
+								TRUE ~ 0),
+			   GEOID = paste0("0", geoid)) %>%
+		filter(city == 1) %>%
+		select(GEOID) %>%
+		pull()
 
 ct@data <-
 	ct@data %>%
@@ -470,6 +493,7 @@ ct@data <-
 		) %>%
 	group_by(COUNTYFP) %>%
 	mutate(tr_POC_rank = rank(tr_pPOC)/length(tr_pPOC),
+
 		   co_rentgap = median(tr_rentgap, na.rm = TRUE),
 		   co_rentgapprop = median(tr_rentgapprop, na.rm = TRUE),
 		   co_pchrent = median(tr_pchrent, na.rm = TRUE),
@@ -481,6 +505,8 @@ ct@data <-
 	## Scenario Criteria
 	group_by(GEOID) %>%
 	mutate(
+		big_city = case_when(GEOID %in% big_city ~ 1,
+							 TRUE ~ 0),
 		v_VLI = case_when(tr_pstudents < .2 &
 						  tr_VLI_prop > co_VLI_prop ~ 1,
 						  TRUE ~ 0),
@@ -513,24 +539,25 @@ ct@data <-
 							  	  v_POC, na.rm = TRUE) >= 3 &
 							  sum(dp_PChRent,
 							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
-
+						  TRUE ~ 0),
+		scen2 = case_when(big_city == 1 ~ scen1,
+						  big_city == 0 &
+						  	tr_pstudents < .2 &
+							tr_population >= 500 &
+							sum(v_VLI, v_Renters, v_RBLI, v_POC, na.rm = TRUE) == 4 &
+							sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
 						  TRUE ~ 0)) %>%
 	ungroup()
 
 	ct$tr_sc.lag <- lag.listw(lw_bin,ct$scen1)
 
-#### left off ####
-
 glimpse(ct@data %>% filter(GEOID == "06037228500"))
 glimpse(ct@data %>% filter(GEOID == "06037700700"))
+glimpse(ct@data %>% filter(GEOID == "06001401600"))
+glimpse(ct@data %>% filter(GEOID == "06075060400"))
 
-ct@data %>% group_by(scen1) %>% count()
-
-#
-# Tract data quality (based on renting hh's)
-# --------------------------------------------------------------------------
-
-
+ct@data %>% group_by(scen1, big_city) %>% count()
+ct@data %>% group_by(scen2, big_city) %>% count()
 
 # ==========================================================================
 # Final dataframe
@@ -547,15 +574,15 @@ df_final <-
 		   starts_with("v_"),
 		   starts_with("dp_"),
 		   starts_with("scen")) %>%
+	group_by(GEOID) %>%
 	mutate(
 		tier2 = case_when(tr_dq == 0 ~ NA_character_,
-						  v_VLI == 1 &
-						  sum(v_POC,
-							  v_Renters,
-							  v_RBLI, na.rm = TRUE) >= 2 &
-						  tr_population >= 500 &
-						  tr_pPOC >= .3 &
-						  tr_pstudents < .20 ~ "Tier 2: Vulnerable"),
+						  tr_pstudents < .2 &
+							tr_population >= 500 &
+						  	v_VLI == 1 &
+							  sum(v_Renters,
+							  	  v_RBLI,
+							  	  v_POC, na.rm = TRUE) >= 2 ~ "Tier 2: Vulnerable"),
 		tier3 = case_when(tr_dq == 0 ~ NA_character_,
 						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
 						  sum(v_POC, v_RBLI, na.rm = TRUE) == 2|
@@ -564,15 +591,22 @@ df_final <-
 						  sum(v_VLI, v_RBLI, na.rm = TRUE) == 2|
 						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
 		scen1 = case_when(tr_sc.lag >= .6 &
-						  tier2 == "Vulnerable" ~ 1,
+						  tier2 == "Tier 2: Vulnerable" ~ 1,
 						  TRUE ~ scen1),
 		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
 						  scen1 == 1 ~ "Tier 1: Heightened Sensitivity"),
+		tier1.2 = case_when(tr_dq == 0 ~ "Poor Data Quality",
+						    scen2 == 1 ~ "Tier 1: Heightened Sensitivity"),
 		text = "",
 		popup_text = paste0("Tract: ", GEOID))
 
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
+df_final %>% st_set_geometry(NULL) %>% group_by(tier1.2) %>% count()
 df_final %>% st_set_geometry(NULL) %>% group_by(scen1) %>% count()
+df_final %>% st_set_geometry(NULL) %>% group_by(tier1, scen1, tier2, tier3) %>% count()
+
+glimpse(df_final %>% filter(GEOID == "06081613800"))
+glimpse(df_final %>% filter(GEOID == "06055201800"))
 
 # st_erase <- function(x, y) {
 #   st_difference(x, st_union(st_combine(y)))
@@ -587,56 +621,56 @@ df_final %>% st_set_geometry(NULL) %>% group_by(scen1) %>% count()
 # Maps
 # ==========================================================================
 
-tm_basemap(leaflet::providers$CartoDB.Positron) +
-	tm_shape(df_final, name = "Tier 1 - Heightened Sensitivity") +
-	tm_polygons("tier1",
-			# palette = c("#FF6633","#FF6633"),
-			palette = c("#FF6633","#CCCCCC"),
-			# label = "Heightened Sensitivity",
-			alpha = .7,
-			border.alpha = .15,
-			border.color = "gray",
-			colorNA = NULL,
-			title = "",
-			id = "popup_text",
-			popup.vars = c("Tot Pop" = "tr_population",
-						   "Tot HH" = "tr_households",
-						   "% Rent" = "tr_prenters",
-						   "$ Rent" = "tr_medrent",
-						   "$ R Lag" = "tr_medrent.lag",
-						   "$ R Gap" = "tr_rentgap",
-						   "Ch Rent" = "tr_chrent",
-						   "Ch R Lag" = "tr_chrent.lag",
-						   "% RB" = "tr_rb",
-						   "% inc x rb " = "tr_irLI_30p",
-						   "% ELI" = "tr_ELI_prop",
-						   "% VLI" = "tr_VLI_prop",
-						   "% Stud." = "tr_pstudents",
-						   "----------" = "text",
-						   "Neigh." = "NeighType",
-						   "% White" = "tr_pWhite",
-						   "% Black" = "tr_pBlack",
-						   "% Asian" = "tr_pAsian",
-						   "% Lat" = "tr_pLatinx",
-						   "% Other" = "tr_pOther",
-						   "% POC" = "tr_pPOC",
-						   "% Welf" = "tr_pwelf",
-						   "% Pov" = "tr_ppoverty",
-						   "% Unemp" = "tr_punemp",
-						   "%FHHw/C"= "tr_pfemhhch",
-						   "----------" = "text",
-						   "SC Criteria" = "text",
-						   "----------" = "text",
-						   "POC" = "v_POC",
-						   "Renters" = "v_Renters",
-						   "VLI" = "v_VLI",
-						   "RB" = "v_RBLI",
-						   "Ch Rent" = "dp_PChRent",
-						   "Rent Gap" = "dp_RentGap"
-						   ),
-			popup.format = list(digits=2)) +
-	# tm_layout(title = paste0("Scenario: v_POC, ",renters,", ", vli, ", ", rb, ", ", chrent, ", ", rentgap)) +
-	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
+# tm_basemap(leaflet::providers$CartoDB.Positron) +
+# 	tm_shape(df_final, name = "Tier 1 - Heightened Sensitivity") +
+# 	tm_polygons("tier1",
+# 			# palette = c("#FF6633","#FF6633"),
+# 			palette = c("#FF6633","#CCCCCC"),
+# 			# label = "Heightened Sensitivity",
+# 			alpha = .7,
+# 			border.alpha = .15,
+# 			border.color = "gray",
+# 			colorNA = NULL,
+# 			title = "",
+# 			id = "popup_text",
+# 			popup.vars = c("Tot Pop" = "tr_population",
+# 						   "Tot HH" = "tr_households",
+# 						   "% Rent" = "tr_prenters",
+# 						   "$ Rent" = "tr_medrent",
+# 						   "$ R Lag" = "tr_medrent.lag",
+# 						   "$ R Gap" = "tr_rentgap",
+# 						   "Ch Rent" = "tr_chrent",
+# 						   "Ch R Lag" = "tr_chrent.lag",
+# 						   "% RB" = "tr_rb",
+# 						   "% inc x rb " = "tr_irLI_30p",
+# 						   "% ELI" = "tr_ELI_prop",
+# 						   "% VLI" = "tr_VLI_prop",
+# 						   "% Stud." = "tr_pstudents",
+# 						   "----------" = "text",
+# 						   "Neigh." = "NeighType",
+# 						   "% White" = "tr_pWhite",
+# 						   "% Black" = "tr_pBlack",
+# 						   "% Asian" = "tr_pAsian",
+# 						   "% Lat" = "tr_pLatinx",
+# 						   "% Other" = "tr_pOther",
+# 						   "% POC" = "tr_pPOC",
+# 						   "% Welf" = "tr_pwelf",
+# 						   "% Pov" = "tr_ppoverty",
+# 						   "% Unemp" = "tr_punemp",
+# 						   "%FHHw/C"= "tr_pfemhhch",
+# 						   "----------" = "text",
+# 						   "SC Criteria" = "text",
+# 						   "----------" = "text",
+# 						   "POC" = "v_POC",
+# 						   "Renters" = "v_Renters",
+# 						   "VLI" = "v_VLI",
+# 						   "RB" = "v_RBLI",
+# 						   "Ch Rent" = "dp_PChRent",
+# 						   "Rent Gap" = "dp_RentGap"
+# 						   ),
+# 			popup.format = list(digits=2)) +
+# 	# tm_layout(title = paste0("Scenario: v_POC, ",renters,", ", vli, ", ", rb, ", ", chrent, ", ", rentgap)) +
+# 	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
 
 
 
@@ -656,7 +690,8 @@ sen_map4 <- function(t1,
 					 vli,
 					 rb,
 					 chrent,
-					 rentgap)
+					 rentgap,
+					 title = paste0("Scenario: v_POC, ",renters,", ", vli, ", ", rb, ", ", chrent, ", ", rentgap))
 tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
 			tm_shape(t3_df, name = "Tier 3 - Some Vulnerability") +
 			tm_polygons(t3,
@@ -797,7 +832,7 @@ tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github
 						   "Rent Gap" = rentgap
 						   ),
 			popup.format = list(digits=2)) +
-	tm_layout(title = paste0("Scenario: v_POC, ",renters,", ", vli, ", ", rb, ", ", chrent, ", ", rentgap)) +
+	tm_layout(title = title) +
 	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
 
 save_map <- function(x,y)
@@ -829,6 +864,22 @@ tiermap1 <-
 			 rentgap = "dp_RentGap")
 
 save_map(tiermap1, "tiermap1")
+
+tiermap2 <-
+	sen_map4(t1 = "tier1.2",
+			 t2_df = t2_df,
+			 t2 = "tier2",
+			 t3_df = t3_df,
+			 t3 = "tier3",
+			 renters = "v_Renters",
+			 vli = "v_VLI",
+			 rb = "v_RBLI",
+			 chrent = "dp_PChRent",
+			 rentgap = "dp_RentGap",
+			 title = "Scenario with City Differentiation Approach")
+	tiermap2
+
+save_map(tiermap2, "tiermap2")
 
 # ==========================================================================
 # EXCESS CODE - to be erased
