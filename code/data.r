@@ -34,7 +34,7 @@ options(tigris_use_cache = TRUE)
 # 	% renter occupied units > 40%
 # 	% rent burdened LI renters (<80% AMI) (above 30% of income spent on rent) > county median
 # 	>30% POC, and POC neighborhood type (not All White, White Shared, or White-Asian)
-# 	∆ rent: % Change in median rent > median for county or change in extralocal rent> county median
+# 	∆ rent: % Change in median rent > median for county or change in extra-local rent > county median
 # 	rent gap: Difference > county median difference
 ###
 
@@ -180,10 +180,10 @@ ir_var <- c(
 # Tract data
 # --------------------------------------------------------------------------
 
-	ct <- tracts(state = "CA", cb = TRUE) # cb option downloads a smaller shapefile
+ct <- tracts(state = "CA", cb = TRUE) # cb option downloads a smaller shapefile
 
 ### Tract data extraction
-tr_data <- function(year, vars)
+tr_data <- function(year, vars, output = "tidy")
 	get_acs(
 		geography = "tract",
 		variables = vars,
@@ -191,20 +191,28 @@ tr_data <- function(year, vars)
 		county = NULL,
 		geometry = FALSE,
 		cache_table = TRUE,
-		# output = "wide",
+		output = output,
 		year = year,
 		keep_geo_vars = TRUE
 		)
 
 tr_df17 <-
-	tr_data(2017, sc_vars) %>% 
-	mutate(COUNTY = substr(GEOID, 1, 5))
+    tr_data(2017, sc_vars) %>%
+    mutate(COUNTY = substr(GEOID, 1, 5))
 
-glimpse(tr_df17)
+tr_df12 <-
+	tr_data(2012, c('medrent12' = 'B25064_001')) %>%
+    mutate(COUNTY = substr(GEOID, 1, 5),
+    	   estimate = estimate*1.07)
 
-#
-# Tract data quality (based on renting hh's)
-# --------------------------------------------------------------------------
+df <-
+	left_join(tr_df17 %>%
+				select(-moe) %>%
+				spread(variable, estimate),
+			  tr_df12 %>%
+			  	select(-moe) %>%
+			  	spread(variable, estimate))
+
 low_dq <-
 	tr_df17 %>%
 	filter(variable == "totrent") %>%
@@ -214,17 +222,7 @@ low_dq <-
 	filter(is.na(quality)) %>%
 	select(GEOID) %>%
 	distinct() %>%
-	pull() 
-
-#
-# Select tracts
-# --------------------------------------------------------------------------
-
-df <-
-	tr_df17 %>%
-	filter(!GEOID %in% low_dq) %>%
-	select(-moe) %>%
-	spread(variable, estimate)
+	pull()
 
 #
 # VLI data
@@ -232,7 +230,7 @@ df <-
 
 inc_names17 <- c(
 	'HHInc_10' = 9999, # Less than $10,000 HOUSEHOLD INCOME 9999
-	'HHInc_15' = 14999, # $10,000 to $14,999 HOUSEHOLD INCOME 
+	'HHInc_15' = 14999, # $10,000 to $14,999 HOUSEHOLD INCOME
 	'HHInc_20' = 19999, # $15,000 to $19,999 HOUSEHOLD INCOME
 	'HHInc_25' = 24999, # $20,000 to $24,999 HOUSEHOLD INCOME
 	'HHInc_30' = 29999, # $25,000 to $29,999 HOUSEHOLD INCOME
@@ -249,28 +247,26 @@ inc_names17 <- c(
 	'HHInc_250' = 249999 # $200,000 or more HOUSEHOLD INCOME 49999
 	)
 
-### Note, for the county median of medians, we exclude the tracts that are omitted by the MOE cut. The numbers should be close but this will tweak the median if we were to include all counties rather than our select counties. 
-
 df_vli <-
 	df %>%
-	select(GEOID, 
-		   COUNTY, 
-		   mhhinc, 
-		   HHInc_10:HHInc_75) %>% 
-	group_by(COUNTY) %>% 
+	select(GEOID,
+		   COUNTY,
+		   mhhinc,
+		   HHInc_10:HHInc_75) %>%
+	group_by(COUNTY) %>%
 	mutate(co_mhhinc = median(mhhinc, na.rm = TRUE),
 		   co_LI_val = .8*co_mhhinc,
 		   co_VLI_val = .5*co_mhhinc,
 		   co_ELI_val = .3*co_mhhinc) %>%
-	group_by(GEOID) %>% 
+	group_by(GEOID) %>%
 	gather(medinc_cat, medinc_count, HHInc_10:HHInc_75) %>%
 	mutate_at(vars(medinc_cat), ~ inc_names17) %>%
-	mutate(bottom_inccat = case_when(medinc_cat == 9999 ~ medinc_cat - 9999, 
-									 medinc_cat > 9999 & 
-									 medinc_cat <= 49999 ~ medinc_cat - 4999, 
-									 medinc_cat == 59999 ~ medinc_cat - 9999, 
-									 medinc_cat > 59999 & 
-									 medinc_cat <= 149999 ~ medinc_cat - 24999, 
+	mutate(bottom_inccat = case_when(medinc_cat == 9999 ~ medinc_cat - 9999,
+									 medinc_cat > 9999 &
+									 medinc_cat <= 49999 ~ medinc_cat - 4999,
+									 medinc_cat == 59999 ~ medinc_cat - 9999,
+									 medinc_cat > 59999 &
+									 medinc_cat <= 149999 ~ medinc_cat - 24999,
 									 medinc_cat >= 199999 ~ medinc_cat - 49999,
 								  TRUE ~ NA_real_),
 		top_inccat = medinc_cat,
@@ -288,144 +284,14 @@ df_vli <-
 						co_ELI_val <= top_inccat &
 						co_ELI_val >= bottom_inccat ~
 						(co_ELI_val - bottom_inccat)/(top_inccat - bottom_inccat),
-						TRUE ~ 0)) %>% 
-	group_by(GEOID) %>%  
-	mutate(tr_totinc_count = sum(medinc_count, na.rm = TRUE), 
-		   tr_LI_prop = sum(LI*medinc_count, na.rm = TRUE)/tr_totinc_count, 
-		   tr_VLI_prop = sum(VLI*medinc_count, na.rm = TRUE)/tr_totinc_count, 
-		   tr_ELI_prop = sum(ELI*medinc_count, na.rm = TRUE)/tr_totinc_count) %>% 
-	select(GEOID:co_ELI_val, tr_totinc_count:tr_ELI_prop) %>% 
-	distinct() %>% 
-	left_join(df, .)
-
-glimpse(df_vli)
-
-#
-# Change
-# --------------------------------------------------------------------------
-
-df_chr <- 
-	left_join(df_vli, 
-			  tr_data(2012, c('medrent12' = 'B25064_001')) %>% 
-			  	select(-moe) %>% 
-			  	spread(variable, estimate)) %>% 
-	mutate(tr_chrent = medrent - medrent12) %>% 
-
-	### left off ###
-
-ct@data <-
-	left_join(ct@data, lidata, by = c("GEOID", "COUNTYFP")) %>%
+						TRUE ~ 0)) %>%
 	group_by(GEOID) %>%
-	mutate(
-		tr_propstudent17 = sum(colenrollE, proenrollE)/totenrollE,
-		tr_rentprop12 = totrentE.x/tottenE.x,
-		tr_rentprop17 = totrentE.y/tottenE.y,
-		tr_rbprop12 = sum(rb_55E.x, na.rm = TRUE)/rb_totE.x,
-		tr_rbprop17 = sum(rb_55E.y, na.rm = TRUE)/rb_totE.y,
-		tr_medrent12 = medrentE.x*1.07,
-		tr_medrent17 = medrentE.y,
-		tr_chrent = tr_medrent17-tr_medrent12,
-		tr_propchrent = (tr_medrent17-tr_medrent12)/tr_medrent12,
-		tr_bachplus12 = sum(bachE.x, masE.x, proE.x, docE.x, na.rm = TRUE),
-		tr_bachplus17 = sum(bachE.y, masE.y, proE.y, docE.y, na.rm = TRUE),
-		tr_proped12 = case_when(tr_bachplus12 == 0 & totedE.x == 0 ~ 0,
-								TRUE ~ tr_bachplus12/totedE.x),
-		tr_proped17 = case_when(tr_bachplus17 == 0 & totedE.y == 0 ~ 0,
-								TRUE ~ tr_bachplus17/totedE.y),
-		tr_propched = case_when(tr_proped17 == 0 & tr_proped12 == 0 ~ 0,
-								TRUE ~ (tr_proped17 - tr_proped12)/(tr_proped12))
-		) %>%
-	group_by(COUNTYFP) %>%
-	mutate(
-		co_medrentprop12 = median(tr_rentprop12, na.rm = TRUE),
-		co_medrentprop17 = median(tr_rentprop17, na.rm = TRUE),
-		co_medrbprop12 = median(tr_rbprop12, na.rm = TRUE),
-		co_medrbprop17 = median(tr_rbprop17, na.rm = TRUE),
-		co_medrent12 = median(tr_medrent12, na.rm = TRUE),
-		co_medrent17 = median(tr_medrent17, na.rm = TRUE),
-		co_medchrent = median(tr_chrent, na.rm = TRUE),
-		co_medproped12 = median(tr_proped12, na.rm = TRUE),
-		co_medproped17 = median(tr_proped17, na.rm = TRUE),
-		co_medched = median(tr_propched, na.rm = TRUE)
-		) %>%
-	group_by(GEOID) %>%
-	mutate( ## special data features ##
-		tr_medrent12 = case_when(is.na(tr_medrent12) ~ co_medrent12,
-								 TRUE ~ tr_medrent12),
-		tr_medrent17 = case_when(is.na(tr_medrent17) ~ co_medrent17,
-		   						 TRUE ~ tr_medrent17),
-		tr_chrent = case_when(is.na(tr_chrent) ~ co_medchrent,
-		   					  TRUE ~ tr_chrent),
-		tr_propchrent = (tr_medrent17-tr_medrent12)/tr_medrent12,
-		tr_propched = case_when(tr_propched == Inf ~
-							    (tr_proped17-tr_proped12)/mean(tr_proped17,tr_proped12),
-		   						TRUE ~ tr_propched)
-		) %>%
-	group_by(COUNTYFP) %>%
-	mutate(co_medpropchrent = median(tr_propchrent)) %>%
-	ungroup()
-
-# ==========================================================================
-# Create lag variables
-# ==========================================================================
-
-#
-# Create neighbor matrix
-# --------------------------------------------------------------------------
-	coords <- coordinates(ct)
-	IDs <- row.names(as(ct, "data.frame"))
-	ct_nb <- poly2nb(ct) # nb
-	lw_bin <- nb2listw(ct_nb, style = "B", zero.policy = TRUE)
-	kern1 <- knn2nb(knearneigh(coords, k = 1), row.names=IDs)
-	dist <- unlist(nbdists(kern1, coords)); summary(dist)
-	max_1nn <- max(dist)
-	dist_nb <- dnearneigh(coords, d1=0, d2 = .5*max_1nn, row.names = IDs)
-	### listw object
-	spdep::set.ZeroPolicyOption(TRUE)
-	spdep::set.ZeroPolicyOption(TRUE)
-	dists <- nbdists(dist_nb, coordinates(ct))
-	idw <- lapply(dists, function(x) 1/(x^2))
-	lw_dist_idwW <- nb2listw(dist_nb, glist = idw, style = "W")
-
-#
-# Create select lag variables
-# --------------------------------------------------------------------------
-
-	ct$tr_chrent.lag <- lag.listw(lw_dist_idwW,ct$tr_chrent)
-	# ct$tr_propchrent.lag <- lag.listw(lw_dist_idwW,ct$tr_propchrent)
-	# ct$tr_propched.lag <- lag.listw(lw_dist_idwW,ct$tr_propched)
-	ct$tr_medrent17.lag <- lag.listw(lw_dist_idwW,ct$tr_medrent17)
-	ct$tr_medrent12.lag <- lag.listw(lw_dist_idwW,ct$tr_medrent12)
-
-ct_sf <-
-	ct %>%
-	st_as_sf() %>%
-	group_by(COUNTYFP) %>%
-	mutate(
-		tr_propchrent.lag = (tr_medrent17.lag - tr_medrent12.lag)/( tr_medrent12.lag),
-		tr_rentgap = tr_medrent17.lag - tr_medrent17,
-		tr_rentgapprop = (tr_medrent17.lag - tr_medrent17)/((tr_medrent17 +  tr_medrent17.lag)/2),
-		co_rentgap = median(tr_rentgap),
-		co_rentgapprop = median(tr_rentgapprop),
-		rent_prank = rank(tr_rentprop17)/length(tr_rentprop17)
-		) %>%
-	ungroup()
-
-# ==========================================================================
-# Create Neighborhood Typologies
-# ==========================================================================
-
-source("~/git/Functions/NeighType_Fun.R")
-
-cal_nt <-
-	ntdf(state = "CA") %>%
-	select(GEOID,NeighType) %>%
-	mutate(v_poc = case_when(# NeighType == "White-Asian" ~ 0,
-							 NeighType == "All White" ~ 0,
-							 NeighType == "White-Shared" ~ 0,
-							 TRUE ~ 1))
-
-ntcheck(cal_nt)
+	mutate(tr_totinc_count = sum(medinc_count, na.rm = TRUE),
+		   tr_LI_prop = sum(LI*medinc_count, na.rm = TRUE)/tr_totinc_count,
+		   tr_VLI_prop = sum(VLI*medinc_count, na.rm = TRUE)/tr_totinc_count,
+		   tr_ELI_prop = sum(ELI*medinc_count, na.rm = TRUE)/tr_totinc_count) %>%
+	select(GEOID:co_ELI_val, tr_totinc_count:tr_ELI_prop) %>%
+	distinct()
 
 #
 # Rent Burden by income for renters
@@ -444,14 +310,12 @@ lirb17 <-
 			year = 2017
 			),
 		df_vli %>%
-			select(GEOID, COUNTY, co_mhhinc)) %>% 
+			select(GEOID, COUNTY, co_mhhinc)) %>%
 	separate(variable, c("ir_type", "rb", "income"))
-
-
 
 tot_ir <-
 	lirb17 %>%
-	filter(rb == "tot", income == "tot", !GEOID %in% poor_dq) %>%
+	filter(rb == "tot", income == "tot") %>%
 	group_by(GEOID, COUNTY) %>%
 	summarise(tot_ir = sum(estimate, na.rm = TRUE)) %>%
 	ungroup()
@@ -493,7 +357,7 @@ df_irli <-
 						   TRUE ~ 0),
 		   tr_LI_ir_count = LI*estimate,
 		   tr_VLI_ir_count = VLI*estimate,
-		   tr_ELI_ir_count = ELI*estimate) %>% 
+		   tr_ELI_ir_count = ELI*estimate) %>%
 	filter(LI > 0,
 		   rb %in% c("349","399","499", "5plus")) %>%
 	group_by(GEOID) %>%
@@ -502,14 +366,189 @@ df_irli <-
 	mutate(tr_irLI_30p = tr_irLI_30rb_ct/tot_ir) %>%
 	group_by(COUNTY) %>%
 	mutate(co_irLI_30_med = median(tr_irLI_30p, na.rm = TRUE),
-		   v_rbLI_30rb = case_when(tr_irLI_30p > co_irLI_30_med ~ 1, 
+		   v_rbLI_30rb = case_when(tr_irLI_30p > co_irLI_30_med ~ 1,
 		   						   TRUE ~ 0)) %>%
-	ungroup() %>% 
-	left_join(***********, .)
+	ungroup()
+
+#
+# Neighborhood Typologies
+# --------------------------------------------------------------------------
+
+source("~/git/Functions/NeighType_Fun.R")
+# https://gitlab.com/timathomas/Functions/blob/master/NeighType_Fun.R
+
+df_nt <-
+	ntdf(state = "CA") %>%
+	select(GEOID,NeighType) %>%
+	mutate(v_poc = case_when(# NeighType == "White-Asian" ~ 0,
+							 NeighType == "All White" ~ 0,
+							 NeighType == "White-Shared" ~ 0,
+							 TRUE ~ 1))
+
+ntcheck(df_nt)
 
 # ==========================================================================
-# Create Final DF
+# Create lag variables
 # ==========================================================================
+
+#
+# Fill in NA's with county medians for lag development
+# --------------------------------------------------------------------------
+
+df_rent <-
+	df %>%
+	group_by(COUNTY) %>%
+	mutate(medrent = case_when(is.na(medrent) ~ median(medrent, na.rm = TRUE),
+							   TRUE ~ medrent),
+		   medrent12 = case_when(is.na(medrent12) ~ median(medrent12, na.rm = TRUE),
+		   					   TRUE ~ medrent12),
+		   tr_chrent = medrent - medrent12,
+		   tr_pchrent = (medrent - medrent12)/medrent12)
+
+ct <- tracts("CA", cb = TRUE)
+
+ct@data <-
+	left_join(ct@data, df_rent, by = "GEOID") %>%
+	left_join(., df_vli) %>%
+	left_join(., df_irli) %>%
+	left_join(., df_nt)
+
+#
+# Create neighbor matrix
+# --------------------------------------------------------------------------
+	coords <- coordinates(ct)
+	IDs <- row.names(as(ct, "data.frame"))
+	ct_nb <- poly2nb(ct) # nb
+	lw_bin <- nb2listw(ct_nb, style = "W", zero.policy = TRUE)
+
+	kern1 <- knn2nb(knearneigh(coords, k = 1), row.names=IDs)
+	dist <- unlist(nbdists(kern1, coords)); summary(dist)
+	max_1nn <- max(dist)
+	dist_nb <- dnearneigh(coords, d1=0, d2 = .5*max_1nn, row.names = IDs)
+	spdep::set.ZeroPolicyOption(TRUE)
+	spdep::set.ZeroPolicyOption(TRUE)
+	dists <- nbdists(dist_nb, coordinates(ct))
+	idw <- lapply(dists, function(x) 1/(x^2))
+	lw_dist_idwW <- nb2listw(dist_nb, glist = idw, style = "W")
+
+#
+# Create select lag variables
+# --------------------------------------------------------------------------
+
+	ct$tr_pchrent.lag <- lag.listw(lw_dist_idwW,ct$tr_pchrent)
+	ct$tr_chrent.lag <- lag.listw(lw_dist_idwW,ct$tr_chrent)
+	ct$tr_medrent.lag <- lag.listw(lw_dist_idwW,ct$medrent)
+
+ct@data <-
+	ct@data %>%
+	group_by(GEOID) %>%
+	mutate(
+		tr_population = race_tot,
+		tr_dq = case_when(GEOID %in% low_dq ~ 0,
+						  TRUE ~ 1),
+		tr_rentgap = tr_medrent.lag - medrent,
+		tr_rentgapprop = tr_rentgap/((medrent + tr_medrent.lag)/2),
+		tr_pstudents = sum(st_colenroll, st_proenroll, na.rm = TRUE)/st_totenroll,
+		tr_prenters = totrent/totten,
+		tr_pWhite = race_White/race_tot,
+		tr_pBlack = race_Black/race_tot,
+		tr_pAsian = race_Asian/race_tot,
+		tr_pLatinx = race_Latinx/race_tot,
+		tr_pOther = (race_tot - race_White - race_Black - race_Asian - race_Latinx)/race_tot,
+		tr_pPOC = 1-(race_White/race_tot),
+		tr_POC_rank = rank(tr_pPOC)/length(tr_pPOC)) %>%
+	group_by(COUNTYFP) %>%
+	mutate(co_rentgap = median(tr_rentgap, na.rm = TRUE),
+		   co_rentgapprop = median(tr_rentgapprop, na.rm = TRUE),
+		   co_pchrent = median(tr_pchrent, na.rm = TRUE),
+		   co_prenters = median(tr_prenters, na.rm = TRUE),
+		   co_pPOC = median(tr_pPOC, na.rm = TRUE),
+		   co_LI_prop = median(tr_LI_prop, na.rm = TRUE),
+		   co_VLI_prop = median(tr_VLI_prop, na.rm = TRUE),
+		   co_ELI_prop = median(tr_ELI_prop, na.rm = TRUE)) %>%
+	## Scenario Criteria
+	group_by(GEOID) %>%
+	mutate(
+		v_VLI = case_when(tr_pstudents < .2 &
+						  tr_VLI_prop > co_VLI_prop ~ 1,
+						  TRUE ~ 0),
+		v_Renters = case_when(tr_prenters > .4 ~ 1,
+							  TRUE ~ 0),
+		v_RBLI = case_when(tr_irLI_30p > co_irLI_30_med ~ 1,
+						   TRUE ~ 0),
+		v_POC = case_when(tr_pPOC > .3 ~ 1,
+						  TRUE ~ 0),
+		dp_PChRent = case_when(tr_pchrent > co_pchrent ~ 1,
+		   					   tr_pchrent.lag > co_pchrent ~ 1,
+						  	   TRUE ~ 0),
+		dp_RentGap = case_when(tr_rentgapprop > co_rentgapprop ~ 1,
+						  	   TRUE ~ 0),
+	## Scenarios
+		scen1 = case_when(v_VLI == 1 &
+						  tr_pstudents < .2 &
+						  tr_population >= 500 &
+						  sum(v_Renters,
+						  	  v_RBLI,
+						  	  v_POC, na.rm = TRUE) >= 2 &
+						  sum(dp_PChRent,
+						  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
+
+						  tr_POC_rank >= .95 &
+						  v_VLI == 1 &
+						  sum(dp_PChRent,
+						  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
+
+						  TRUE ~ 0),
+		tier1 = case_when(tr_dq == 0 ~ "Missing Data",
+						  scen1 == 1 ~ "Heightened Sensitivity"),
+		tier2 = case_when(tr_dq == 0 ~ "Missing Data",
+						  v_VLI == 1 &
+						  sum(v_POC,
+							  v_Renters,
+							  v_RBLI, na.rm = TRUE) >= 2 &
+						  tr_population >= 500 &
+						  tr_pPOC >= .3 &
+						  tr_pstudents < .20 ~ "Vulnerable"),
+		tier3 = case_when(tr_dq == 0 ~ "Missing Data",
+						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
+						  sum(v_POC, v_RBLI, na.rm = TRUE) == 2|
+						  sum(v_POC, v_Renters, na.rm = TRUE) == 2|
+						  v_VLI == 1 |
+						  sum(v_VLI, v_RBLI, na.rm = TRUE) == 2|
+						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Some Vulnerability")) %>%
+	ungroup()
+
+	ct$tr_sc.lag <- lag.listw(lw_bin,ct$tier1)
+
+#### left off ####
+
+glimpse(ct@data %>% filter(GEOID == "06037228500"))
+
+#
+# Tract data quality (based on renting hh's)
+# --------------------------------------------------------------------------
+
+
+
+# ==========================================================================
+# Final dataframe
+# ==========================================================================
+
+df_final <-
+	ct %>%
+	st_as_sf() %>%
+	select(GEOID,
+		   COUNTY,
+		   NeighType,
+		   starts_with("tr_"),
+		   starts_with("co_"),
+		   starts_with("v_"),
+		   starts_with("dp_"),
+		   starts_with("tier")) %>%
+	mutate(tier1 = case_when(tr_sc.lag >= .6 ~ 1,
+							 TRUE ~ tier1))
+
+
 
 final_df <-
 	left_join(ct_sf, cal_nt) %>%
