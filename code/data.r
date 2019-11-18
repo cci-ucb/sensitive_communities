@@ -449,14 +449,22 @@ ct@data <-
 		tr_rentgap = tr_medrent.lag - medrent,
 		tr_rentgapprop = tr_rentgap/((medrent + tr_medrent.lag)/2),
 		tr_pstudents = sum(st_colenroll, st_proenroll, na.rm = TRUE)/st_totenroll,
+		tr_medrent = medrent,
 		tr_prenters = totrent/totten,
+		tr_rb = sum(rb_34.9, rb_39.9, rb_49.9, rb_55, na.rm = TRUE)/rb_tot,
+		tr_households = totten,
 		tr_pWhite = race_White/race_tot,
 		tr_pBlack = race_Black/race_tot,
 		tr_pAsian = race_Asian/race_tot,
 		tr_pLatinx = race_Latinx/race_tot,
 		tr_pOther = (race_tot - race_White - race_Black - race_Asian - race_Latinx)/race_tot,
 		tr_pPOC = 1-(race_White/race_tot),
-		tr_POC_rank = rank(tr_pPOC)/length(tr_pPOC)) %>%
+		tr_POC_rank = rank(tr_pPOC)/length(tr_pPOC),
+		tr_pwelf = welf/welf_tot,
+		tr_ppoverty = sum(pov_famh, pov_nonfamh, na.rm = TRUE)/pov_tot,
+		tr_punemp = unemp/unemp_tot,
+		tr_pfemhhch = sum(fhh_famheadch, fhh_nonfamheadch, na.rm = TRUE)/fhh_tot
+		) %>%
 	group_by(COUNTYFP) %>%
 	mutate(co_rentgap = median(tr_rentgap, na.rm = TRUE),
 		   co_rentgapprop = median(tr_rentgapprop, na.rm = TRUE),
@@ -485,40 +493,21 @@ ct@data <-
 						  	   TRUE ~ 0),
 	## Scenarios
 		scen1 = case_when(v_VLI == 1 &
-						  tr_pstudents < .2 &
-						  tr_population >= 500 &
-						  sum(v_Renters,
-						  	  v_RBLI,
-						  	  v_POC, na.rm = TRUE) >= 2 &
-						  sum(dp_PChRent,
-						  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
-
+							  tr_pstudents < .2 &
+							  tr_population >= 500 &
+							  sum(v_Renters,
+							  	  v_RBLI,
+							  	  v_POC, na.rm = TRUE) >= 2 &
+							  sum(dp_PChRent,
+							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
 						  tr_POC_rank >= .95 &
-						  v_VLI == 1 &
-						  sum(dp_PChRent,
-						  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
-
-						  TRUE ~ 0),
-		tier1 = case_when(tr_dq == 0 ~ "Missing Data",
-						  scen1 == 1 ~ "Heightened Sensitivity"),
-		tier2 = case_when(tr_dq == 0 ~ "Missing Data",
-						  v_VLI == 1 &
-						  sum(v_POC,
-							  v_Renters,
-							  v_RBLI, na.rm = TRUE) >= 2 &
-						  tr_population >= 500 &
-						  tr_pPOC >= .3 &
-						  tr_pstudents < .20 ~ "Vulnerable"),
-		tier3 = case_when(tr_dq == 0 ~ "Missing Data",
-						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
-						  sum(v_POC, v_RBLI, na.rm = TRUE) == 2|
-						  sum(v_POC, v_Renters, na.rm = TRUE) == 2|
-						  v_VLI == 1 |
-						  sum(v_VLI, v_RBLI, na.rm = TRUE) == 2|
-						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Some Vulnerability")) %>%
+							  v_VLI == 1 &
+							  sum(dp_PChRent,
+							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
+						  TRUE ~ 0)) %>%
 	ungroup()
 
-	ct$tr_sc.lag <- lag.listw(lw_bin,ct$tier1)
+	ct$tr_sc.lag <- lag.listw(lw_bin,ct$scen1)
 
 #### left off ####
 
@@ -544,10 +533,211 @@ df_final <-
 		   starts_with("co_"),
 		   starts_with("v_"),
 		   starts_with("dp_"),
-		   starts_with("tier")) %>%
-	mutate(tier1 = case_when(tr_sc.lag >= .6 ~ 1,
-							 TRUE ~ tier1))
+		   starts_with("scen")) %>%
+	mutate(scen1 = case_when(tr_sc.lag >= .6 ~ 1,
+							 TRUE ~ scen1),
+		tier1 = case_when(tr_dq == 0 ~ "Missing Data",
+						  scen1 == 1 ~ "Heightened Sensitivity"),
+		tier2 = case_when(tr_dq == 0 ~ "Missing Data",
+						  v_VLI == 1 &
+						  sum(v_POC,
+							  v_Renters,
+							  v_RBLI, na.rm = TRUE) >= 2 &
+						  tr_population >= 500 &
+						  tr_pPOC >= .3 &
+						  tr_pstudents < .20 ~ "Vulnerable"),
+		tier3 = case_when(tr_dq == 0 ~ "Missing Data",
+						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
+						  sum(v_POC, v_RBLI, na.rm = TRUE) == 2|
+						  sum(v_POC, v_Renters, na.rm = TRUE) == 2|
+						  v_VLI == 1 |
+						  sum(v_VLI, v_RBLI, na.rm = TRUE) == 2|
+						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Some Vulnerability"))
 
+# ==========================================================================
+# Maps
+# ==========================================================================
+
+tmap_mode("view")
+sen_map4 <- function(t1,
+					 t2_df,
+					 t2,
+					 t3_df,
+					 t3,
+					 renters,
+					 vli,
+					 rb,
+					 chrent,
+					 rentgap)
+tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
+			tm_shape(t3_df, name = "Tier 3 - Some Vulnerability") +
+			tm_polygons(t3,
+			palette = c("#4daf4a","#4daf4a"),
+			label = "Tier 3 - Some Vulnerability",
+			alpha = .9,
+			border.alpha = .15,
+			border.color = "gray",
+			colorNA = NULL,
+			title = "",
+			id = "popup_text",
+			popup.vars = c("Tot Pop" = "tr_population",
+						   "Tot HH" = "tr_households",
+						   "% Rent" = "tr_prenters",
+						   "$ Rent" = "tr_medrent",
+						   "$ R Lag" = "tr_medrent.lag",
+						   "$ R Gap" = "tr_rentgap",
+						   "Ch Rent" = "tr_chrent",
+						   "Ch R Lag" = "tr_chrent.lag",
+						   "% RB" = "tr_rb",
+						   "% inc x rb " = "tr_irLI_30p",
+						   "% ELI" = "tr_ELI_prop",
+						   "% VLI" = "tr_VLI_prop",
+						   "% Stud." = "tr_pstudents",
+						   "----------" = "text",
+						   "Neigh." = "NeighType",
+						   "% White" = "tr_pWhite",
+						   "% Black" = "tr_pBlack",
+						   "% Asian" = "tr_pAsian",
+						   "% Lat" = "tr_pLatinx",
+						   "% Other" = "tr_pOther",
+						   "% POC" = "tr_pPOC",
+						   "% Welf" = "tr_pwelf",
+						   "% Pov" = "tr_ppoverty",
+						   "% Unemp" = "tr_punemp",
+						   "%FHHw/C"= "tr_pfemhhch",
+						   "----------" = "text",
+						   "SC Criteria" = "text",
+						   "----------" = "text",
+						   "POC" = "v_POC",
+						   "Renters" = renters,
+						   "VLI" = vli,
+						   "RB" = rb,
+						   "Ch Rent" = chrent,
+						   "Rent Gap" = rentgap
+						   )) +
+			tm_shape(t2_df, name = "Tier 2 - Vulnerable Communities") +
+			tm_polygons(t2,
+			palette = c("#377eb8","#377eb8"),
+			label = "Tier 2 - Vulnerable Communities",
+			alpha = .9,
+			border.alpha = .15,
+			border.color = "gray",
+			colorNA = NULL,
+			title = "",
+			id = "popup_text",
+			popup.vars = c("Tot Pop" = "tr_population",
+						   "Tot HH" = "tr_households",
+						   "% Rent" = "tr_prenters",
+						   "$ Rent" = "tr_medrent",
+						   "$ R Lag" = "tr_medrent.lag",
+						   "$ R Gap" = "tr_rentgap",
+						   "Ch Rent" = "tr_chrent",
+						   "Ch R Lag" = "tr_chrent.lag",
+						   "% RB" = "tr_rb",
+						   "% inc x rb " = "tr_irLI_30p",
+						   "% ELI" = "tr_ELI_prop",
+						   "% VLI" = "tr_VLI_prop",
+						   "% Stud." = "tr_pstudents",
+						   "----------" = "text",
+						   "Neigh." = "NeighType",
+						   "% White" = "tr_pWhite",
+						   "% Black" = "tr_pBlack",
+						   "% Asian" = "tr_pAsian",
+						   "% Lat" = "tr_pLatinx",
+						   "% Other" = "tr_pOther",
+						   "% POC" = "tr_pPOC",
+						   "% Welf" = "tr_pwelf",
+						   "% Pov" = "tr_ppoverty",
+						   "% Unemp" = "tr_punemp",
+						   "%FHHw/C"= "tr_pfemhhch",
+						   "----------" = "text",
+						   "SC Criteria" = "text",
+						   "----------" = "text",
+						   "POC" = "v_POC",
+						   "Renters" = renters,
+						   "VLI" = vli,
+						   "RB" = rb,
+						   "Ch Rent" = chrent,
+						   "Rent Gap" = rentgap
+						   ),
+			popup.format = list(digits=2)) +
+	tm_shape(df_final, name = "Sensitive Communities Layer") +
+	tm_polygons(t1,
+			# palette = c("#FF6633","#FF6633"),
+			palette = c("#e41a1c","#e41a1c"),
+			label = "Sensitive Communities",
+			alpha = .9,
+			border.alpha = .15,
+			border.color = "gray",
+			colorNA = NULL,
+			title = "",
+			id = "popup_text",
+			popup.vars = c("Tot Pop" = "tr_population",
+						   "Tot HH" = "tr_households",
+						   "% Rent" = "tr_prenters",
+						   "$ Rent" = "tr_medrent",
+						   "$ R Lag" = "tr_medrent.lag",
+						   "$ R Gap" = "tr_rentgap",
+						   "Ch Rent" = "tr_chrent",
+						   "Ch R Lag" = "tr_chrent.lag",
+						   "% RB" = "tr_rb",
+						   "% inc x rb " = "tr_irLI_30p",
+						   "% ELI" = "tr_ELI_prop",
+						   "% VLI" = "tr_VLI_prop",
+						   "% Stud." = "tr_pstudents",
+						   "----------" = "text",
+						   "Neigh." = "NeighType",
+						   "% White" = "tr_pWhite",
+						   "% Black" = "tr_pBlack",
+						   "% Asian" = "tr_pAsian",
+						   "% Lat" = "tr_pLatinx",
+						   "% Other" = "tr_pOther",
+						   "% POC" = "tr_pPOC",
+						   "% Welf" = "tr_pwelf",
+						   "% Pov" = "tr_ppoverty",
+						   "% Unemp" = "tr_punemp",
+						   "%FHHw/C"= "tr_pfemhhch",
+						   "----------" = "text",
+						   "SC Criteria" = "text",
+						   "----------" = "text",
+						   "POC" = "v_POC",
+						   "Renters" = renters,
+						   "VLI" = vli,
+						   "RB" = rb,
+						   "Ch Rent" = chrent,
+						   "Rent Gap" = rentgap
+						   ),
+			popup.format = list(digits=2)) +
+	tm_layout(title = paste0("Scenario 52: v_POC, ",renters,", ", vli, ", ", rb, ", ", chrent, ", ", rentgap)) +
+	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
+
+save_map <- function(x,y)
+	tmap_save(x, paste0("~/git/sensitive_communities/docs/", y, ".html"))
+
+t2_df <-
+	df_final %>%
+	filter(tier2 == "Vulnerable")
+
+t3_df <-
+	df_final %>%
+	filter(tier3 == "Some Vulnerability")
+
+
+tiermap1 <-
+	sen_map4(t1 = "tier1",
+			 t2_df = t2_df,
+			 t2 = "tier2",
+			 t3_df = t3_df,
+			 t3 = "tier3",
+			 renters = "v_Renters",
+			 vli = "v_VLI",
+			 rb = "v_RBLI",
+			 chrent = "dp_PChRent",
+			 rentgap = "dp_RentGap")
+
+# ==========================================================================
+# EXCESS CODE - to be erased
+# ==========================================================================
 
 
 final_df <-
@@ -961,7 +1151,7 @@ glimpse(final_df)
 
 tmap_mode("view")
 
-sen_map1 <- function(scen, renters, li, lirb, rb, chrent, rentgap)
+sen_map1 <- function(scen, renters, vli, rb, chrent, rentgap)
 tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
 tm_shape(final_df, name = "Sensitive Communities Layer") +
 	tm_polygons(scen,
@@ -974,37 +1164,37 @@ tm_shape(final_df, name = "Sensitive Communities Layer") +
 			colorNA = NULL,
 			title = "",
 			id = "popup_text",
-			popup.vars = c("Tot Pop" = "totraceE.y",
-						   "Tot HH" = "tottenE.y",
-						   "% Rent" = "tr_rentprop17",
-						   "$ Rent" = "tr_medrent17",
-						   "$ R Lag" = "tr_medrent17.lag",
+			popup.vars = c("Tot Pop" = "tr_population",
+						   "Tot HH" = "tr_households",
+						   "% Rent" = "tr_prenters",
+						   "$ Rent" = "tr_medrent",
+						   "$ R Lag" = "tr_medrent.lag",
 						   "$ R Gap" = "tr_rentgap",
 						   "Ch Rent" = "tr_chrent",
 						   "Ch R Lag" = "tr_chrent.lag",
-						   "% RB" = "tr_rbprop17",
-						   "% inc x rb " = lirb,
-						   "% ELI" = "tr_ELI_prop17",
-						   "% VLI" = "tr_VLI_prop17",
-						   "% Stud." = "tr_propstudent17",
+						   "% RB" = "tr_rb",
+						   "% inc x rb " = "tr_irLI_30p",
+						   "% ELI" = "tr_ELI_prop",
+						   "% VLI" = "tr_VLI_prop",
+						   "% Stud." = "tr_pstudents",
 						   "----------" = "text",
 						   "Neigh." = "NeighType",
-						   "% White" = "pwhite",
-						   "% Black" = "pblack",
-						   "% Asian" = "pasian",
-						   "% Lat" = "platinx",
-						   "% Other" = "pother",
-						   "% POC" = "pPOC",
-						   "% Welf" = "pwelfare",
-						   "% Pov" = "ppoverty",
-						   "% Unemp" = "unemp",
-						   "%FHHw/C"= "pfemhhch",
+						   "% White" = "tr_pWhite",
+						   "% Black" = "tr_pBlack",
+						   "% Asian" = "tr_pAsian",
+						   "% Lat" = "tr_pLatinx",
+						   "% Other" = "tr_pOther",
+						   "% POC" = "tr_pPOC",
+						   "% Welf" = "tr_pwelf",
+						   "% Pov" = "tr_ppoverty",
+						   "% Unemp" = "tr_punemp",
+						   "%FHHw/C"= "tr_pfemhhch",
 						   "----------" = "text",
 						   "SC Criteria" = "text",
 						   "----------" = "text",
-						   "POC" = "v_poc",
+						   "POC" = "v_POC",
 						   "Renters" = renters,
-						   "LI_Cat" = li,
+						   "VLI" = vli,
 						   "RB" = rb,
 						   "Ch Rent" = chrent,
 						   "Rent Gap" = rentgap
@@ -1027,8 +1217,7 @@ sen_map4 <- function(t1,
 					 t3_df,
 					 t3,
 					 renters,
-					 li,
-					 lirb,
+					 vli,
 					 rb,
 					 chrent,
 					 rentgap)
@@ -1043,37 +1232,37 @@ tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github
 			colorNA = NULL,
 			title = "",
 			id = "popup_text",
-			popup.vars = c("Tot Pop" = "totraceE.y",
-						   "Tot HH" = "tottenE.y",
-						   "% Rent" = "tr_rentprop17",
-						   "$ Rent" = "tr_medrent17",
-						   "$ R Lag" = "tr_medrent17.lag",
+			popup.vars = c("Tot Pop" = "tr_population",
+						   "Tot HH" = "tr_households",
+						   "% Rent" = "tr_prenters",
+						   "$ Rent" = "tr_medrent",
+						   "$ R Lag" = "tr_medrent.lag",
 						   "$ R Gap" = "tr_rentgap",
 						   "Ch Rent" = "tr_chrent",
 						   "Ch R Lag" = "tr_chrent.lag",
-						   "% RB" = "tr_rbprop17",
-						   "% inc x rb " = lirb,
-						   "% ELI" = "tr_ELI_prop17",
-						   "% VLI" = "tr_VLI_prop17",
-						   "% Stud." = "tr_propstudent17",
+						   "% RB" = "tr_rb",
+						   "% inc x rb " = "tr_irLI_30p",
+						   "% ELI" = "tr_ELI_prop",
+						   "% VLI" = "tr_VLI_prop",
+						   "% Stud." = "tr_pstudents",
 						   "----------" = "text",
 						   "Neigh." = "NeighType",
-						   "% White" = "pwhite",
-						   "% Black" = "pblack",
-						   "% Asian" = "pasian",
-						   "% Lat" = "platinx",
-						   "% Other" = "pother",
-						   "% POC" = "pPOC",
-						   "% Welf" = "pwelfare",
-						   "% Pov" = "ppoverty",
-						   "% Unemp" = "unemp",
-						   "%FHHw/C"= "pfemhhch",
+						   "% White" = "tr_pWhite",
+						   "% Black" = "tr_pBlack",
+						   "% Asian" = "tr_pAsian",
+						   "% Lat" = "tr_pLatinx",
+						   "% Other" = "tr_pOther",
+						   "% POC" = "tr_pPOC",
+						   "% Welf" = "tr_pwelf",
+						   "% Pov" = "tr_ppoverty",
+						   "% Unemp" = "tr_punemp",
+						   "%FHHw/C"= "tr_pfemhhch",
 						   "----------" = "text",
 						   "SC Criteria" = "text",
 						   "----------" = "text",
-						   "POC" = "v_poc",
+						   "POC" = "v_POC",
 						   "Renters" = renters,
-						   "LI_Cat" = li,
+						   "VLI" = vli,
 						   "RB" = rb,
 						   "Ch Rent" = chrent,
 						   "Rent Gap" = rentgap
@@ -1088,43 +1277,43 @@ tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github
 			colorNA = NULL,
 			title = "",
 			id = "popup_text",
-			popup.vars = c("Tot Pop" = "totraceE.y",
-						   "Tot HH" = "tottenE.y",
-						   "% Rent" = "tr_rentprop17",
-						   "$ Rent" = "tr_medrent17",
-						   "$ R Lag" = "tr_medrent17.lag",
+			popup.vars = c("Tot Pop" = "tr_population",
+						   "Tot HH" = "tr_households",
+						   "% Rent" = "tr_prenters",
+						   "$ Rent" = "tr_medrent",
+						   "$ R Lag" = "tr_medrent.lag",
 						   "$ R Gap" = "tr_rentgap",
 						   "Ch Rent" = "tr_chrent",
 						   "Ch R Lag" = "tr_chrent.lag",
-						   "% RB" = "tr_rbprop17",
-						   "% inc x rb " = lirb,
-						   "% ELI" = "tr_ELI_prop17",
-						   "% VLI" = "tr_VLI_prop17",
-						   "% Stud." = "tr_propstudent17",
+						   "% RB" = "tr_rb",
+						   "% inc x rb " = "tr_irLI_30p",
+						   "% ELI" = "tr_ELI_prop",
+						   "% VLI" = "tr_VLI_prop",
+						   "% Stud." = "tr_pstudents",
 						   "----------" = "text",
 						   "Neigh." = "NeighType",
-						   "% White" = "pwhite",
-						   "% Black" = "pblack",
-						   "% Asian" = "pasian",
-						   "% Lat" = "platinx",
-						   "% Other" = "pother",
-						   "% POC" = "pPOC",
-						   "% Welf" = "pwelfare",
-						   "% Pov" = "ppoverty",
-						   "% Unemp" = "unemp",
-						   "%FHHw/C"= "pfemhhch",
+						   "% White" = "tr_pWhite",
+						   "% Black" = "tr_pBlack",
+						   "% Asian" = "tr_pAsian",
+						   "% Lat" = "tr_pLatinx",
+						   "% Other" = "tr_pOther",
+						   "% POC" = "tr_pPOC",
+						   "% Welf" = "tr_pwelf",
+						   "% Pov" = "tr_ppoverty",
+						   "% Unemp" = "tr_punemp",
+						   "%FHHw/C"= "tr_pfemhhch",
 						   "----------" = "text",
 						   "SC Criteria" = "text",
 						   "----------" = "text",
-						   "POC" = "v_poc",
+						   "POC" = "v_POC",
 						   "Renters" = renters,
-						   "LI_Cat" = li,
+						   "VLI" = vli,
 						   "RB" = rb,
 						   "Ch Rent" = chrent,
 						   "Rent Gap" = rentgap
 						   ),
 			popup.format = list(digits=2)) +
-	tm_shape(final_df, name = "Sensitive Communities Layer") +
+	tm_shape(df_final, name = "Sensitive Communities Layer") +
 	tm_polygons(t1,
 			# palette = c("#FF6633","#FF6633"),
 			palette = c("#e41a1c","#e41a1c"),
@@ -1135,43 +1324,43 @@ tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github
 			colorNA = NULL,
 			title = "",
 			id = "popup_text",
-			popup.vars = c("Tot Pop" = "totraceE.y",
-						   "Tot HH" = "tottenE.y",
-						   "% Rent" = "tr_rentprop17",
-						   "$ Rent" = "tr_medrent17",
-						   "$ R Lag" = "tr_medrent17.lag",
+			popup.vars = c("Tot Pop" = "tr_population",
+						   "Tot HH" = "tr_households",
+						   "% Rent" = "tr_prenters",
+						   "$ Rent" = "tr_medrent",
+						   "$ R Lag" = "tr_medrent.lag",
 						   "$ R Gap" = "tr_rentgap",
 						   "Ch Rent" = "tr_chrent",
 						   "Ch R Lag" = "tr_chrent.lag",
-						   "% RB" = "tr_rbprop17",
-						   "% inc x rb " = lirb,
-						   "% ELI" = "tr_ELI_prop17",
-						   "% VLI" = "tr_VLI_prop17",
-						   "% Stud." = "tr_propstudent17",
+						   "% RB" = "tr_rb",
+						   "% inc x rb " = "tr_irLI_30p",
+						   "% ELI" = "tr_ELI_prop",
+						   "% VLI" = "tr_VLI_prop",
+						   "% Stud." = "tr_pstudents",
 						   "----------" = "text",
 						   "Neigh." = "NeighType",
-						   "% White" = "pwhite",
-						   "% Black" = "pblack",
-						   "% Asian" = "pasian",
-						   "% Lat" = "platinx",
-						   "% Other" = "pother",
-						   "% POC" = "pPOC",
-						   "% Welf" = "pwelfare",
-						   "% Pov" = "ppoverty",
-						   "% Unemp" = "unemp",
-						   "%FHHw/C"= "pfemhhch",
+						   "% White" = "tr_pWhite",
+						   "% Black" = "tr_pBlack",
+						   "% Asian" = "tr_pAsian",
+						   "% Lat" = "tr_pLatinx",
+						   "% Other" = "tr_pOther",
+						   "% POC" = "tr_pPOC",
+						   "% Welf" = "tr_pwelf",
+						   "% Pov" = "tr_ppoverty",
+						   "% Unemp" = "tr_punemp",
+						   "%FHHw/C"= "tr_pfemhhch",
 						   "----------" = "text",
 						   "SC Criteria" = "text",
 						   "----------" = "text",
-						   "POC" = "v_poc",
+						   "POC" = "v_POC",
 						   "Renters" = renters,
-						   "LI_Cat" = li,
+						   "VLI" = vli,
 						   "RB" = rb,
 						   "Ch Rent" = chrent,
 						   "Rent Gap" = rentgap
 						   ),
 			popup.format = list(digits=2)) +
-	tm_layout(title = paste0("Scenario 52: v_POC, ",renters,", ", li, ", ", rb, ", ", chrent, ", ", rentgap)) +
+	tm_layout(title = paste0("Scenario 52: v_POC, ",renters,", ", vli, ", ", rb, ", ", chrent, ", ", rentgap)) +
 	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
 
 save_map <- function(x,y)
@@ -1242,12 +1431,14 @@ scen51 <- sen_map3("Scenario 51", "v_renters_40p", "v_VLI", "irELI_50p", "v_rbEL
 scen52 <- sen_map3("Scenario 52", "v_renters_40p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co")
 scen53 <- sen_map3("Scenario 53", "v_renters_50p", "v_VLI_med", "irVLI_50p", "v_rbVLI_50rb", "dp_chrent_co", "dp_rentgap_co")
 
+
+
 t2_df <-
-	final_df %>%
+	df_final %>%
 	filter(tier2 == "Vulnerable")
 
 t3_df <-
-	final_df %>%
+	df_final %>%
 	filter(tier3 == "Some Vulnerability")
 
 
@@ -1257,12 +1448,11 @@ tiermap1 <-
 			 t2 = "tier2",
 			 t3_df = t3_df,
 			 t3 = "tier3",
-			 renters = "v_renters_40p",
-			 li = "v_VLI_med",
-			 lirb = "irLI_50p",
-			 rb = "v_rbLI_50rb",
-			 chrent = "dp_chrent_co",
-			 rentgap = "dp_rentgap_co")
+			 renters = "v_Renters",
+			 vli = "v_VLI",
+			 rb = "v_RBLI",
+			 chrent = "dp_PChRent",
+			 rentgap = "dp_RentGap")
 
 
 
