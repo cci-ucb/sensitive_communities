@@ -546,6 +546,14 @@ ct@data <-
 							tr_population >= 500 &
 							sum(v_VLI, v_Renters, v_RBLI, v_POC, na.rm = TRUE) == 4 &
 							sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
+						  TRUE ~ 0),
+		scen3 = case_when(big_city == 1 ~ scen1,
+						  big_city == 0 &
+						  	tr_pstudents < .2 &
+							tr_population >= 500 &
+							v_VLI == 1 &
+							sum(v_VLI, v_Renters, v_RBLI, v_POC, na.rm = TRUE) >= 2 &
+							sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
 						  TRUE ~ 0)) %>%
 	ungroup()
 
@@ -558,6 +566,7 @@ glimpse(ct@data %>% filter(GEOID == "06075060400"))
 
 ct@data %>% group_by(scen1, big_city) %>% count()
 ct@data %>% group_by(scen2, big_city) %>% count()
+ct@data %>% group_by(scen3, big_city) %>% count()
 
 # ==========================================================================
 # Final dataframe
@@ -597,11 +606,14 @@ df_final <-
 						  scen1 == 1 ~ "Tier 1: Heightened Sensitivity"),
 		tier1.2 = case_when(tr_dq == 0 ~ "Poor Data Quality",
 						    scen2 == 1 ~ "Tier 1: Heightened Sensitivity"),
+		tier1.3 = case_when(tr_dq == 0 ~ "Poor Data Quality",
+						    scen3 == 1 ~ "Tier 1: Heightened Sensitivity"),
 		text = "",
 		popup_text = paste0("Tract: ", GEOID))
 
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1.2) %>% count()
+df_final %>% st_set_geometry(NULL) %>% group_by(tier1.3) %>% count()
 df_final %>% st_set_geometry(NULL) %>% group_by(scen1) %>% count()
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1, scen1, tier2, tier3) %>% count()
 
@@ -861,7 +873,8 @@ tiermap1 <-
 			 vli = "v_VLI",
 			 rb = "v_RBLI",
 			 chrent = "dp_PChRent",
-			 rentgap = "dp_RentGap")
+			 rentgap = "dp_RentGap",
+			 "Scenario: No City Differentiation")
 
 save_map(tiermap1, "tiermap1")
 
@@ -876,10 +889,24 @@ tiermap2 <-
 			 rb = "v_RBLI",
 			 chrent = "dp_PChRent",
 			 rentgap = "dp_RentGap",
-			 title = "Scenario with City Differentiation Approach")
-	tiermap2
+			 title = "Scenario: City Differentiation == 4:4 Vuln. & 2:2 DP")
 
 save_map(tiermap2, "tiermap2")
+
+tiermap3 <-
+	sen_map4(t1 = "tier1.3",
+			 t2_df = t2_df,
+			 t2 = "tier2",
+			 t3_df = t3_df,
+			 t3 = "tier3",
+			 renters = "v_Renters",
+			 vli = "v_VLI",
+			 rb = "v_RBLI",
+			 chrent = "dp_PChRent",
+			 rentgap = "dp_RentGap",
+			 title = "Scenario: City Differentiation == v_VLI, 2:3 Vuln., & 2:2 DP")
+
+save_map(tiermap3, "tiermap3")
 
 # ==========================================================================
 # EXCESS CODE - to be erased
