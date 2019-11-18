@@ -505,9 +505,15 @@ ct@data <-
 							  sum(dp_PChRent,
 							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
 						  tr_POC_rank >= .95 &
-							  v_VLI == 1 &
+							  tr_pstudents < .2 &
+							  tr_population >= 500 &
+							  sum(v_VLI,
+							  	  v_Renters,
+							  	  v_RBLI,
+							  	  v_POC, na.rm = TRUE) >= 3 &
 							  sum(dp_PChRent,
 							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
+
 						  TRUE ~ 0)) %>%
 	ungroup()
 
@@ -542,7 +548,7 @@ df_final <-
 		   starts_with("dp_"),
 		   starts_with("scen")) %>%
 	mutate(
-		tier2 = case_when(tr_dq == 0 ~ NA,
+		tier2 = case_when(tr_dq == 0 ~ NA_character_,
 						  v_VLI == 1 &
 						  sum(v_POC,
 							  v_Renters,
@@ -550,7 +556,7 @@ df_final <-
 						  tr_population >= 500 &
 						  tr_pPOC >= .3 &
 						  tr_pstudents < .20 ~ "Tier 2: Vulnerable"),
-		tier3 = case_when(tr_dq == 0 ~ NA,
+		tier3 = case_when(tr_dq == 0 ~ NA_character_,
 						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
 						  sum(v_POC, v_RBLI, na.rm = TRUE) == 2|
 						  sum(v_POC, v_Renters, na.rm = TRUE) == 2|
@@ -654,7 +660,7 @@ sen_map4 <- function(t1,
 tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
 			tm_shape(t3_df, name = "Tier 3 - Some Vulnerability") +
 			tm_polygons(t3,
-			palette = c("#4daf4a","#4daf4a"),
+			palette = "#4daf4a",
 			# label = "Tier 3 - Some Vulnerability",
 			alpha = .7,
 			border.alpha = .15,
@@ -700,7 +706,7 @@ tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github
 			popup.format = list(digits=2)) +
 			tm_shape(t2_df, name = "Tier 2 - Vulnerable Communities") +
 			tm_polygons(t2,
-			palette = c("#377eb8","#377eb8"),
+			palette = "#377eb8",
 			# label = "Tier 2 - Vulnerable Communities",
 			alpha = .7,
 			border.alpha = .15,
@@ -747,8 +753,8 @@ tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github
 	tm_shape(df_final, name = "Tier 1 - Heightened Sensitivity") +
 	tm_polygons(t1,
 			# palette = c("#FF6633","#FF6633"),
-			palette = c("#e41a1c","#e41a1c"),
-			label = "Heightened Sensitivity",
+			palette = c("#CCCCCC", "#FF6633"),
+			# label = "Heightened Sensitivity",
 			alpha = .7,
 			border.alpha = .15,
 			border.color = "gray",
@@ -803,11 +809,11 @@ save_map <- function(x,y)
 
 t2_df <-
 	df_final %>%
-	filter(tier2 == "Vulnerable")
+	filter(tier2 == "Tier 2: Vulnerable")
 
 t3_df <-
 	df_final %>%
-	filter(tier3 == "Some Vulnerability")
+	filter(tier3 == "Tier 3: Some Vulnerability")
 
 
 tiermap1 <-
