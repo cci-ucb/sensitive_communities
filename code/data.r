@@ -552,7 +552,17 @@ ct@data <-
 						  	tr_pstudents < .2 &
 							tr_population >= 500 &
 							v_VLI == 1 &
-							sum(v_VLI, v_Renters, v_RBLI, v_POC, na.rm = TRUE) >= 2 &
+							sum(v_Renters, v_RBLI, v_POC, na.rm = TRUE) >= 2 &
+							sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
+						  TRUE ~ 0),
+		scen4 = case_when(big_city == 1 ~ scen1,
+						  big_city == 0 &
+						  	tr_pstudents < .2 &
+							tr_population >= 500 &
+							sum(v_VLI, v_Renters, v_RBLI, v_POC, na.rm = TRUE) == 4 |
+						  big_city == 0 &
+						  	tr_pstudents < .2 &
+							tr_population >= 500 &
 							sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
 						  TRUE ~ 0)) %>%
 	ungroup()
@@ -563,10 +573,12 @@ glimpse(ct@data %>% filter(GEOID == "06037228500"))
 glimpse(ct@data %>% filter(GEOID == "06037700700"))
 glimpse(ct@data %>% filter(GEOID == "06001401600"))
 glimpse(ct@data %>% filter(GEOID == "06075060400"))
+glimpse(ct@data %>% filter(GEOID == "06037700802"))
 
 ct@data %>% group_by(scen1, big_city) %>% count()
 ct@data %>% group_by(scen2, big_city) %>% count()
 ct@data %>% group_by(scen3, big_city) %>% count()
+ct@data %>% group_by(scen4, big_city) %>% count()
 
 # ==========================================================================
 # Final dataframe
@@ -608,12 +620,15 @@ df_final <-
 						    scen2 == 1 ~ "Tier 1: Heightened Sensitivity"),
 		tier1.3 = case_when(tr_dq == 0 ~ "Poor Data Quality",
 						    scen3 == 1 ~ "Tier 1: Heightened Sensitivity"),
+		tier1.4 = case_when(tr_dq == 0 ~ "Poor Data Quality",
+						    scen4 == 1 ~ "Tier 1: Heightened Sensitivity"),
 		text = "",
 		popup_text = paste0("Tract: ", GEOID))
 
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1.2) %>% count()
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1.3) %>% count()
+df_final %>% st_set_geometry(NULL) %>% group_by(tier1.4) %>% count()
 df_final %>% st_set_geometry(NULL) %>% group_by(scen1) %>% count()
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1, scen1, tier2, tier3) %>% count()
 
@@ -907,6 +922,21 @@ tiermap3 <-
 			 title = "Scenario: City Differentiation == v_VLI, 2:3 Vuln., & 2:2 DP")
 
 save_map(tiermap3, "tiermap3")
+
+tiermap4 <-
+	sen_map4(t1 = "tier1.2",
+			 t2_df = t2_df,
+			 t2 = "tier2",
+			 t3_df = t3_df,
+			 t3 = "tier3",
+			 renters = "v_Renters",
+			 vli = "v_VLI",
+			 rb = "v_RBLI",
+			 chrent = "dp_PChRent",
+			 rentgap = "dp_RentGap",
+			 title = "Scenario: City Differentiation == 4:4 Vuln. OR 2:2 DP")
+
+save_map(tiermap4, "tiermap4")
 
 # ==========================================================================
 # EXCESS CODE - to be erased
