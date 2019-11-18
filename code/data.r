@@ -439,6 +439,10 @@ ct@data <-
 	ct$tr_chrent.lag <- lag.listw(lw_dist_idwW,ct$tr_chrent)
 	ct$tr_medrent.lag <- lag.listw(lw_dist_idwW,ct$medrent)
 
+#
+# Develop variables
+# --------------------------------------------------------------------------
+
 ct@data <-
 	ct@data %>%
 	group_by(GEOID) %>%
@@ -500,7 +504,7 @@ ct@data <-
 							  	  v_POC, na.rm = TRUE) >= 2 &
 							  sum(dp_PChRent,
 							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
-						  tr_POC_rank >= .95&
+						  tr_POC_rank >= .95 &
 							  v_VLI == 1 &
 							  sum(dp_PChRent,
 							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
@@ -537,29 +541,32 @@ df_final <-
 		   starts_with("v_"),
 		   starts_with("dp_"),
 		   starts_with("scen")) %>%
-	mutate(scen1 = case_when(tr_sc.lag >= .95 ~ 1,
-							 TRUE ~ scen1),
-		tier1 = case_when(tr_dq == 0 ~ "Missing Data",
-						  scen1 == 1 ~ "Heightened Sensitivity"),
-		tier2 = case_when(tr_dq == 0 ~ "Missing Data",
+	mutate(
+		tier2 = case_when(tr_dq == 0 ~ NA,
 						  v_VLI == 1 &
 						  sum(v_POC,
 							  v_Renters,
 							  v_RBLI, na.rm = TRUE) >= 2 &
 						  tr_population >= 500 &
 						  tr_pPOC >= .3 &
-						  tr_pstudents < .20 ~ "Vulnerable"),
-		tier3 = case_when(tr_dq == 0 ~ "Missing Data",
+						  tr_pstudents < .20 ~ "Tier 2: Vulnerable"),
+		tier3 = case_when(tr_dq == 0 ~ NA,
 						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
 						  sum(v_POC, v_RBLI, na.rm = TRUE) == 2|
 						  sum(v_POC, v_Renters, na.rm = TRUE) == 2|
 						  v_VLI == 1 |
 						  sum(v_VLI, v_RBLI, na.rm = TRUE) == 2|
-						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Some Vulnerability"),
+						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
+		scen1 = case_when(tr_sc.lag >= .6 &
+						  tier2 == "Vulnerable" ~ 1,
+						  TRUE ~ scen1),
+		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
+						  scen1 == 1 ~ "Tier 1: Heightened Sensitivity"),
 		text = "",
 		popup_text = paste0("Tract: ", GEOID))
 
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
+df_final %>% st_set_geometry(NULL) %>% group_by(scen1) %>% count()
 
 # st_erase <- function(x, y) {
 #   st_difference(x, st_union(st_combine(y)))
@@ -578,7 +585,7 @@ tm_basemap(leaflet::providers$CartoDB.Positron) +
 	tm_shape(df_final, name = "Tier 1 - Heightened Sensitivity") +
 	tm_polygons("tier1",
 			# palette = c("#FF6633","#FF6633"),
-			# palette = c("#e41a1c","#e41a1c"),
+			palette = c("#FF6633","#CCCCCC"),
 			# label = "Heightened Sensitivity",
 			alpha = .7,
 			border.alpha = .15,
@@ -648,7 +655,7 @@ tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github
 			tm_shape(t3_df, name = "Tier 3 - Some Vulnerability") +
 			tm_polygons(t3,
 			palette = c("#4daf4a","#4daf4a"),
-			label = "Tier 3 - Some Vulnerability",
+			# label = "Tier 3 - Some Vulnerability",
 			alpha = .7,
 			border.alpha = .15,
 			border.color = "gray",
@@ -694,7 +701,7 @@ tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github
 			tm_shape(t2_df, name = "Tier 2 - Vulnerable Communities") +
 			tm_polygons(t2,
 			palette = c("#377eb8","#377eb8"),
-			label = "Tier 2 - Vulnerable Communities",
+			# label = "Tier 2 - Vulnerable Communities",
 			alpha = .7,
 			border.alpha = .15,
 			border.color = "gray",
