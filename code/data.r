@@ -611,29 +611,52 @@ df_final <-
 						  v_VLI == 1 |
 						  sum(v_VLI, v_RBLI, na.rm = TRUE) == 2|
 						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
-		scen1 = case_when(tr_sc.lag >= .6 &
-						  tier2 == "Tier 2: Vulnerable" ~ 1,
-						  TRUE ~ scen1),
-		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						  scen1 == 1 ~ "Tier 1: Heightened Sensitivity"),
-		tier1.2 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						    scen2 == 1 ~ "Tier 1: Heightened Sensitivity"),
+		# scen1 = case_when(tr_sc.lag >= .6 &
+		# 				  # tier2 == "Tier 2: Vulnerable" ~ 1,
+		# 				  sum(v_VLI,
+		# 				  	  v_Renters,
+		# 				  	  v_RBLI,
+		# 				  	  v_POC,
+		# 				  	  dp_PChRent,
+		# 				  	  dp_RentGap, na.rm = TRUE) ~ 1,
+		# 				  TRUE ~ scen1),
+		# tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
+		# 				  scen1 == 1 ~ "Tier 1: Heightened Sensitivity"),
+		# tier1.2 = case_when(tr_dq == 0 ~ "Poor Data Quality",
+		# 				    scen2 == 1 ~ "Tier 1: Heightened Sensitivity"),
 		tier1.3 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						    scen3 == 1 ~ "Tier 1: Heightened Sensitivity"),
-		tier1.4 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						    scen4 == 1 ~ "Tier 1: Heightened Sensitivity"),
+						    scen3 == 1 ~ "Tier 1: Heightened Sensitivity",
+							tr_sc.lag >= .6 &
+						  # tier2 == "Tier 2: Vulnerable" ~ 1,
+							  sum(v_VLI,
+							  	  v_Renters,
+							  	  v_RBLI,
+							  	  v_POC,
+							  	  dp_PChRent,
+							  	  dp_RentGap, na.rm = TRUE) >= 3 ~ "Tier 1: Heightened Sensitivity"),
+		# tier1.4 = case_when(tr_dq == 0 ~ "Poor Data Quality",
+		# 				    scen4 == 1 ~ "Tier 1: Heightened Sensitivity"),
 		text = "",
 		popup_text = paste0("Tract: ", GEOID))
 
-df_final %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
-df_final %>% st_set_geometry(NULL) %>% group_by(tier1.2) %>% count()
+	### LEFT OFF ###
+	# 300k cities
+	# Double check that tier 3 is doing it right
+
+# df_final %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
+# df_final %>% st_set_geometry(NULL) %>% group_by(tier1.2) %>% count()
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1.3) %>% count()
-df_final %>% st_set_geometry(NULL) %>% group_by(tier1.4) %>% count()
-df_final %>% st_set_geometry(NULL) %>% group_by(scen1) %>% count()
+# df_final %>% st_set_geometry(NULL) %>% group_by(tier1.4) %>% count()
+# df_final %>% st_set_geometry(NULL) %>% group_by(scen1) %>% count()
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1, scen1, tier2, tier3) %>% count()
 
 glimpse(df_final %>% filter(GEOID == "06081613800"))
 glimpse(df_final %>% filter(GEOID == "06055201800"))
+glimpse(df_final %>% filter(GEOID == "06037222001"))
+glimpse(df_final %>% filter(GEOID == "06037222001"))
+
+ggplot(df_final %>% filter(COUNTY == "06037")) +
+	geom_point(aes(x = reorder(GEOID, -tr_irLI_30p), y = tr_irLI_30p))
 
 # st_erase <- function(x, y) {
 #   st_difference(x, st_union(st_combine(y)))
@@ -658,6 +681,7 @@ adv_shouldbe <- c("06075023400", "06075020900", "06081611800", "06081611900", "0
 
 advocate_tracts <-
 	df_final %>%
+	ungroup() %>%
 	mutate(adv_surprisedissc = case_when(GEOID %in% adv_surprisedissc ~ TRUE),
 		   adv_shouldbe = case_when(GEOID %in% adv_shouldbe ~ TRUE))
 
@@ -668,6 +692,9 @@ adv_surprisedissc <-
 adv_shouldbe <-
 	advocate_tracts%>%
 	filter(adv_shouldbe == TRUE)
+
+fwrite(advocate_tracts %>% st_set_geometry(NULL), "~/git/sensitive_communities/data/191118_sc_advocate.csv")
+st_write(advocate_tracts, "~/git/sensitive_communities/data/191118_sc_advocate.shp")
 
 
 # ==========================================================================
@@ -1042,9 +1069,9 @@ tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github
 						   ),
 			popup.format = list(digits=2)) +
 	tm_shape(adv_surprisedissc, name = "Surprised It's Sensitive") +
-		tm_borders(col = "blue", lwd = 2, alpha = 0) +
-	tm_shape(adv_shouldbe, name = "Surprised It's Not Sensitive") +
-		tm_polygons(col = "red", lwd = 2, alpha = 0) +
+		tm_polygons(border.col = "blue", lwd = 3, alpha = 0) +
+	tm_shape(adv_shouldbe, name = "Should Be Sensitive") +
+		tm_polygons(border.col = "red", lwd = 3, alpha = 0) +
 	tm_layout(title = title) +
 	tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
 
