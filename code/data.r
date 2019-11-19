@@ -451,20 +451,15 @@ ct@data <-
 
 ## California places
 	big_city <-
-		fread("~/git/sensitive_communities/data/ca_place.csv") %>% 
+		fread("~/git/sensitive_communities/data/ca_place.csv") %>%
 		mutate(city = case_when(cplace %in% c("Los Angeles",
-												"San Diego",
-												"San Jose",
-												"San Francisco",
-												"Fresno",
-												"Sacramento",
-												"Long Beach",
-												"Oakland",
-												"Bakersfield",
-												"Anaheim",
-												"Santa Ana",
-												"Riverside",
-												"Stockton") ~ 1,
+											  "San Francisco",
+											  "Oakland",
+											  "San Jose",
+											  "Fresno",
+											  "San Diego",
+											  "Sacramento",
+											  "Long Beach") ~ 1,
 								TRUE ~ 0),
 			   GEOID = paste0("0", geoid)) %>%
 		filter(city == 1) %>%
@@ -545,13 +540,13 @@ ct@data <-
 							  sum(dp_PChRent,
 							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
 						  TRUE ~ 0),
-		# scen2 = case_when(big_city == 1 ~ scen1,
-		# 				  big_city == 0 &
-		# 				  	tr_pstudents < .2 &
-		# 					tr_population >= 500 &
-		# 					sum(v_VLI, v_Renters, v_RBLI, v_POC, na.rm = TRUE) == 4 &
-		# 					sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
-		# 				  TRUE ~ 0),
+		scen2 = case_when(big_city == 1 ~ scen1,
+						  big_city == 0 &
+						  	tr_pstudents < .2 &
+							tr_population >= 500 &
+							sum(v_VLI, v_Renters, v_RBLI, v_POC, na.rm = TRUE) == 4 &
+							sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
+						  TRUE ~ 0),
 		scen3 = case_when(big_city == 1 ~ scen1,
 						  big_city == 0 &
 						  	tr_pstudents < .2 &
@@ -559,29 +554,20 @@ ct@data <-
 							v_VLI == 1 &
 							sum(v_Renters, v_RBLI, v_POC, na.rm = TRUE) >= 2 &
 							sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
-						  TRUE ~ 0),		
+						  TRUE ~ 0),
 		scen4 = case_when(big_city == 1 ~ scen1,
 						  big_city == 0 &
 						  	tr_pstudents < .2 &
 							tr_population >= 500 &
-							v_RBLI == 1 &
-							sum(v_Renters, v_VLI, v_POC, na.rm = TRUE) >= 2 &
+							sum(v_VLI, v_Renters, v_RBLI, v_POC, na.rm = TRUE) == 4 |
+						  big_city == 0 &
+						  	tr_pstudents < .2 &
+							tr_population >= 500 &
 							sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
-						  TRUE ~ 0),
-		# scen4 = case_when(big_city == 1 ~ scen1,
-		# 				  big_city == 0 &
-		# 				  	tr_pstudents < .2 &
-		# 					tr_population >= 500 &
-		# 					sum(v_VLI, v_Renters, v_RBLI, v_POC, na.rm = TRUE) == 4 |
-		# 				  big_city == 0 &
-		# 				  	tr_pstudents < .2 &
-		# 					tr_population >= 500 &
-		# 					sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
-		# 				  TRUE ~ 0)
-		) %>%
+						  TRUE ~ 0)) %>%
 	ungroup()
 
-	ct$tr_sc.lag <- lag.listw(lw_bin,ct$scen3)
+	ct$tr_sc.lag <- lag.listw(lw_bin,ct$scen1)
 
 glimpse(ct@data %>% filter(GEOID == "06037228500"))
 glimpse(ct@data %>% filter(GEOID == "06037700700"))
@@ -639,26 +625,15 @@ df_final <-
 		# tier1.2 = case_when(tr_dq == 0 ~ "Poor Data Quality",
 		# 				    scen2 == 1 ~ "Tier 1: Heightened Sensitivity"),
 		tier1.3 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						    scen3 == 1 ~ "Tier 1: Heightened Sensitivity",
-							tr_sc.lag >= .6 &
-						  # tier2 == "Tier 2: Vulnerable" ~ 1,
-							  sum(v_VLI,
-							  	  v_Renters,
-							  	  v_RBLI,
-							  	  v_POC,
-							  	  dp_PChRent,
-							  	  dp_RentGap, na.rm = TRUE) >= 3 ~ "Tier 1: Heightened Sensitivity"
-							  ),		
-		tier1.4 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						    scen4 == 1 ~ "Tier 1: Heightened Sensitivity",
-							tr_sc.lag >= .6 &
-						  # tier2 == "Tier 2: Vulnerable" ~ 1,
-							  sum(v_VLI,
-							  	  v_Renters,
-							  	  v_RBLI,
-							  	  v_POC,
-							  	  dp_PChRent,
-							  	  dp_RentGap, na.rm = TRUE) >= 3 ~ "Tier 1: Heightened Sensitivity"
+						    scen3 == 1 ~ "Tier 1: Heightened Sensitivity"#,
+							# tr_sc.lag >= .6 &
+						 #  # tier2 == "Tier 2: Vulnerable" ~ 1,
+							#   sum(v_VLI,
+							#   	  v_Renters,
+							#   	  v_RBLI,
+							#   	  v_POC,
+							#   	  dp_PChRent,
+							#   	  dp_RentGap, na.rm = TRUE) >= 3 ~ "Tier 1: Heightened Sensitivity"
 							  ),
 		# tier1.4 = case_when(tr_dq == 0 ~ "Poor Data Quality",
 		# 				    scen4 == 1 ~ "Tier 1: Heightened Sensitivity"),
@@ -672,9 +647,7 @@ df_final <-
 # df_final %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
 # df_final %>% st_set_geometry(NULL) %>% group_by(tier1.2) %>% count()
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1.3) %>% count()
-df_final %>% st_set_geometry(NULL) %>% group_by(tier2) %>% count()
-df_final %>% st_set_geometry(NULL) %>% group_by(tier3) %>% count()
-df_final %>% st_set_geometry(NULL) %>% group_by(tier1.4) %>% count()
+# df_final %>% st_set_geometry(NULL) %>% group_by(tier1.4) %>% count()
 # df_final %>% st_set_geometry(NULL) %>% group_by(scen1) %>% count()
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1.3, scen1, tier2, tier3) %>% count()
 
