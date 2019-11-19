@@ -218,33 +218,27 @@ totfhc
 # 
 # ==========================================================================
 
-totrent
-'totrent' = 'B25003_003', # Estimate!!Total!!Renter occupied TENURE
-totten
+SC_Vars <- 
+c('totrent' = 'B25003_003', # Estimate!!Total!!Renter occupied TENURE
 'totten' = 'B25003_001',  # Estimate!!Total TENURE
-colenroll
 'colenroll' = 'B14007_017', # Estimate!!Total!!Enrolled in school!!Enrolled in college undergraduate years	SCHOOL ENROLLMENT BY DETAILED  LEVEL OF SCHOOL FOR THE POPULATION 3 YEARS AND OVER
-proenroll
 'proenroll' = 'B14007_018', # Estimate!!Total!!Enrolled in school!!Graduate or professional school	SCHOOL ENROLLMENT BY DETAILED  LEVEL OF SCHOOL FOR THE POPULATION 3 YEARS AND OVER
-totenroll
 'totenroll' = 'B14007_001', # Estimate!!Total	SCHOOL ENROLLMENT BY DETAILED  LEVEL OF SCHOOL FOR THE POPULATION 3 YEARS AND OVER
-rb_55
 'rb_55' = 'B25070_010', # 50.0 percent or more GROSS RENT as % hh income
-rb_tot
 'rb_tot' = 'B25070_001', # GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME
-medrent
 'medrent' = 'B25064_001', #MEDIAN GROSS RENT (DOLLARS)
-totrace
 'totrace' = 'B03002_001',
-White
 'White' = 'B03002_003',
-Black
 'Black' = 'B03002_004',
-Asian
 'Asian' = 'B03002_006',
-Latinx
 'Latinx' = 'B03002_012',
-totwelf
 'totwelf' = 'B19057_001', #
-welf
 'welf' = 'B19057_002',
+'povfamh' = 'B17017_003',
+'povnonfamh' = 'B17017_020',
+'totpov' = 'B17017_001', #
+'unemp' = 'B23025_005',
+'totunemp' = 'B23025_001',
+'femfamheadch' = 'B11005_007',
+'femnonfamheadch' = 'B11005_010',
+'totfhc' = 'B11005_001')

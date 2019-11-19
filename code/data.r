@@ -625,15 +625,16 @@ df_final <-
 		# tier1.2 = case_when(tr_dq == 0 ~ "Poor Data Quality",
 		# 				    scen2 == 1 ~ "Tier 1: Heightened Sensitivity"),
 		tier1.3 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						    scen3 == 1 ~ "Tier 1: Heightened Sensitivity",
-							tr_sc.lag >= .6 &
-						  # tier2 == "Tier 2: Vulnerable" ~ 1,
-							  sum(v_VLI,
-							  	  v_Renters,
-							  	  v_RBLI,
-							  	  v_POC,
-							  	  dp_PChRent,
-							  	  dp_RentGap, na.rm = TRUE) >= 3 ~ "Tier 1: Heightened Sensitivity"),
+						    scen3 == 1 ~ "Tier 1: Heightened Sensitivity"#,
+							# tr_sc.lag >= .6 &
+						 #  # tier2 == "Tier 2: Vulnerable" ~ 1,
+							#   sum(v_VLI,
+							#   	  v_Renters,
+							#   	  v_RBLI,
+							#   	  v_POC,
+							#   	  dp_PChRent,
+							#   	  dp_RentGap, na.rm = TRUE) >= 3 ~ "Tier 1: Heightened Sensitivity"
+							  ),
 		# tier1.4 = case_when(tr_dq == 0 ~ "Poor Data Quality",
 		# 				    scen4 == 1 ~ "Tier 1: Heightened Sensitivity"),
 		text = "",
@@ -648,7 +649,7 @@ df_final <-
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1.3) %>% count()
 # df_final %>% st_set_geometry(NULL) %>% group_by(tier1.4) %>% count()
 # df_final %>% st_set_geometry(NULL) %>% group_by(scen1) %>% count()
-df_final %>% st_set_geometry(NULL) %>% group_by(tier1, scen1, tier2, tier3) %>% count()
+df_final %>% st_set_geometry(NULL) %>% group_by(tier1.3, scen1, tier2, tier3) %>% count()
 
 glimpse(df_final %>% filter(GEOID == "06081613800"))
 glimpse(df_final %>% filter(GEOID == "06055201800"))
