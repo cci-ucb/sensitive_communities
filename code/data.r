@@ -549,13 +549,13 @@ ct@data <-
 							  sum(dp_PChRent,
 							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
 						  TRUE ~ 0),
-		scen2 = case_when(big_city == 1 ~ scen1,
-						  big_city == 0 &
-						  	tr_pstudents < .2 &
-							tr_population >= 500 &
-							sum(v_VLI, v_Renters, v_RBLI, v_POC, na.rm = TRUE) == 4 &
-							sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
-						  TRUE ~ 0),
+		# scen2 = case_when(big_city == 1 ~ scen1,
+		# 				  big_city == 0 &
+		# 				  	tr_pstudents < .2 &
+		# 					tr_population >= 500 &
+		# 					sum(v_VLI, v_Renters, v_RBLI, v_POC, na.rm = TRUE) == 4 &
+		# 					sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
+		# 				  TRUE ~ 0),
 		scen3 = case_when(big_city == 1 ~ scen1,
 						  big_city == 0 &
 						  	tr_pstudents < .2 &
@@ -568,12 +568,38 @@ ct@data <-
 						  big_city == 0 &
 						  	tr_pstudents < .2 &
 							tr_population >= 500 &
-							sum(v_VLI, v_Renters, v_RBLI, v_POC, na.rm = TRUE) == 4 |
-						  big_city == 0 &
-						  	tr_pstudents < .2 &
-							tr_population >= 500 &
+							v_VLI == 1 &
+							sum(v_Renters, v_RBLI, v_POC, na.rm = TRUE) >= 2 &
 							sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
+						  tr_POC_rank >= .95 &
+							  tr_pstudents < .2 &
+							  tr_population >= 500 &
+							  sum(v_VLI,
+							  	  v_Renters,
+							  	  v_RBLI,
+							  	  v_POC, na.rm = TRUE) >= 3 &
+							  sum(dp_PChRent,
+							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,						  
+						  tr_pPOC >= .9 &
+							  tr_pstudents < .2 &
+							  tr_population >= 500 &
+							  sum(v_VLI,
+							  	  v_Renters,
+							  	  v_RBLI,
+							  	  v_POC, na.rm = TRUE) >= 3 &
+							  sum(dp_PChRent,
+							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
 						  TRUE ~ 0)) %>%
+		# scen4 = case_when(big_city == 1 ~ scen1,
+		# 				  big_city == 0 &
+		# 				  	tr_pstudents < .2 &
+		# 					tr_population >= 500 &
+		# 					sum(v_VLI, v_Renters, v_RBLI, v_POC, na.rm = TRUE) == 4 |
+		# 				  big_city == 0 &
+		# 				  	tr_pstudents < .2 &
+		# 					tr_population >= 500 &
+		# 					sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
+		# 				  TRUE ~ 0)
 	ungroup()
 
 	ct$tr_sc.lag <- lag.listw(lw_bin,ct$scen1)
@@ -635,6 +661,8 @@ df_final <-
 		# 				    scen2 == 1 ~ "Tier 1: Heightened Sensitivity"),
 		tier1.3 = case_when(tr_dq == 0 ~ "Poor Data Quality",
 						    scen3 == 1 ~ "Sensative Community"),
+		tier1.4 = case_when(tr_dq == 0 ~ "Poor Data Quality",
+						    scen4 == 1 ~ "Sensative Community"),
 							# tr_sc.lag >= .6 &
 						 #    tier2 == "Tier 2: Vulnerable" ~ "Tier 1: Heightened Sensitivity"),
 							  # sum(v_VLI,
@@ -655,7 +683,7 @@ df_final <-
 # df_final %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
 # df_final %>% st_set_geometry(NULL) %>% group_by(tier1.2) %>% count()
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1.3) %>% count()
-# df_final %>% st_set_geometry(NULL) %>% group_by(tier1.4) %>% count()
+df_final %>% st_set_geometry(NULL) %>% group_by(tier1.4) %>% count()
 # df_final %>% st_set_geometry(NULL) %>% group_by(scen1) %>% count()
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1.3, scen1, tier2, tier3) %>% count()
 
@@ -875,6 +903,81 @@ v2map <-
 # save_map(v2map, "v2map")
 library(htmlwidgets)
 saveWidget(v2map, file="~/git/sensitive_communities/docs/v2map.html")
+
+mapb <- 
+tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
+tm_shape(Bus) + 
+	tm_polygons("label", 
+				palette="Greys", alpha = .25, 
+				border.color = "gray", 
+				border.alpha = .5, 
+				id = "label", 
+				popup.vars = c("Type: " = "id"), 
+				title = "") + 
+tm_shape(Rail) + 
+	tm_polygons("label", 
+				palette="Greys", 
+				alpha = .25, 
+				border.alpha = .5, 
+				id = "label", 
+				popup.vars = c("Type: " = "id"), 
+				title = "") + 
+tm_shape(df_final, name = "Sensitive Community") +
+	tm_polygons("tier1.4",
+			palette = c("#CCCCCC", "#FF6633"),
+			# label = "Heightened Sensitivity",
+			alpha = .5,
+			border.alpha = .05,
+			border.color = "gray",
+			colorNA = NULL,
+			title = "",
+			id = "popup_text",
+			popup.vars = c("Tot Pop" = "tr_population",
+						   "Tot HH" = "tr_households",
+						   "% Rent" = "tr_prenters",
+						   "$ Rent" = "tr_medrent",
+						   "$ R Lag" = "tr_medrent.lag",
+						   "$ R Gap" = "tr_rentgap",
+						   "Ch Rent" = "tr_chrent",
+						   "Ch R Lag" = "tr_chrent.lag",
+						   "% RB" = "tr_rb",
+						   "% inc x rb " = "tr_irLI_30p",
+						   "% ELI" = "tr_ELI_prop",
+						   "% VLI" = "tr_VLI_prop",
+						   "% Stud." = "tr_pstudents",
+						   "----------" = "text",
+						   "Neigh." = "NeighType",
+						   "% White" = "tr_pWhite",
+						   "% Black" = "tr_pBlack",
+						   "% Asian" = "tr_pAsian",
+						   "% Lat" = "tr_pLatinx",
+						   "% Other" = "tr_pOther",
+						   "% POC" = "tr_pPOC",
+						   "% Welf" = "tr_pwelf",
+						   "% Pov" = "tr_ppoverty",
+						   "% Unemp" = "tr_punemp",
+						   "%FHHw/C"= "tr_pfemhhch",
+						   "----------" = "text",
+						   "SC Criteria" = "text",
+						   "----------" = "text",
+						   "VLI" = "v_VLI",
+						   "POC" = "v_POC",
+						   "Renters" = "v_Renters",
+						   "RB" = "v_RBLI",
+						   "Ch Rent" = "dp_PChRent",
+						   "Rent Gap" = "dp_RentGap"
+						   ),
+			popup.format = list(digits=2)) +
+tm_layout(title = "Scenario: v_POC, v_Renters, v_VLI, v_RBLI, dp_PChRent, dp_RentGap") +
+tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9) 
+
+v2mapb <- 
+	tmap_leaflet(mapb) %>% 
+	leaflet::hideGroup("Bus")
+
+# save_map(v2map, "v2map")
+library(htmlwidgets)
+saveWidget(v2mapb, file="~/git/sensitive_communities/docs/v2mapb.html")
 
 
 
