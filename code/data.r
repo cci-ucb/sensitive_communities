@@ -538,7 +538,7 @@ ct@data <-
 							  	  v_RBLI,
 							  	  v_POC, na.rm = TRUE) >= 3 &
 							  sum(dp_PChRent,
-							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,						  
+							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
 						  tr_pPOC >= .9 &
 							  tr_pstudents < .2 &
 							  tr_population >= 500 &
@@ -579,7 +579,7 @@ ct@data <-
 							  	  v_RBLI,
 							  	  v_POC, na.rm = TRUE) >= 3 &
 							  sum(dp_PChRent,
-							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,						  
+							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
 						  tr_pPOC >= .9 &
 							  tr_pstudents < .2 &
 							  tr_population >= 500 &
@@ -609,6 +609,7 @@ glimpse(ct@data %>% filter(GEOID == "06037700700"))
 glimpse(ct@data %>% filter(GEOID == "06001401600"))
 glimpse(ct@data %>% filter(GEOID == "06075060400"))
 glimpse(ct@data %>% filter(GEOID == "06037700802"))
+glimpse(ct@data %>% filter(GEOID == "06081611800"))
 
 ct@data %>% group_by(scen1, big_city) %>% count()
 ct@data %>% group_by(scen2, big_city) %>% count()
@@ -660,9 +661,9 @@ df_final <-
 		# tier1.2 = case_when(tr_dq == 0 ~ "Poor Data Quality",
 		# 				    scen2 == 1 ~ "Tier 1: Heightened Sensitivity"),
 		tier1.3 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						    scen3 == 1 ~ "Sensative Community"),
+						    scen3 == 1 ~ "Sensitive Community"),
 		tier1.4 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						    scen4 == 1 ~ "Sensative Community"),
+						    scen4 == 1 ~ "Sensitive Community"),
 							# tr_sc.lag >= .6 &
 						 #    tier2 == "Tier 2: Vulnerable" ~ "Tier 1: Heightened Sensitivity"),
 							  # sum(v_VLI,
@@ -793,20 +794,20 @@ st_write(advocate_tracts, "~/git/sensitive_communities/data/191118_sc_advocate.s
 # transit layer
 # --------------------------------------------------------------------------
 
-Bus <- 
-	transit %>% 
-	filter(label == "High-Quality Bus Corridor Buffer") %>% 
+Bus <-
+	transit %>%
+	filter(label == "High-Quality Bus Corridor Buffer") %>%
 	mutate(label = as.character(label))
 
-Rail <- 
-	transit %>% 
-	filter(label == "Fixed Transit Stop Buffer") %>% 
+Rail <-
+	transit %>%
+	filter(label == "Fixed Transit Stop Buffer") %>%
 	mutate(label = as.character(label))
 
-# map <- 
+# map <-
 
 
-# 	tmap_leaflet(map) %>% 
+# 	tmap_leaflet(map) %>%
 # 	leaflet::hideGroup("bus")
 
 # tm_shape(bus) +
@@ -828,24 +829,25 @@ tmap_mode("view")
 # 					 chrent,
 # 					 rentgap,
 # 					 title = paste0("Scenario: v_POC, ",renters,", ", vli, ", ", rb, ", ", chrent, ", ", rentgap))
-map <- 
+
+map <-
 tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
-tm_shape(Bus) + 
-	tm_polygons("label", 
-				palette="Greys", alpha = .25, 
-				border.color = "gray", 
-				border.alpha = .5, 
-				id = "label", 
-				popup.vars = c("Type: " = "id"), 
-				title = "") + 
-tm_shape(Rail) + 
-	tm_polygons("label", 
-				palette="Greys", 
-				alpha = .25, 
-				border.alpha = .5, 
-				id = "label", 
-				popup.vars = c("Type: " = "id"), 
-				title = "") + 
+tm_shape(Bus) +
+	tm_polygons("label",
+				palette="Greys", alpha = .25,
+				border.color = "gray",
+				border.alpha = .5,
+				id = "label",
+				popup.vars = c("Type: " = "id"),
+				title = "") +
+tm_shape(Rail) +
+	tm_polygons("label",
+				palette="Greys",
+				alpha = .25,
+				border.alpha = .5,
+				id = "label",
+				popup.vars = c("Type: " = "id"),
+				title = "") +
 tm_shape(df_final, name = "Sensitive Community") +
 	tm_polygons("tier1.3",
 
@@ -866,7 +868,7 @@ tm_shape(df_final, name = "Sensitive Community") +
 						   "Ch Rent" = "tr_chrent",
 						   "Ch R Lag" = "tr_chrent.lag",
 						   "% RB" = "tr_rb",
-						   "% inc x rb " = "tr_irLI_30p",
+						   "% LI x RB" = "tr_irLI_30p",
 						   "% ELI" = "tr_ELI_prop",
 						   "% VLI" = "tr_VLI_prop",
 						   "% Stud." = "tr_pstudents",
@@ -894,34 +896,34 @@ tm_shape(df_final, name = "Sensitive Community") +
 						   ),
 			popup.format = list(digits=2)) +
 tm_layout(title = "Scenario: v_POC, v_Renters, v_VLI, v_RBLI, dp_PChRent, dp_RentGap") +
-tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9) 
+tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
 
-v2map <- 
-	tmap_leaflet(map) %>% 
+v2map <-
+	tmap_leaflet(map) %>%
 	leaflet::hideGroup("Bus")
 
 # save_map(v2map, "v2map")
 library(htmlwidgets)
 saveWidget(v2map, file="~/git/sensitive_communities/docs/v2map.html")
 
-mapb <- 
+mapb <-
 tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
-tm_shape(Bus) + 
-	tm_polygons("label", 
-				palette="Greys", alpha = .25, 
-				border.color = "gray", 
-				border.alpha = .5, 
-				id = "label", 
-				popup.vars = c("Type: " = "id"), 
-				title = "") + 
-tm_shape(Rail) + 
-	tm_polygons("label", 
-				palette="Greys", 
-				alpha = .25, 
-				border.alpha = .5, 
-				id = "label", 
-				popup.vars = c("Type: " = "id"), 
-				title = "") + 
+tm_shape(Bus) +
+	tm_polygons("label",
+				palette="Greys", alpha = .25,
+				border.color = "gray",
+				border.alpha = .5,
+				id = "label",
+				popup.vars = c("Type: " = "id"),
+				title = "") +
+tm_shape(Rail) +
+	tm_polygons("label",
+				palette="Greys",
+				alpha = .25,
+				border.alpha = .5,
+				id = "label",
+				popup.vars = c("Type: " = "id"),
+				title = "") +
 tm_shape(df_final, name = "Sensitive Community") +
 	tm_polygons("tier1.4",
 			palette = c("#CCCCCC", "#FF6633"),
@@ -941,7 +943,7 @@ tm_shape(df_final, name = "Sensitive Community") +
 						   "Ch Rent" = "tr_chrent",
 						   "Ch R Lag" = "tr_chrent.lag",
 						   "% RB" = "tr_rb",
-						   "% inc x rb " = "tr_irLI_30p",
+						   "% LI x RB" = "tr_irLI_30p",
 						   "% ELI" = "tr_ELI_prop",
 						   "% VLI" = "tr_VLI_prop",
 						   "% Stud." = "tr_pstudents",
@@ -969,10 +971,10 @@ tm_shape(df_final, name = "Sensitive Community") +
 						   ),
 			popup.format = list(digits=2)) +
 tm_layout(title = "Scenario: v_POC, v_Renters, v_VLI, v_RBLI, dp_PChRent, dp_RentGap") +
-tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9) 
+tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
 
-v2mapb <- 
-	tmap_leaflet(mapb) %>% 
+v2mapb <-
+	tmap_leaflet(mapb) %>%
 	leaflet::hideGroup("Bus")
 
 # save_map(v2map, "v2map")
@@ -1027,7 +1029,7 @@ tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github
 						   "Ch Rent" = "tr_chrent",
 						   "Ch R Lag" = "tr_chrent.lag",
 						   "% RB" = "tr_rb",
-						   "% inc x rb " = "tr_irLI_30p",
+						   "% LI x RB" = "tr_irLI_30p",
 						   "% ELI" = "tr_ELI_prop",
 						   "% VLI" = "tr_VLI_prop",
 						   "% Stud." = "tr_pstudents",
