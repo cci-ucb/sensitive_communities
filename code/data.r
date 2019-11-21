@@ -920,7 +920,7 @@ v2map <-
 
 # save_map(v2map, "v2map")
 library(htmlwidgets)
-saveWidget(v2map, file="~/git/sensitive_communities/docs/v2map_20pVLI.html")
+saveWidget(v2map, file="~/git/sensitive_communities/docs/v2map20pVLI.html")
 
 mapb <-
 tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
