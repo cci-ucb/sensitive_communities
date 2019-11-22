@@ -611,6 +611,7 @@ glimpse(ct@data %>% filter(GEOID == "06001401600"))
 glimpse(ct@data %>% filter(GEOID == "06075060400"))
 glimpse(ct@data %>% filter(GEOID == "06037700802"))
 glimpse(ct@data %>% filter(GEOID == "06081611800"))
+glimpse(ct@data %>% filter(GEOID == "06081611800"))
 
 ct@data %>% group_by(scen1, big_city) %>% count()
 ct@data %>% group_by(scen2, big_city) %>% count()
@@ -663,8 +664,8 @@ df_final <-
 		# 				    scen2 == 1 ~ "Tier 1: Heightened Sensitivity"),
 		tier1.3 = case_when(tr_dq == 0 ~ "Poor Data Quality",
 						    scen3 == 1 ~ "Sensitive Community"),
-		tier1.4 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						    scen4 == 1 ~ "Sensitive Community"),
+		# tier1.4 = case_when(tr_dq == 0 ~ "Poor Data Quality",
+		# 				    scen4 == 1 ~ "Sensitive Community"),
 							# tr_sc.lag >= .6 &
 						 #    tier2 == "Tier 2: Vulnerable" ~ "Tier 1: Heightened Sensitivity"),
 							  # sum(v_VLI,
@@ -695,6 +696,12 @@ glimpse(df_final %>% filter(GEOID == "06037222001"))
 glimpse(df_final %>% filter(GEOID == "06037222001"))
 glimpse(df_final %>% filter(GEOID == "06075017700"))
 glimpse(df_final %>% filter(GEOID == "06001426100"))
+glimpse(df_final %>% filter(GEOID == "06037531101"))
+glimpse(df_final %>% filter(GEOID == "06037531504"))
+glimpse(df_final %>% filter(GEOID == "06037532700"))
+glimpse(df_final %>% filter(GEOID == "06075015900"))
+glimpse(df_final %>% filter(GEOID == "06037228720"))
+glimpse(df_final %>% filter(GEOID == "06081611800"))
 
 df_final %>% st_set_geometry(NULL) %>% select(tr_VLI_prop, co_VLI_prop) %>% distinct() %>% ungroup() %>% summary()
 
