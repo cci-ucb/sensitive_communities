@@ -225,6 +225,57 @@ low_dq <-
 	pull()
 
 #
+# County subdivision tracts and place tracts
+# --------------------------------------------------------------------------
+
+csd <-
+	county_subdivisions("CA", cb = TRUE, class = "sf") %>%
+	filter(NAME %in% c("Los Angeles",
+					   "South Gate-East Los Angeles",
+					   "Santa Monica",
+					   "South Bay Cities",
+					   "Torrance",
+					   "Palos Verdes",
+					   "Inglewood",
+					   "Long Beach-Lakewood",
+					   "Compton",
+					   "Downey-Norwalk",
+					   "Southwest San Gabriel Valley",
+
+					   "Fresno",
+					   "San Francisco",
+					   "Oakland"))
+
+csd_tracts <-
+	sf::st_centroid(sf::st_as_sf(ct)) %>%
+	sf::st_set_crs(4269) %>%
+	.[csd, ] %>%
+	st_set_geometry(NULL) %>%
+	select(GEOID) %>%
+	pull()
+
+place <-
+	places("CA", cb = TRUE, class = "sf") %>%
+	filter(NAME %in% c("San Diego",
+					 "San Jose",
+					 "Sacramento"))
+place_tracts <-
+	sf::st_centroid(sf::st_as_sf(ct)) %>%
+	sf::st_set_crs(4269) %>%
+	.[csd, ] %>%
+	st_set_geometry(NULL) %>%
+	select(GEOID) %>%
+	pull()
+
+
+big_city_tracts <- c(csd_tracts, place_tracts)
+
+	tm_shape(place) +
+		tm_polygons("NAME") +
+	tm_shape(csd) +
+		tm_polygons("NAME")
+
+#
 # VLI data
 # --------------------------------------------------------------------------
 
@@ -448,23 +499,23 @@ ct@data <-
 #
 # Develop variables
 # --------------------------------------------------------------------------
-
-## California places
-	big_city <-
-		fread("~/git/sensitive_communities/data/ca_place.csv") %>%
-		mutate(city = case_when(cplace %in% c("Los Angeles",
-											  "San Francisco",
-											  "Oakland",
-											  "San Jose",
-											  "Fresno",
-											  "San Diego",
-											  "Sacramento",
-											  "Long Beach") ~ 1,
-								TRUE ~ 0),
-			   GEOID = paste0("0", geoid)) %>%
-		filter(city == 1) %>%
-		select(GEOID) %>%
-		pull()
+#
+# ## California places
+# 	big_city <-
+# 		fread("~/git/sensitive_communities/data/ca_place.csv") %>%
+# 		mutate(city = case_when(cplace %in% c("Los Angeles",
+# 											  "San Francisco",
+# 											  "Oakland",
+# 											  "San Jose",
+# 											  "Fresno",
+# 											  "San Diego",
+# 											  "Sacramento",
+# 											  "Long Beach") ~ 1,
+# 								TRUE ~ 0),
+# 			   GEOID = paste0("0", geoid)) %>%
+# 		filter(city == 1) %>%
+# 		select(GEOID) %>%
+# 		pull()
 
 ct@data <-
 	ct@data %>%
@@ -505,7 +556,7 @@ ct@data <-
 	## Scenario Criteria
 	group_by(GEOID) %>%
 	mutate(
-		big_city = case_when(GEOID %in% big_city ~ 1,
+		big_city = case_when(GEOID %in% big_city_tracts ~ 1,
 							 TRUE ~ 0),
 		v_VLI = case_when(tr_pstudents < .2 &
 						  tr_VLI_prop > .2 ~ 1,
@@ -628,6 +679,7 @@ df_final <-
 	select(GEOID,
 		   COUNTY,
 		   NeighType,
+		   big_city,
 		   starts_with("tr_"),
 		   starts_with("co_"),
 		   starts_with("v_"),
@@ -663,7 +715,14 @@ df_final <-
 		# tier1.2 = case_when(tr_dq == 0 ~ "Poor Data Quality",
 		# 				    scen2 == 1 ~ "Tier 1: Heightened Sensitivity"),
 		tier1.3 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						    scen3 == 1 ~ "Sensitive Community"),
+						    scen3 == 1 ~ "Sensitive Community",
+							tr_sc.lag >= 1 &
+							tr_pstudents < .2 &
+							tr_population >= 500 &
+						  	v_VLI == 1 &
+							  sum(v_Renters,
+							  	  v_RBLI,
+							  	  v_POC, na.rm = TRUE) >= 2 ~ "Sensitive Community"),
 		# tier1.4 = case_when(tr_dq == 0 ~ "Poor Data Quality",
 		# 				    scen4 == 1 ~ "Sensitive Community"),
 							# tr_sc.lag >= .6 &
@@ -702,6 +761,12 @@ glimpse(df_final %>% filter(GEOID == "06037532700"))
 glimpse(df_final %>% filter(GEOID == "06075015900"))
 glimpse(df_final %>% filter(GEOID == "06037228720"))
 glimpse(df_final %>% filter(GEOID == "06081611800"))
+glimpse(df_final %>% filter(GEOID == "06037228720"))
+glimpse(df_final %>% filter(GEOID == "06075017700"))
+
+glimpse(df_final %>% filter(GEOID == "06037531101"))
+glimpse(df_final %>% filter(GEOID == "06037531504"))
+glimpse(df_final %>% filter(GEOID == "06037532700"))
 
 df_final %>% st_set_geometry(NULL) %>% select(tr_VLI_prop, co_VLI_prop) %>% distinct() %>% ungroup() %>% summary()
 
@@ -750,8 +815,8 @@ adv_shouldbe <-
 	advocate_tracts%>%
 	filter(adv_shouldbe == TRUE)
 
-fwrite(advocate_tracts %>% st_set_geometry(NULL), "~/git/sensitive_communities/data/191118_sc_advocate.csv")
-st_write(advocate_tracts, "~/git/sensitive_communities/data/191118_sc_advocate.shp")
+# fwrite(advocate_tracts %>% st_set_geometry(NULL), "~/git/sensitive_communities/data/191118_sc_advocate.csv")
+# st_write(advocate_tracts, "~/git/sensitive_communities/data/191118_sc_advocate.shp")
 
 
 # ==========================================================================
@@ -921,13 +986,21 @@ tm_shape(df_final, name = "Sensitive Community") +
 tm_layout(title = "Scenario: v_POC, v_Renters, v_VLI, v_RBLI, dp_PChRent, dp_RentGap") +
 tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
 
-v2map <-
+NewCity191122 <-
 	tmap_leaflet(map) %>%
 	leaflet::hideGroup(c("Bus", "adv_surprisedissc", "adv_shouldbe"))
 
 # save_map(v2map, "v2map")
-library(htmlwidgets)
-saveWidget(v2map, file="~/git/sensitive_communities/docs/v2map20pVLI.html")
+htmlwidgets::saveWidget(NewCity191122, file="~/git/sensitive_communities/docs/NewCity191122.html")
+
+
+
+
+
+
+
+
+
 
 mapb <-
 tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
