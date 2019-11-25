@@ -230,21 +230,21 @@ low_dq <-
 
 csd <-
 	county_subdivisions("CA", cb = TRUE, class = "sf") %>%
-	filter(NAME %in% c("Los Angeles",
-					   "South Gate-East Los Angeles",
-					   "Santa Monica",
-					   "South Bay Cities",
-					   "Torrance",
-					   "Palos Verdes",
-					   "Inglewood",
-					   "Long Beach-Lakewood",
-					   "Compton",
-					   "Downey-Norwalk",
-					   "Southwest San Gabriel Valley",
-
-					   "Fresno",
-					   "San Francisco",
-					   "Oakland"))
+	filter(NAME %in% c("Fresno"#,
+					   # "Los Angeles",
+					   # "South Gate-East Los Angeles",
+					   # "Santa Monica",
+					   # "South Bay Cities",
+					   # "Torrance",
+					   # "Palos Verdes",
+					   # "Inglewood",
+					   # "Long Beach-Lakewood",
+					   # "Compton",
+					   # "Downey-Norwalk",
+					   # "Southwest San Gabriel Valley",
+					   # "San Francisco",
+					   # "Oakland"
+					   ))
 
 csd_tracts <-
 	sf::st_centroid(sf::st_as_sf(ct)) %>%
@@ -256,13 +256,17 @@ csd_tracts <-
 
 place <-
 	places("CA", cb = TRUE, class = "sf") %>%
-	filter(NAME %in% c("San Diego",
-					 "San Jose",
-					 "Sacramento"))
+	filter(NAME %in% c("Los Angeles", 
+					   "San Francisco", 
+					   "San Diego",
+					   "San Jose",
+					   "Sacramento", 
+					   "Oakland", 
+					   "San Francisco"))
 place_tracts <-
 	sf::st_centroid(sf::st_as_sf(ct)) %>%
 	sf::st_set_crs(4269) %>%
-	.[csd, ] %>%
+	.[place, ] %>%
 	st_set_geometry(NULL) %>%
 	select(GEOID) %>%
 	pull()
@@ -704,33 +708,33 @@ df_final <-
 						  sum(v_VLI, v_RBLI, na.rm = TRUE) == 2|
 						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
 		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						    scen3 == 1 ~ "Sensitive Community",
+						    scen3 == 1 ~ "Tier 1: Heightened Sensitivity",
 							tr_sc.lag >= 1 &
 							tr_pstudents < .2 &
 							tr_population >= 500 &
 						  	v_VLI == 1 &
 							sum(v_Renters,
 								v_RBLI,
-								v_POC, na.rm = TRUE) >= 2 ~ "Sensitive Community"),
-		vnosc = case_when(# is.na(tier1) &
-						  # v_VLI == 1 &
-							sum(v_VLI,
-								v_Renters,
-								v_RBLI,
-								v_POC, na.rm = TRUE) == 4 &
-								sum(v_VLI, v_Renters, na.rm = TRUE) == 0 ~ 1),
+								v_POC, na.rm = TRUE) >= 2 ~ "Tier 1: Heightened Sensitivity"),
+		# vnosc = case_when(# is.na(tier1) &
+		# 				  # v_VLI == 1 &
+		# 					sum(v_VLI,
+		# 						v_Renters,
+		# 						v_RBLI,
+		# 						v_POC, na.rm = TRUE) == 4 &
+		# 						sum(v_VLI, v_Renters, na.rm = TRUE) == 0 ~ 1),
 		# tier1.4 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-		# 				    scen4 == 1 ~ "Sensitive Community"),
+		# 				    scen4 == 1 ~ "Tier 1: Heightened Sensitivity"),
 							# tr_sc.lag >= .6 &
-						 #    tier2 == "Tier 2: Vulnerable" ~ "Tier 1: Heightened Sensitivity"),
+						 #    tier2 == "Tier 2: Vulnerable" ~ "Tier 1: Tier 1: Heightened Sensitivity"),
 							  # sum(v_VLI,
 							  # 	  v_Renters,
 							  # 	  v_RBLI,
 							  # 	  v_POC,
 							  # 	  dp_PChRent,
-							  # 	  dp_RentGap, na.rm = TRUE) >= 3 ~ "Tier 1: Heightened Sensitivity"),
+							  # 	  dp_RentGap, na.rm = TRUE) >= 3 ~ "Tier 1: Tier 1: Heightened Sensitivity"),
 		# tier1.4 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-		# 				    scen4 == 1 ~ "Tier 1: Heightened Sensitivity"),
+		# 				    scen4 == 1 ~ "Tier 1: Tier 1: Heightened Sensitivity"),
 		text = "",
 		popup_text = paste0("Tract: ", GEOID))
 
@@ -760,6 +764,7 @@ glimpse(df_final %>% filter(GEOID == "06037531101"))
 glimpse(df_final %>% filter(GEOID == "06037531504"))
 glimpse(df_final %>% filter(GEOID == "06037532700"))
 glimpse(df_final %>% filter(GEOID == "06037203900"))
+glimpse(df_final %>% filter(GEOID == "06075980501"))
 
 st_write(df_final, "~/git/sensitive_communities/data/df_final.shp", delete_layer = TRUE)
 
@@ -815,11 +820,11 @@ adv_shouldbe <-
 # ==========================================================================
 
 # tm_basemap(leaflet::providers$CartoDB.Positron) +
-# 	tm_shape(df_final, name = "Tier 1 - Heightened Sensitivity") +
+# 	tm_shape(df_final, name = "Tier 1 - Tier 1: Heightened Sensitivity") +
 # 	tm_polygons("tier1",
 # 			# palette = c("#FF6633","#FF6633"),
 # 			palette = c("#FF6633","#CCCCCC"),
-# 			# label = "Heightened Sensitivity",
+# 			# label = "Tier 1: Heightened Sensitivity",
 # 			alpha = .7,
 # 			border.alpha = .15,
 # 			border.color = "gray",
@@ -897,6 +902,11 @@ save_map <- function(x,y)
 
 tmap_mode("view")
 
+df_finalt2 <- df_final
+bc_tract <- 
+	df_final %>% 
+	filter(big_city == 1)
+
 # sen_map4 <- function(t1,
 # 					 renters,
 # 					 vli,
@@ -923,9 +933,54 @@ tm_shape(Rail) +
 				id = "label",
 				popup.vars = c("Type: " = "id"),
 				title = "") +
-tm_shape(df_final, name = "Sensitive Community") +
+tm_shape(df_finalt2, name = "Tier 2: Vulnerable") +
+	tm_polygons("tier2",
+			palette = c("#6699FF", "#6699FF"),
+			# label = "Heightened Sensitivity",
+			alpha = .5,
+			border.alpha = .05,
+			border.color = "gray",
+			colorNA = NULL,
+			title = "",
+			id = "popup_text",
+			popup.vars = c("Tot Pop" = "tr_population",
+						   "Tot HH" = "tr_households",
+						   "% Rent" = "tr_prenters",
+						   "$ Rent" = "tr_medrent",
+						   "$ R Lag" = "tr_medrent.lag",
+						   "$ R Gap" = "tr_rentgap",
+						   "Ch Rent" = "tr_chrent",
+						   "Ch R Lag" = "tr_chrent.lag",
+						   "% RB" = "tr_rb",
+						   "% LI x RB" = "tr_irLI_30p",
+						   "% ELI" = "tr_ELI_prop",
+						   "% VLI" = "tr_VLI_prop",
+						   "% Stud." = "tr_pstudents",
+						   "----------" = "text",
+						   "Neigh." = "NeighType",
+						   "% White" = "tr_pWhite",
+						   "% Black" = "tr_pBlack",
+						   "% Asian" = "tr_pAsian",
+						   "% Lat" = "tr_pLatinx",
+						   "% Other" = "tr_pOther",
+						   "% POC" = "tr_pPOC",
+						   "% Welf" = "tr_pwelf",
+						   "% Pov" = "tr_ppoverty",
+						   "% Unemp" = "tr_punemp",
+						   "%FHHw/C"= "tr_pfemhhch",
+						   "----------" = "text",
+						   "SC Criteria" = "text",
+						   "----------" = "text",
+						   "VLI" = "v_VLI",
+						   "POC" = "v_POC",
+						   "Renters" = "v_Renters",
+						   "RB" = "v_RBLI",
+						   "Ch Rent" = "dp_PChRent",
+						   "Rent Gap" = "dp_RentGap"
+						   ),
+			popup.format = list(digits=2)) +
+tm_shape(df_final, name = "Tier 1: Heightened Sensitivity") +
 	tm_polygons("tier1",
-
 			palette = c("#CCCCCC", "#FF6633"),
 			# label = "Heightened Sensitivity",
 			alpha = .5,
@@ -970,6 +1025,10 @@ tm_shape(df_final, name = "Sensitive Community") +
 						   "Rent Gap" = "dp_RentGap"
 						   ),
 			popup.format = list(digits=2)) +
+	tm_shape(place, name = "places") +
+		tm_polygons(border.col = "black", lwd = 3, alpha = 0) +
+	tm_shape(csd, name = "county sub division") +
+		tm_polygons(border.col = "grey", lwd = 3, alpha = 0) +
 	tm_shape(adv_surprisedissc, name = "Surprised It's Sensitive") +
 		tm_polygons(border.col = "blue", lwd = 3, alpha = 0) +
 	tm_shape(adv_shouldbe, name = "Should Be Sensitive") +
@@ -977,17 +1036,19 @@ tm_shape(df_final, name = "Sensitive Community") +
 tm_layout(title = "Scenario: v_POC, v_Renters, v_VLI, v_RBLI, dp_PChRent, dp_RentGap") +
 tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
 
-NewCity191122 <-
+T1T2191124 <-
 	tmap_leaflet(map) %>%
-	leaflet::hideGroup(c("Bus", "adv_surprisedissc", "adv_shouldbe"))
+	leaflet::hideGroup(c("Bus", "df_finalt2", "adv_surprisedissc", "adv_shouldbe"))
 
 # save_map(v2map, "v2map")
-htmlwidgets::saveWidget(NewCity191122, file="~/git/sensitive_communities/docs/NewCity191122.html")
+htmlwidgets::saveWidget(T1T2191124, file="~/git/sensitive_communities/docs/T1T2191124.html")
 
 
 
 
-
+# ==========================================================================
+# 
+# ==========================================================================
 
 
 
