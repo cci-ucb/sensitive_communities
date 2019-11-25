@@ -709,7 +709,8 @@ df_final <-
 						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
 		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
 						    scen3 == 1 ~ "Tier 1: Heightened Sensitivity",
-							tr_sc.lag >= 1 &
+						    big_city == 1 &  
+							tr_sc.lag >= .6 &
 							tr_pstudents < .2 &
 							tr_population >= 500 &
 						  	v_VLI == 1 &
@@ -745,26 +746,27 @@ df_final %>% st_set_geometry(NULL) %>% group_by(tier1.4) %>% count()
 # df_final %>% st_set_geometry(NULL) %>% group_by(scen1) %>% count()
 df_final %>% st_set_geometry(NULL) %>% group_by(tier1, scen1, tier2, tier3) %>% count()
 
-glimpse(df_final %>% filter(GEOID == "06081613800"))
-glimpse(df_final %>% filter(GEOID == "06055201800"))
-glimpse(df_final %>% filter(GEOID == "06037222001"))
-glimpse(df_final %>% filter(GEOID == "06037222001"))
-glimpse(df_final %>% filter(GEOID == "06075017700"))
-glimpse(df_final %>% filter(GEOID == "06001426100"))
-glimpse(df_final %>% filter(GEOID == "06037531101"))
-glimpse(df_final %>% filter(GEOID == "06037531504"))
-glimpse(df_final %>% filter(GEOID == "06037532700"))
-glimpse(df_final %>% filter(GEOID == "06075015900"))
-glimpse(df_final %>% filter(GEOID == "06037228720"))
-glimpse(df_final %>% filter(GEOID == "06081611800"))
-glimpse(df_final %>% filter(GEOID == "06037228720"))
-glimpse(df_final %>% filter(GEOID == "06075017700"))
+# glimpse(df_final %>% filter(GEOID == "06081613800"))
+# glimpse(df_final %>% filter(GEOID == "06055201800"))
+# glimpse(df_final %>% filter(GEOID == "06037222001"))
+# glimpse(df_final %>% filter(GEOID == "06037222001"))
+# glimpse(df_final %>% filter(GEOID == "06075017700"))
+# glimpse(df_final %>% filter(GEOID == "06001426100"))
+# glimpse(df_final %>% filter(GEOID == "06037531101"))
+# glimpse(df_final %>% filter(GEOID == "06037531504"))
+# glimpse(df_final %>% filter(GEOID == "06037532700"))
+# glimpse(df_final %>% filter(GEOID == "06075015900"))
+# glimpse(df_final %>% filter(GEOID == "06037228720"))
+# glimpse(df_final %>% filter(GEOID == "06081611800"))
+# glimpse(df_final %>% filter(GEOID == "06037228720"))
+# glimpse(df_final %>% filter(GEOID == "06075017700"))
 
-glimpse(df_final %>% filter(GEOID == "06037531101"))
-glimpse(df_final %>% filter(GEOID == "06037531504"))
-glimpse(df_final %>% filter(GEOID == "06037532700"))
-glimpse(df_final %>% filter(GEOID == "06037203900"))
-glimpse(df_final %>% filter(GEOID == "06075980501"))
+# glimpse(df_final %>% filter(GEOID == "06037531101"))
+# glimpse(df_final %>% filter(GEOID == "06037531504"))
+# glimpse(df_final %>% filter(GEOID == "06037532700"))
+# glimpse(df_final %>% filter(GEOID == "06037203900"))
+# glimpse(df_final %>% filter(GEOID == "06075980501"))
+# glimpse(df_final %>% filter(GEOID == "06019002701"))
 
 st_write(df_final, "~/git/sensitive_communities/data/df_final.shp", delete_layer = TRUE)
 
@@ -902,7 +904,7 @@ save_map <- function(x,y)
 
 tmap_mode("view")
 
-df_finalt2 <- df_final
+df_tier2 <- df_final
 bc_tract <- 
 	df_final %>% 
 	filter(big_city == 1)
@@ -933,7 +935,7 @@ tm_shape(Rail) +
 				id = "label",
 				popup.vars = c("Type: " = "id"),
 				title = "") +
-tm_shape(df_finalt2, name = "Tier 2: Vulnerable") +
+tm_shape(df_tier2, name = "Tier 2: Vulnerable") +
 	tm_polygons("tier2",
 			palette = c("#6699FF", "#6699FF"),
 			# label = "Heightened Sensitivity",
@@ -1025,23 +1027,27 @@ tm_shape(df_final, name = "Tier 1: Heightened Sensitivity") +
 						   "Rent Gap" = "dp_RentGap"
 						   ),
 			popup.format = list(digits=2)) +
-	tm_shape(place, name = "places") +
-		tm_polygons(border.col = "black", lwd = 3, alpha = 0) +
-	tm_shape(csd, name = "county sub division") +
-		tm_polygons(border.col = "grey", lwd = 3, alpha = 0) +
-	tm_shape(adv_surprisedissc, name = "Surprised It's Sensitive") +
-		tm_polygons(border.col = "blue", lwd = 3, alpha = 0) +
-	tm_shape(adv_shouldbe, name = "Should Be Sensitive") +
-		tm_polygons(border.col = "red", lwd = 3, alpha = 0) +
+	# tm_shape(place, name = "places") +
+	# 	tm_polygons(border.col = "black", lwd = 3, alpha = 0) +
+	# tm_shape(csd, name = "county sub division") +
+	# 	tm_polygons(border.col = "grey", lwd = 3, alpha = 0) +
+	# tm_shape(adv_surprisedissc, name = "Surprised It's Sensitive") +
+	# 	tm_polygons(border.col = "blue", lwd = 3, alpha = 0) +
+	# tm_shape(adv_shouldbe, name = "Should Be Sensitive") +
+	# 	tm_polygons(border.col = "red", lwd = 3, alpha = 0) +
 tm_layout(title = "Scenario: v_POC, v_Renters, v_VLI, v_RBLI, dp_PChRent, dp_RentGap") +
 tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
 
-T1T2191124 <-
+V2SC191125 <-
 	tmap_leaflet(map) %>%
-	leaflet::hideGroup(c("Bus", "df_finalt2", "adv_surprisedissc", "adv_shouldbe"))
+	leaflet::hideGroup(c("Bus", 
+						 "Tier 2: Vulnerable"#, 
+						 # "adv_surprisedissc", 
+						 # "adv_shouldbe"
+						 ))
 
 # save_map(v2map, "v2map")
-htmlwidgets::saveWidget(T1T2191124, file="~/git/sensitive_communities/docs/T1T2191124.html")
+htmlwidgets::saveWidget(V2SC191125, file="~/git/sensitive_communities/docs/V2SC191125.html")
 
 
 
