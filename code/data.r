@@ -256,12 +256,12 @@ csd_tracts <-
 
 place <-
 	places("CA", cb = TRUE, class = "sf") %>%
-	filter(NAME %in% c("Los Angeles", 
-					   "San Francisco", 
+	filter(NAME %in% c("Los Angeles",
+					   "San Francisco",
 					   "San Diego",
 					   "San Jose",
-					   "Sacramento", 
-					   "Oakland", 
+					   "Sacramento",
+					   "Oakland",
 					   "San Francisco"))
 place_tracts <-
 	sf::st_centroid(sf::st_as_sf(ct)) %>%
@@ -709,7 +709,7 @@ df_final <-
 						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
 		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
 						    scen3 == 1 ~ "Tier 1: Heightened Sensitivity",
-						    big_city == 1 &  
+						    big_city == 1 &
 							tr_sc.lag >= .6 &
 							tr_pstudents < .2 &
 							tr_population >= 500 &
@@ -767,6 +767,9 @@ df_final %>% st_set_geometry(NULL) %>% group_by(tier1, scen1, tier2, tier3) %>% 
 # glimpse(df_final %>% filter(GEOID == "06037203900"))
 # glimpse(df_final %>% filter(GEOID == "06075980501"))
 # glimpse(df_final %>% filter(GEOID == "06019002701"))
+# glimpse(df_final %>% filter(GEOID == "06037228720"))
+glimpse(df_final %>% filter(GEOID == "06081610400"))
+glimpse(df_final %>% filter(GEOID == "06081610400"))
 
 st_write(df_final, "~/git/sensitive_communities/data/df_final.shp", delete_layer = TRUE)
 
@@ -905,8 +908,8 @@ save_map <- function(x,y)
 tmap_mode("view")
 
 df_tier2 <- df_final
-bc_tract <- 
-	df_final %>% 
+bc_tract <-
+	df_final %>%
 	filter(big_city == 1)
 
 # sen_map4 <- function(t1,
@@ -1035,14 +1038,14 @@ tm_shape(df_final, name = "Tier 1: Heightened Sensitivity") +
 	# 	tm_polygons(border.col = "blue", lwd = 3, alpha = 0) +
 	# tm_shape(adv_shouldbe, name = "Should Be Sensitive") +
 	# 	tm_polygons(border.col = "red", lwd = 3, alpha = 0) +
-tm_layout(title = "Scenario: v_POC, v_Renters, v_VLI, v_RBLI, dp_PChRent, dp_RentGap") +
+# tm_layout(title = "Scenario: v_POC, v_Renters, v_VLI, v_RBLI, dp_PChRent, dp_RentGap") +
 tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
 
 V2SC191125 <-
 	tmap_leaflet(map) %>%
-	leaflet::hideGroup(c("Bus", 
-						 "Tier 2: Vulnerable"#, 
-						 # "adv_surprisedissc", 
+	leaflet::hideGroup(c("Bus",
+						 "Tier 2: Vulnerable"#,
+						 # "adv_surprisedissc",
 						 # "adv_shouldbe"
 						 ))
 
@@ -1053,7 +1056,7 @@ htmlwidgets::saveWidget(V2SC191125, file="~/git/sensitive_communities/docs/V2SC1
 
 
 # ==========================================================================
-# 
+#
 # ==========================================================================
 
 
