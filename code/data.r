@@ -418,7 +418,11 @@ df_irli <-
 						   TRUE ~ 0),
 		   tr_LI_ir_count = LI*estimate,
 		   tr_VLI_ir_count = VLI*estimate,
-		   tr_ELI_ir_count = ELI*estimate) %>%
+		   tr_ELI_ir_count = ELI*estimate)
+
+
+df_LI30RB <-
+	df_irli %>%
 	filter(LI > 0,
 		   rb %in% c("349","399","499", "5plus")) %>%
 	group_by(GEOID) %>%
@@ -430,6 +434,53 @@ df_irli <-
 		   v_rbLI_30rb = case_when(tr_irLI_30p > co_irLI_30_med ~ 1,
 		   						   TRUE ~ 0)) %>%
 	ungroup()
+
+df_LI50RB <-
+	df_irli %>%
+	filter(VLI > 0,
+		   rb == "5plus") %>%
+	group_by(GEOID) %>%
+	summarise(tr_irLI_50rb_ct = sum(tr_LI_ir_count, na.rm = TRUE)) %>%
+	left_join(tot_ir,.) %>%
+	mutate(tr_irLI_50p = tr_irLI_50rb_ct/tot_ir) %>%
+	group_by(COUNTY) %>%
+	mutate(co_irLI_50_med = median(tr_irLI_50p, na.rm = TRUE),
+		   v_rbLI_50rb = case_when(tr_irLI_50p > co_irLI_50_med ~ 1,
+		   						   TRUE ~ 0)) %>%
+	ungroup()
+
+df_VLI30RB <-
+	df_irli %>%
+	filter(VLI > 0,
+		   rb %in% c("349","399","499", "5plus")) %>%
+	group_by(GEOID) %>%
+	summarise(tr_irVLI_30rb_ct = sum(tr_VLI_ir_count, na.rm = TRUE)) %>%
+	left_join(tot_ir,.) %>%
+	mutate(tr_irVLI_30p = tr_irVLI_30rb_ct/tot_ir) %>%
+	group_by(COUNTY) %>%
+	mutate(co_irVLI_30_med = median(tr_irVLI_30p, na.rm = TRUE),
+		   v_rbVLI_30rb = case_when(tr_irVLI_30p > co_irVLI_30_med ~ 1,
+		   						   TRUE ~ 0)) %>%
+	ungroup()
+
+df_VLI50RB <-
+	df_irli %>%
+	filter(LI > 0,
+		   rb == "5plus") %>%
+	group_by(GEOID) %>%
+	summarise(tr_irVLI_50rb_ct = sum(tr_VLI_ir_count, na.rm = TRUE)) %>%
+	left_join(tot_ir,.) %>%
+	mutate(tr_irVLI_50p = tr_irVLI_50rb_ct/tot_ir) %>%
+	group_by(COUNTY) %>%
+	mutate(co_irVLI_50_med = median(tr_irVLI_50p, na.rm = TRUE),
+		   v_rbVLI_50rb = case_when(tr_irVLI_50p > co_irVLI_50_med ~ 1,
+		   						   TRUE ~ 0)) %>%
+	ungroup()
+
+df_irli_f <-
+	left_join(df_LI30RB, df_LI50RB) %>%
+	left_join(., df_VLI30RB) %>%
+	left_join(., df_VLI50RB)
 
 #
 # Neighborhood Typologies
@@ -471,7 +522,7 @@ ct <- tracts("CA", cb = TRUE)
 ct@data <-
 	left_join(ct@data, df_rent, by = "GEOID") %>%
 	left_join(., df_vli) %>%
-	left_join(., df_irli) %>%
+	left_join(., df_irli_f) %>%
 	left_join(., df_nt)
 
 #
@@ -550,9 +601,9 @@ ct_new@data <-
 		) %>%
 	group_by(COUNTYFP) %>%
 	mutate(tr_POC_rank = rank(tr_pPOC)/length(tr_pPOC),
-
 		   co_rentgap = median(tr_rentgap, na.rm = TRUE),
 		   co_rentgapprop = median(tr_rentgapprop, na.rm = TRUE),
+		   # co_pchrent = median(case_when(tr_pchrent >= 0 ~ tr_pchrent), na.rm = TRUE),
 		   co_pchrent = median(tr_pchrent, na.rm = TRUE),
 		   co_prenters = median(tr_prenters, na.rm = TRUE),
 		   co_pPOC = median(tr_pPOC, na.rm = TRUE),
@@ -570,9 +621,15 @@ ct_new@data <-
 						  TRUE ~ 0),
 		v_Renters = case_when(tr_prenters > .4 ~ 1,
 							  TRUE ~ 0),
-		v_RBLI = case_when(tr_irLI_30p > co_irLI_30_med ~ 1,
+		v_RB30LI = case_when(tr_irLI_30p > co_irLI_30_med ~ 1,
 						   TRUE ~ 0),
-		v_POC = case_when(tr_pPOC > .3 ~ 1,
+		v_RB50LI = case_when(tr_irLI_50p > co_irLI_50_med ~ 1,
+						   TRUE ~ 0),
+		v_RB30VLI = case_when(tr_irVLI_30p > co_irVLI_30_med ~ 1,
+						   TRUE ~ 0),
+		v_RB50VLI = case_when(tr_irVLI_50p > co_irVLI_50_med ~ 1,
+						   TRUE ~ 0),
+		v_POC = case_when(tr_pPOC > .4 ~ 1,
 						  TRUE ~ 0),
 		dp_PChRent = case_when(tr_pchrent > co_pchrent ~ 1,
 		   					   tr_pchrent.lag > co_pchrent ~ 1,
@@ -580,11 +637,11 @@ ct_new@data <-
 		dp_RentGap = case_when(tr_rentgapprop > co_rentgapprop ~ 1,
 						  	   TRUE ~ 0),
 	## Scenarios
-		scen1 = case_when(v_VLI == 1 &
+		scen1.LI30RB = case_when(v_VLI == 1 &
 							  tr_pstudents < .2 &
 							  tr_population >= 500 &
 							  sum(v_Renters,
-							  	  v_RBLI,
+							  	  v_RB30LI,
 							  	  v_POC, na.rm = TRUE) >= 2 &
 							  sum(dp_PChRent,
 							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
@@ -593,7 +650,7 @@ ct_new@data <-
 							  tr_population >= 500 &
 							  sum(v_VLI,
 							  	  v_Renters,
-							  	  v_RBLI,
+							  	  v_RB30LI,
 							  	  v_POC, na.rm = TRUE) >= 3 &
 							  sum(dp_PChRent,
 							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
@@ -602,65 +659,130 @@ ct_new@data <-
 							  tr_population >= 500 &
 							  sum(v_VLI,
 							  	  v_Renters,
-							  	  v_RBLI,
+							  	  v_RB30LI,
 							  	  v_POC, na.rm = TRUE) >= 3 &
 							  sum(dp_PChRent,
 							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
 						  TRUE ~ 0),
-		# scen2 = case_when(big_city == 1 ~ scen1,
-		# 				  big_city == 0 &
-		# 				  	tr_pstudents < .2 &
-		# 					tr_population >= 500 &
-		# 					sum(v_VLI, v_Renters, v_RBLI, v_POC, na.rm = TRUE) == 4 &
-		# 					sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
-		# 				  TRUE ~ 0),
-		scen3 = case_when(big_city == 1 ~ scen1,
+		scen3.LI30RB = case_when(big_city == 1 ~ scen1.LI30RB,
 						  big_city == 0 &
 						  	tr_pstudents < .2 &
 							tr_population >= 500 &
 							v_VLI == 1 &
-							sum(v_Renters, v_RBLI, v_POC, na.rm = TRUE) >= 2 &
+							sum(v_Renters, v_RB30LI, v_POC, na.rm = TRUE) >= 2 &
+							sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
+						  TRUE ~ 0),
+		scen1.LI50RB = case_when(v_VLI == 1 &
+							  tr_pstudents < .2 &
+							  tr_population >= 500 &
+							  sum(v_Renters,
+							  	  v_RB50LI,
+							  	  v_POC, na.rm = TRUE) >= 2 &
+							  sum(dp_PChRent,
+							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
+						  tr_POC_rank >= .95 &
+							  tr_pstudents < .2 &
+							  tr_population >= 500 &
+							  sum(v_VLI,
+							  	  v_Renters,
+							  	  v_RB50LI,
+							  	  v_POC, na.rm = TRUE) >= 3 &
+							  sum(dp_PChRent,
+							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
+						  tr_pPOC >= .9 &
+							  tr_pstudents < .2 &
+							  tr_population >= 500 &
+							  sum(v_VLI,
+							  	  v_Renters,
+							  	  v_RB50LI,
+							  	  v_POC, na.rm = TRUE) >= 3 &
+							  sum(dp_PChRent,
+							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
+						  TRUE ~ 0),
+		scen3.LI50RB = case_when(big_city == 1 ~ scen1.LI50RB,
+						  big_city == 0 &
+						  	tr_pstudents < .2 &
+							tr_population >= 500 &
+							v_VLI == 1 &
+							sum(v_Renters, v_RB50LI, v_POC, na.rm = TRUE) >= 2 &
+							sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
+						  TRUE ~ 0),
+		scen1.VLI30RB = case_when(v_VLI == 1 &
+							  tr_pstudents < .2 &
+							  tr_population >= 500 &
+							  sum(v_Renters,
+							  	  v_RB30VLI,
+							  	  v_POC, na.rm = TRUE) >= 2 &
+							  sum(dp_PChRent,
+							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
+						  tr_POC_rank >= .95 &
+							  tr_pstudents < .2 &
+							  tr_population >= 500 &
+							  sum(v_VLI,
+							  	  v_Renters,
+							  	  v_RB30VLI,
+							  	  v_POC, na.rm = TRUE) >= 3 &
+							  sum(dp_PChRent,
+							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
+						  tr_pPOC >= .9 &
+							  tr_pstudents < .2 &
+							  tr_population >= 500 &
+							  sum(v_VLI,
+							  	  v_Renters,
+							  	  v_RB30VLI,
+							  	  v_POC, na.rm = TRUE) >= 3 &
+							  sum(dp_PChRent,
+							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
+						  TRUE ~ 0),
+		scen3.VLI30RB = case_when(big_city == 1 ~ scen1.VLI30RB,
+						  big_city == 0 &
+						  	tr_pstudents < .2 &
+							tr_population >= 500 &
+							v_VLI == 1 &
+							sum(v_Renters, v_RB30VLI, v_POC, na.rm = TRUE) >= 2 &
+							sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
+						  TRUE ~ 0),
+		scen1.VLI50RB = case_when(v_VLI == 1 &
+							  tr_pstudents < .2 &
+							  tr_population >= 500 &
+							  sum(v_Renters,
+							  	  v_RB50VLI,
+							  	  v_POC, na.rm = TRUE) >= 2 &
+							  sum(dp_PChRent,
+							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
+						  tr_POC_rank >= .95 &
+							  tr_pstudents < .2 &
+							  tr_population >= 500 &
+							  sum(v_VLI,
+							  	  v_Renters,
+							  	  v_RB50VLI,
+							  	  v_POC, na.rm = TRUE) >= 3 &
+							  sum(dp_PChRent,
+							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
+						  tr_pPOC >= .9 &
+							  tr_pstudents < .2 &
+							  tr_population >= 500 &
+							  sum(v_VLI,
+							  	  v_Renters,
+							  	  v_RB50VLI,
+							  	  v_POC, na.rm = TRUE) >= 3 &
+							  sum(dp_PChRent,
+							  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
+						  TRUE ~ 0),
+		scen3.VLI50RB = case_when(big_city == 1 ~ scen1.VLI50RB,
+						  big_city == 0 &
+						  	tr_pstudents < .2 &
+							tr_population >= 500 &
+							v_VLI == 1 &
+							sum(v_Renters, v_RB50VLI, v_POC, na.rm = TRUE) >= 2 &
 							sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
 						  TRUE ~ 0)) %>%
-		# scen4 = case_when(big_city == 1 ~ scen1,
-		# 				  big_city == 0 &
-		# 				  	tr_pstudents < .2 &
-		# 					tr_population >= 500 &
-		# 					v_VLI == 1 &
-		# 					sum(v_Renters, v_RBLI, v_POC, na.rm = TRUE) >= 2 &
-		# 					sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
-		# 				  tr_POC_rank >= .95 &
-		# 					  tr_pstudents < .2 &
-		# 					  tr_population >= 500 &
-		# 					  sum(v_VLI,
-		# 					  	  v_Renters,
-		# 					  	  v_RBLI,
-		# 					  	  v_POC, na.rm = TRUE) >= 3 &
-		# 					  sum(dp_PChRent,
-		# 					  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
-		# 				  tr_pPOC >= .9 &
-		# 					  tr_pstudents < .2 &
-		# 					  tr_population >= 500 &
-		# 					  sum(v_VLI,
-		# 					  	  v_Renters,
-		# 					  	  v_RBLI,
-		# 					  	  v_POC, na.rm = TRUE) >= 3 &
-		# 					  sum(dp_PChRent,
-		# 					  	  dp_RentGap, na.rm = TRUE) >= 1 ~ 1,
-		# 				  TRUE ~ 0)
-		# scen4 = case_when(big_city == 1 ~ scen1,
-		# 				  big_city == 0 &
-		# 				  	tr_pstudents < .2 &
-		# 					tr_population >= 500 &
-		# 					sum(v_VLI, v_Renters, v_RBLI, v_POC, na.rm = TRUE) == 4 |
-		# 				  big_city == 0 &
-		# 				  	tr_pstudents < .2 &
-		# 					tr_population >= 500 &
-		# 					sum(dp_PChRent, dp_RentGap, na.rm = TRUE) == 2 ~ 1,
-		# 				  TRUE ~ 0)
 	ungroup()
 
-	ct_new$tr_sc.lag <- lag.listw(lw_bin,ct_new$scen1)
+	ct_new$tr_sc_LI30RB.lag <- lag.listw(lw_bin,ct_new$scen1.LI30RB)
+	ct_new$tr_sc_LI50RB.lag <- lag.listw(lw_bin,ct_new$scen1.LI50RB)
+	ct_new$tr_sc_VLI30RB.lag <- lag.listw(lw_bin,ct_new$scen1.VLI30RB)
+	ct_new$tr_sc_VLI50RB.lag <- lag.listw(lw_bin,ct_new$scen1.VLI50RB)
 
 # glimpse(ct@data %>% filter(GEOID == "06037228500"))
 # glimpse(ct@data %>% filter(GEOID == "06037700700"))
@@ -679,7 +801,7 @@ ct_new@data <-
 # Final dataframe
 # ==========================================================================
 
-df_final <-
+df_final.RB30LI <-
 	ct_new %>%
 	st_as_sf() %>%
 	select(GEOID,
@@ -698,53 +820,168 @@ df_final <-
 							tr_population >= 500 &
 						  	v_VLI == 1 &
 							  sum(v_Renters,
-							  	  v_RBLI,
+							  	  v_RB30LI,
 							  	  v_POC, na.rm = TRUE) >= 2 ~ "Tier 2: Vulnerable"),
 		tier3 = case_when(tr_dq == 0 ~ NA_character_,
 						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
-						  sum(v_POC, v_RBLI, na.rm = TRUE) == 2|
+						  sum(v_POC, v_RB30LI, na.rm = TRUE) == 2|
 						  sum(v_POC, v_Renters, na.rm = TRUE) == 2|
 						  v_VLI == 1 |
-						  sum(v_VLI, v_RBLI, na.rm = TRUE) == 2|
+						  sum(v_VLI, v_RB30LI, na.rm = TRUE) == 2|
 						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
 		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						    scen3 == 1 ~ "Tier 1: Heightened Sensitivity",
+						    scen3.LI30RB == 1 ~ "Tier 1: Heightened Sensitivity",
 						    big_city == 1 &
-							tr_sc.lag >= .6 &
+							tr_sc_LI30RB.lag >= .6 &
 							tr_pstudents < .2 &
 							tr_population >= 500 &
 						  	v_VLI == 1 &
 							sum(v_Renters,
-								v_RBLI,
+								v_RB30LI,
 								v_POC, na.rm = TRUE) >= 2 ~ "Tier 1: Heightened Sensitivity"),
-		# vnosc = case_when(# is.na(tier1) &
-		# 				  # v_VLI == 1 &
-		# 					sum(v_VLI,
-		# 						v_Renters,
-		# 						v_RBLI,
-		# 						v_POC, na.rm = TRUE) == 4 &
-		# 						sum(v_VLI, v_Renters, na.rm = TRUE) == 0 ~ 1),
-		# tier1.4 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-		# 				    scen4 == 1 ~ "Tier 1: Heightened Sensitivity"),
-							# tr_sc.lag >= .6 &
-						 #    tier2 == "Tier 2: Vulnerable" ~ "Tier 1: Tier 1: Heightened Sensitivity"),
-							  # sum(v_VLI,
-							  # 	  v_Renters,
-							  # 	  v_RBLI,
-							  # 	  v_POC,
-							  # 	  dp_PChRent,
-							  # 	  dp_RentGap, na.rm = TRUE) >= 3 ~ "Tier 1: Tier 1: Heightened Sensitivity"),
-		# tier1.4 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-		# 				    scen4 == 1 ~ "Tier 1: Tier 1: Heightened Sensitivity"),
+		text = "",
+		popup_text = paste0("Tract: ", GEOID))
+
+# df_final.RB50LI <-
+# 	ct_new %>%
+# 	st_as_sf() %>%
+# 	select(GEOID,
+# 		   COUNTY,
+# 		   NeighType,
+# 		   big_city,
+# 		   starts_with("tr_"),
+# 		   starts_with("co_"),
+# 		   starts_with("v_"),
+# 		   starts_with("dp_"),
+# 		   starts_with("scen")) %>%
+# 	group_by(GEOID) %>%
+# 	mutate(
+# 		tier2 = case_when(tr_dq == 0 ~ NA_character_,
+# 						  tr_pstudents < .2 &
+# 							tr_population >= 500 &
+# 						  	v_VLI == 1 &
+# 							  sum(v_Renters,
+# 							  	  v_RB50LI,
+# 							  	  v_POC, na.rm = TRUE) >= 2 ~ "Tier 2: Vulnerable"),
+# 		tier3 = case_when(tr_dq == 0 ~ NA_character_,
+# 						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
+# 						  sum(v_POC, v_RB50LI, na.rm = TRUE) == 2|
+# 						  sum(v_POC, v_Renters, na.rm = TRUE) == 2|
+# 						  v_VLI == 1 |
+# 						  sum(v_VLI, v_RB50LI, na.rm = TRUE) == 2|
+# 						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
+# 		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
+# 						    scen3.LI50RB == 1 ~ "Tier 1: Heightened Sensitivity",
+# 						    big_city == 1 &
+# 							tr_sc_LI50RB.lag >= .6 &
+# 							tr_pstudents < .2 &
+# 							tr_population >= 500 &
+# 						  	v_VLI == 1 &
+# 							sum(v_Renters,
+# 								v_RB50LI,
+# 								v_POC, na.rm = TRUE) >= 2 ~ "Tier 1: Heightened Sensitivity"),
+# 		text = "",
+# 		popup_text = paste0("Tract: ", GEOID))
+
+# df_final.RB30VLI <-
+# 	ct_new %>%
+# 	st_as_sf() %>%
+# 	select(GEOID,
+# 		   COUNTY,
+# 		   NeighType,
+# 		   big_city,
+# 		   starts_with("tr_"),
+# 		   starts_with("co_"),
+# 		   starts_with("v_"),
+# 		   starts_with("dp_"),
+# 		   starts_with("scen")) %>%
+# 	group_by(GEOID) %>%
+# 	mutate(
+# 		tier2 = case_when(tr_dq == 0 ~ NA_character_,
+# 						  tr_pstudents < .2 &
+# 							tr_population >= 500 &
+# 						  	v_VLI == 1 &
+# 							  sum(v_Renters,
+# 							  	  v_RB30VLI,
+# 							  	  v_POC, na.rm = TRUE) >= 2 ~ "Tier 2: Vulnerable"),
+# 		tier3 = case_when(tr_dq == 0 ~ NA_character_,
+# 						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
+# 						  sum(v_POC, v_RB30VLI, na.rm = TRUE) == 2|
+# 						  sum(v_POC, v_Renters, na.rm = TRUE) == 2|
+# 						  v_VLI == 1 |
+# 						  sum(v_VLI, v_RB30VLI, na.rm = TRUE) == 2|
+# 						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
+# 		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
+# 						    scen3.VLI30RB == 1 ~ "Tier 1: Heightened Sensitivity",
+# 						    big_city == 1 &
+# 							tr_sc_VLI30RB.lag >= .6 &
+# 							tr_pstudents < .2 &
+# 							tr_population >= 500 &
+# 						  	v_VLI == 1 &
+# 							sum(v_Renters,
+# 								v_RB30VLI,
+# 								v_POC, na.rm = TRUE) >= 2 ~ "Tier 1: Heightened Sensitivity"),
+# 		text = "",
+# 		popup_text = paste0("Tract: ", GEOID))
+
+df_final.RB50VLI <-
+	ct_new %>%
+	st_as_sf() %>%
+	select(GEOID,
+		   COUNTY,
+		   NeighType,
+		   big_city,
+		   starts_with("tr_"),
+		   starts_with("co_"),
+		   starts_with("v_"),
+		   starts_with("dp_"),
+		   starts_with("scen")) %>%
+	group_by(GEOID) %>%
+	mutate(
+		tier2 = case_when(tr_dq == 0 ~ NA_character_,
+						  tr_pstudents < .2 &
+							tr_population >= 500 &
+						  	v_VLI == 1 &
+							  sum(v_Renters,
+							  	  v_RB50VLI,
+							  	  v_POC, na.rm = TRUE) >= 2 ~ "Tier 2: Vulnerable"),
+		tier3 = case_when(tr_dq == 0 ~ NA_character_,
+						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
+						  sum(v_POC, v_RB50VLI, na.rm = TRUE) == 2|
+						  sum(v_POC, v_Renters, na.rm = TRUE) == 2|
+						  v_VLI == 1 |
+						  sum(v_VLI, v_RB50VLI, na.rm = TRUE) == 2|
+						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
+		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
+						    scen3.VLI50RB == 1 ~ "Tier 1: Heightened Sensitivity",
+						    big_city == 1 &
+							tr_sc_VLI50RB.lag >= .6 &
+							tr_pstudents < .2 &
+							tr_population >= 500 &
+						  	v_VLI == 1 &
+							sum(v_Renters,
+								v_RB50VLI,
+								v_POC, na.rm = TRUE) >= 2 ~ "Tier 1: Heightened Sensitivity"),
 		text = "",
 		popup_text = paste0("Tract: ", GEOID))
 
 # df_final %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
 # df_final %>% st_set_geometry(NULL) %>% group_by(tier1.2) %>% count()
-df_final %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
-df_final %>% st_set_geometry(NULL) %>% group_by(tier1.4) %>% count()
+df_final.RB30LI %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
+df_final.RB50LI %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
+df_final.RB30VLI %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
+df_final.RB50VLI %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
+
+# df_final %>% st_set_geometry(NULL) %>% group_by(tier1.4) %>% count()
 # df_final %>% st_set_geometry(NULL) %>% group_by(scen1) %>% count()
-df_final %>% st_set_geometry(NULL) %>% group_by(tier1, scen1, tier2, tier3) %>% count()
+# df_final %>% st_set_geometry(NULL) %>% group_by(tier1, scen1, tier2, tier3) %>% count()
+
+
+# df_final.RB30LI %>% pull(tr_pPOC) %>% unique() %>% summary()
+# df_final.RB50VLI %>% pull(co_pchrent) %>% unique() %>% summary()
+
+# ggplot(df_final.RB30LI) +
+# 	geom_point(aes(x = reorder(GEOID, co_pchrent), y = co_pchrent))
 
 # glimpse(df_final %>% filter(GEOID == "06081613800"))
 # glimpse(df_final %>% filter(GEOID == "06055201800"))
@@ -771,7 +1008,8 @@ df_final %>% st_set_geometry(NULL) %>% group_by(tier1, scen1, tier2, tier3) %>% 
 glimpse(df_final %>% filter(GEOID == "06081610400"))
 glimpse(df_final %>% filter(GEOID == "06081610400"))
 
-st_write(df_final, "~/git/sensitive_communities/data/df_final.shp", delete_layer = TRUE)
+# st_write(df_final, "~/git/sensitive_communities/data/df_final.shp", delete_layer = TRUE)
+# fwrite(df_final %>% st_set_geometry(NULL), "~/git/sensitive_communities/data/df_final.csv")
 
 df_final %>% st_set_geometry(NULL) %>% select(tr_VLI_prop, co_VLI_prop) %>% distinct() %>% ungroup() %>% summary()
 
@@ -889,16 +1127,6 @@ Rail <-
 	filter(label == "Fixed Transit Stop Buffer") %>%
 	mutate(label = as.character(label))
 
-# map <-
-
-
-# 	tmap_leaflet(map) %>%
-# 	leaflet::hideGroup("bus")
-
-# tm_shape(bus) +
-# 	tm_polygons("label", palette="Greys", alpha = .25, colorNA = NULL)
-
-
 #
 # Map functions
 # --------------------------------------------------------------------------
@@ -907,9 +1135,9 @@ save_map <- function(x,y)
 
 tmap_mode("view")
 
-df_tier2 <- df_final
+df_tier2 <- df_final.RB50VLI
 bc_tract <-
-	df_final %>%
+	df_final.RB50VLI %>%
 	filter(big_city == 1)
 
 # sen_map4 <- function(t1,
@@ -920,7 +1148,7 @@ bc_tract <-
 # 					 rentgap,
 # 					 title = paste0("Scenario: v_POC, ",renters,", ", vli, ", ", rb, ", ", chrent, ", ", rentgap))
 
-map <-
+map.RB50VLI <-
 tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
 tm_shape(Bus) +
 	tm_polygons("label",
@@ -979,12 +1207,12 @@ tm_shape(df_tier2, name = "Tier 2: Vulnerable") +
 						   "VLI" = "v_VLI",
 						   "POC" = "v_POC",
 						   "Renters" = "v_Renters",
-						   "RB" = "v_RBLI",
+						   "RB" = "v_RB50VLI",
 						   "Ch Rent" = "dp_PChRent",
 						   "Rent Gap" = "dp_RentGap"
 						   ),
 			popup.format = list(digits=2)) +
-tm_shape(df_final, name = "Tier 1: Heightened Sensitivity") +
+tm_shape(df_final.RB50VLI, name = "Tier 1: Heightened Sensitivity") +
 	tm_polygons("tier1",
 			palette = c("#CCCCCC", "#FF6633"),
 			# label = "Heightened Sensitivity",
@@ -1025,7 +1253,7 @@ tm_shape(df_final, name = "Tier 1: Heightened Sensitivity") +
 						   "VLI" = "v_VLI",
 						   "POC" = "v_POC",
 						   "Renters" = "v_Renters",
-						   "RB" = "v_RBLI",
+						   "RB" = "v_RB50VLI",
 						   "Ch Rent" = "dp_PChRent",
 						   "Rent Gap" = "dp_RentGap"
 						   ),
@@ -1041,8 +1269,8 @@ tm_shape(df_final, name = "Tier 1: Heightened Sensitivity") +
 # tm_layout(title = "Scenario: v_POC, v_Renters, v_VLI, v_RBLI, dp_PChRent, dp_RentGap") +
 tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
 
-V2SC191125 <-
-	tmap_leaflet(map) %>%
+map.RB50VLI <-
+	tmap_leaflet(map.RB50VLI) %>%
 	leaflet::hideGroup(c("Bus",
 						 "Tier 2: Vulnerable"#,
 						 # "adv_surprisedissc",
@@ -1050,7 +1278,7 @@ V2SC191125 <-
 						 ))
 
 # save_map(v2map, "v2map")
-htmlwidgets::saveWidget(V2SC191125, file="~/git/sensitive_communities/docs/V2SC191125.html")
+htmlwidgets::saveWidget(map.RB50VLI, file="~/git/sensitive_communities/docs/map.RB50VLI.html")
 
 
 
