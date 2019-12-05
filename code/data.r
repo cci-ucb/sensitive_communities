@@ -842,46 +842,46 @@ df_final.RB30LI <-
 		text = "",
 		popup_text = paste0("Tract: ", GEOID))
 
-# df_final.RB50LI <-
-# 	ct_new %>%
-# 	st_as_sf() %>%
-# 	select(GEOID,
-# 		   COUNTY,
-# 		   NeighType,
-# 		   big_city,
-# 		   starts_with("tr_"),
-# 		   starts_with("co_"),
-# 		   starts_with("v_"),
-# 		   starts_with("dp_"),
-# 		   starts_with("scen")) %>%
-# 	group_by(GEOID) %>%
-# 	mutate(
-# 		tier2 = case_when(tr_dq == 0 ~ NA_character_,
-# 						  tr_pstudents < .2 &
-# 							tr_population >= 500 &
-# 						  	v_VLI == 1 &
-# 							  sum(v_Renters,
-# 							  	  v_RB50LI,
-# 							  	  v_POC, na.rm = TRUE) >= 2 ~ "Tier 2: Vulnerable"),
-# 		tier3 = case_when(tr_dq == 0 ~ NA_character_,
-# 						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
-# 						  sum(v_POC, v_RB50LI, na.rm = TRUE) == 2|
-# 						  sum(v_POC, v_Renters, na.rm = TRUE) == 2|
-# 						  v_VLI == 1 |
-# 						  sum(v_VLI, v_RB50LI, na.rm = TRUE) == 2|
-# 						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
-# 		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-# 						    scen3.LI50RB == 1 ~ "Tier 1: Heightened Sensitivity",
-# 						    big_city == 1 &
-# 							tr_sc_LI50RB.lag >= .6 &
-# 							tr_pstudents < .2 &
-# 							tr_population >= 500 &
-# 						  	v_VLI == 1 &
-# 							sum(v_Renters,
-# 								v_RB50LI,
-# 								v_POC, na.rm = TRUE) >= 2 ~ "Tier 1: Heightened Sensitivity"),
-# 		text = "",
-# 		popup_text = paste0("Tract: ", GEOID))
+df_final.RB50LI <-
+	ct_new %>%
+	st_as_sf() %>%
+	select(GEOID,
+		   COUNTY,
+		   NeighType,
+		   big_city,
+		   starts_with("tr_"),
+		   starts_with("co_"),
+		   starts_with("v_"),
+		   starts_with("dp_"),
+		   starts_with("scen")) %>%
+	group_by(GEOID) %>%
+	mutate(
+		tier2 = case_when(tr_dq == 0 ~ NA_character_,
+						  tr_pstudents < .2 &
+							tr_population >= 500 &
+						  	v_VLI == 1 &
+							  sum(v_Renters,
+							  	  v_RB50LI,
+							  	  v_POC, na.rm = TRUE) >= 2 ~ "Tier 2: Vulnerable"),
+		tier3 = case_when(tr_dq == 0 ~ NA_character_,
+						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
+						  sum(v_POC, v_RB50LI, na.rm = TRUE) == 2|
+						  sum(v_POC, v_Renters, na.rm = TRUE) == 2|
+						  v_VLI == 1 |
+						  sum(v_VLI, v_RB50LI, na.rm = TRUE) == 2|
+						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
+		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
+						    scen3.LI50RB == 1 ~ "Tier 1: Heightened Sensitivity",
+						    big_city == 1 &
+							tr_sc_LI50RB.lag >= .6 &
+							tr_pstudents < .2 &
+							tr_population >= 500 &
+						  	v_VLI == 1 &
+							sum(v_Renters,
+								v_RB50LI,
+								v_POC, na.rm = TRUE) >= 2 ~ "Tier 1: Heightened Sensitivity"),
+		text = "",
+		popup_text = paste0("Tract: ", GEOID))
 
 # df_final.RB30VLI <-
 # 	ct_new %>%
@@ -977,11 +977,18 @@ df_final.RB50VLI %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
 # df_final %>% st_set_geometry(NULL) %>% group_by(tier1, scen1, tier2, tier3) %>% count()
 
 
-# df_final.RB30LI %>% pull(tr_pPOC) %>% unique() %>% summary()
-# df_final.RB50VLI %>% pull(co_pchrent) %>% unique() %>% summary()
+df_final.RB30VLI %>% pull(tr_pPOC) %>% unique() %>% summary()
+df_final.RB50VLI %>% pull(co_irLI_50_med) %>% unique() %>% summary()
+df_final.RB50VLI %>% pull(tr_irLI_50p) %>% unique() %>% summary()
+df_final.RB50VLI %>% pull(co_irLI_50_med) %>% unique() %>% summary()
+df_final.RB50VLI %>% pull(tr_irLI_50p) %>% unique() %>% summary()
 
-# ggplot(df_final.RB30LI) +
-# 	geom_point(aes(x = reorder(GEOID, co_pchrent), y = co_pchrent))
+ggplot(df_final.RB30VLI) +
+	# geom_point(aes(x = reorder(GEOID, tr_irLI_30p), y = tr_irLI_30p), col = "blue") +
+	geom_point(aes(x = reorder(GEOID, tr_pPOC), y = tr_pPOC), col = "red") #+
+	# geom_point(aes(x = reorder(GEOID, tr_irVLI_30p), y = tr_irVLI_30p), col = "orange") +
+	# geom_point(aes(x = reorder(GEOID, tr_irVLI_50p), y = tr_irVLI_50p), col = "green")
+
 
 # glimpse(df_final %>% filter(GEOID == "06081613800"))
 # glimpse(df_final %>% filter(GEOID == "06055201800"))
@@ -1006,7 +1013,7 @@ df_final.RB50VLI %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
 # glimpse(df_final %>% filter(GEOID == "06019002701"))
 # glimpse(df_final %>% filter(GEOID == "06037228720"))
 glimpse(df_final %>% filter(GEOID == "06081610400"))
-glimpse(df_final %>% filter(GEOID == "06081610400"))
+glimpse(df_final.RB50LI %>% filter(GEOID == "06075032700"))
 
 # st_write(df_final, "~/git/sensitive_communities/data/df_final.shp", delete_layer = TRUE)
 # fwrite(df_final %>% st_set_geometry(NULL), "~/git/sensitive_communities/data/df_final.csv")
@@ -1137,7 +1144,7 @@ tmap_mode("view")
 
 df_tier2 <- df_final.RB50VLI
 bc_tract <-
-	df_final.RB50VLI %>%
+	df_final.RB50LI %>%
 	filter(big_city == 1)
 
 # sen_map4 <- function(t1,
@@ -1148,7 +1155,7 @@ bc_tract <-
 # 					 rentgap,
 # 					 title = paste0("Scenario: v_POC, ",renters,", ", vli, ", ", rb, ", ", chrent, ", ", rentgap))
 
-map.RB50VLI <-
+map.RB50LI <-
 tm_basemap(leaflet::providers$CartoDB.Positron) + # http://leaflet-extras.github.io/leaflet-providers/preview/
 tm_shape(Bus) +
 	tm_polygons("label",
@@ -1207,12 +1214,12 @@ tm_shape(df_tier2, name = "Tier 2: Vulnerable") +
 						   "VLI" = "v_VLI",
 						   "POC" = "v_POC",
 						   "Renters" = "v_Renters",
-						   "RB" = "v_RB50VLI",
+						   "RB" = "v_RB50LI",
 						   "Ch Rent" = "dp_PChRent",
 						   "Rent Gap" = "dp_RentGap"
 						   ),
 			popup.format = list(digits=2)) +
-tm_shape(df_final.RB50VLI, name = "Tier 1: Heightened Sensitivity") +
+tm_shape(df_final.RB50LI, name = "Tier 1: Heightened Sensitivity") +
 	tm_polygons("tier1",
 			palette = c("#CCCCCC", "#FF6633"),
 			# label = "Heightened Sensitivity",
@@ -1253,7 +1260,7 @@ tm_shape(df_final.RB50VLI, name = "Tier 1: Heightened Sensitivity") +
 						   "VLI" = "v_VLI",
 						   "POC" = "v_POC",
 						   "Renters" = "v_Renters",
-						   "RB" = "v_RB50VLI",
+						   "RB" = "v_RB50LI",
 						   "Ch Rent" = "dp_PChRent",
 						   "Rent Gap" = "dp_RentGap"
 						   ),
@@ -1269,8 +1276,8 @@ tm_shape(df_final.RB50VLI, name = "Tier 1: Heightened Sensitivity") +
 # tm_layout(title = "Scenario: v_POC, v_Renters, v_VLI, v_RBLI, dp_PChRent, dp_RentGap") +
 tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
 
-map.RB50VLI <-
-	tmap_leaflet(map.RB50VLI) %>%
+map.RB50LI <-
+	tmap_leaflet(map.RB50LI) %>%
 	leaflet::hideGroup(c("Bus",
 						 "Tier 2: Vulnerable"#,
 						 # "adv_surprisedissc",
@@ -1278,7 +1285,7 @@ map.RB50VLI <-
 						 ))
 
 # save_map(v2map, "v2map")
-htmlwidgets::saveWidget(map.RB50VLI, file="~/git/sensitive_communities/docs/map.RB50VLI.html")
+htmlwidgets::saveWidget(map.RB50LI, file="~/git/sensitive_communities/docs/map.RB50LI.html")
 
 
 
