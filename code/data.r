@@ -801,87 +801,87 @@ ct_new@data <-
 # Final dataframe
 # ==========================================================================
 
-df_final.RB30LI <-
-	ct_new %>%
-	st_as_sf() %>%
-	select(GEOID,
-		   COUNTY,
-		   NeighType,
-		   big_city,
-		   starts_with("tr_"),
-		   starts_with("co_"),
-		   starts_with("v_"),
-		   starts_with("dp_"),
-		   starts_with("scen")) %>%
-	group_by(GEOID) %>%
-	mutate(
-		tier2 = case_when(tr_dq == 0 ~ NA_character_,
-						  tr_pstudents < .2 &
-							tr_population >= 500 &
-						  	v_VLI == 1 &
-							  sum(v_Renters,
-							  	  v_RB30LI,
-							  	  v_POC, na.rm = TRUE) >= 2 ~ "Tier 2: Vulnerable"),
-		tier3 = case_when(tr_dq == 0 ~ NA_character_,
-						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
-						  sum(v_POC, v_RB30LI, na.rm = TRUE) == 2|
-						  sum(v_POC, v_Renters, na.rm = TRUE) == 2|
-						  v_VLI == 1 |
-						  sum(v_VLI, v_RB30LI, na.rm = TRUE) == 2|
-						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
-		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						    scen3.LI30RB == 1 ~ "Tier 1: Heightened Sensitivity",
-						    big_city == 1 &
-							tr_sc_LI30RB.lag >= .6 &
-							tr_pstudents < .2 &
-							tr_population >= 500 &
-						  	v_VLI == 1 &
-							sum(v_Renters,
-								v_RB30LI,
-								v_POC, na.rm = TRUE) >= 2 ~ "Tier 1: Heightened Sensitivity"),
-		text = "",
-		popup_text = paste0("Tract: ", GEOID))
+# df_final.RB30LI <-
+# 	ct_new %>%
+# 	st_as_sf() %>%
+# 	select(GEOID,
+# 		   COUNTY,
+# 		   NeighType,
+# 		   big_city,
+# 		   starts_with("tr_"),
+# 		   starts_with("co_"),
+# 		   starts_with("v_"),
+# 		   starts_with("dp_"),
+# 		   starts_with("scen")) %>%
+# 	group_by(GEOID) %>%
+# 	mutate(
+# 		tier2 = case_when(tr_dq == 0 ~ NA_character_,
+# 						  tr_pstudents < .2 &
+# 							tr_population >= 500 &
+# 						  	v_VLI == 1 &
+# 							  sum(v_Renters,
+# 							  	  v_RB30LI,
+# 							  	  v_POC, na.rm = TRUE) >= 2 ~ "Tier 2: Vulnerable"),
+# 		tier3 = case_when(tr_dq == 0 ~ NA_character_,
+# 						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
+# 						  sum(v_POC, v_RB30LI, na.rm = TRUE) == 2|
+# 						  sum(v_POC, v_Renters, na.rm = TRUE) == 2|
+# 						  v_VLI == 1 |
+# 						  sum(v_VLI, v_RB30LI, na.rm = TRUE) == 2|
+# 						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
+# 		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
+# 						    scen3.LI30RB == 1 ~ "Tier 1: Heightened Sensitivity",
+# 						    big_city == 1 &
+# 							tr_sc_LI30RB.lag >= .6 &
+# 							tr_pstudents < .2 &
+# 							tr_population >= 500 &
+# 						  	v_VLI == 1 &
+# 							sum(v_Renters,
+# 								v_RB30LI,
+# 								v_POC, na.rm = TRUE) >= 2 ~ "Tier 1: Heightened Sensitivity"),
+# 		text = "",
+# 		popup_text = paste0("Tract: ", GEOID))
 
-df_final.RB50LI <-
-	ct_new %>%
-	st_as_sf() %>%
-	select(GEOID,
-		   COUNTY,
-		   NeighType,
-		   big_city,
-		   starts_with("tr_"),
-		   starts_with("co_"),
-		   starts_with("v_"),
-		   starts_with("dp_"),
-		   starts_with("scen")) %>%
-	group_by(GEOID) %>%
-	mutate(
-		tier2 = case_when(tr_dq == 0 ~ NA_character_,
-						  tr_pstudents < .2 &
-							tr_population >= 500 &
-						  	v_VLI == 1 &
-							  sum(v_Renters,
-							  	  v_RB50LI,
-							  	  v_POC, na.rm = TRUE) >= 2 ~ "Tier 2: Vulnerable"),
-		tier3 = case_when(tr_dq == 0 ~ NA_character_,
-						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
-						  sum(v_POC, v_RB50LI, na.rm = TRUE) == 2|
-						  sum(v_POC, v_Renters, na.rm = TRUE) == 2|
-						  v_VLI == 1 |
-						  sum(v_VLI, v_RB50LI, na.rm = TRUE) == 2|
-						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
-		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						    scen3.LI50RB == 1 ~ "Tier 1: Heightened Sensitivity",
-						    big_city == 1 &
-							tr_sc_LI50RB.lag >= .6 &
-							tr_pstudents < .2 &
-							tr_population >= 500 &
-						  	v_VLI == 1 &
-							sum(v_Renters,
-								v_RB50LI,
-								v_POC, na.rm = TRUE) >= 2 ~ "Tier 1: Heightened Sensitivity"),
-		text = "",
-		popup_text = paste0("Tract: ", GEOID))
+# df_final.RB50LI <-
+# 	ct_new %>%
+# 	st_as_sf() %>%
+# 	select(GEOID,
+# 		   COUNTY,
+# 		   NeighType,
+# 		   big_city,
+# 		   starts_with("tr_"),
+# 		   starts_with("co_"),
+# 		   starts_with("v_"),
+# 		   starts_with("dp_"),
+# 		   starts_with("scen")) %>%
+# 	group_by(GEOID) %>%
+# 	mutate(
+# 		tier2 = case_when(tr_dq == 0 ~ NA_character_,
+# 						  tr_pstudents < .2 &
+# 							tr_population >= 500 &
+# 						  	v_VLI == 1 &
+# 							  sum(v_Renters,
+# 							  	  v_RB50LI,
+# 							  	  v_POC, na.rm = TRUE) >= 2 ~ "Tier 2: Vulnerable"),
+# 		tier3 = case_when(tr_dq == 0 ~ NA_character_,
+# 						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
+# 						  sum(v_POC, v_RB50LI, na.rm = TRUE) == 2|
+# 						  sum(v_POC, v_Renters, na.rm = TRUE) == 2|
+# 						  v_VLI == 1 |
+# 						  sum(v_VLI, v_RB50LI, na.rm = TRUE) == 2|
+# 						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
+# 		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
+# 						    scen3.LI50RB == 1 ~ "Tier 1: Heightened Sensitivity",
+# 						    big_city == 1 &
+# 							tr_sc_LI50RB.lag >= .6 &
+# 							tr_pstudents < .2 &
+# 							tr_population >= 500 &
+# 						  	v_VLI == 1 &
+# 							sum(v_Renters,
+# 								v_RB50LI,
+# 								v_POC, na.rm = TRUE) >= 2 ~ "Tier 1: Heightened Sensitivity"),
+# 		text = "",
+# 		popup_text = paste0("Tract: ", GEOID))
 
 # df_final.RB30VLI <-
 # 	ct_new %>%
@@ -967,9 +967,9 @@ df_final.RB50VLI <-
 
 # df_final %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
 # df_final %>% st_set_geometry(NULL) %>% group_by(tier1.2) %>% count()
-df_final.RB30LI %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
-df_final.RB50LI %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
-df_final.RB30VLI %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
+# df_final.RB30LI %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
+# df_final.RB50LI %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
+# df_final.RB30VLI %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
 df_final.RB50VLI %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
 
 df_final.RB50VLI %>%
@@ -993,6 +993,14 @@ ggplot(df_final.RB30VLI) +
 	geom_point(aes(x = reorder(GEOID, tr_pPOC), y = tr_pPOC), col = "red") #+
 	# geom_point(aes(x = reorder(GEOID, tr_irVLI_30p), y = tr_irVLI_30p), col = "orange") +
 	# geom_point(aes(x = reorder(GEOID, tr_irVLI_50p), y = tr_irVLI_50p), col = "green")
+
+df_final.RB50VLI %>%
+	st_set_geometry(NULL) %>%
+	filter(NeighType == "White-Asian",
+		   tier1 == "Tier 1: Heightened Sensitivity") %>%
+	select(GEOID, NeighType, tr_pWhite:tr_pPOC) %>%
+	data.frame() %>%
+	arrange(tr_pPOC)
 
 
 # glimpse(df_final %>% filter(GEOID == "06081613800"))
@@ -1048,12 +1056,12 @@ adv_surprisedissc <- c("06001422300", "06001441923", "06001403300", "06041125000
 
 adv_shouldbe <- c("06075023400", "06075020900", "06081611800", "06081611900", "06001406000", "06075026003", "06075010600", "06075011700", "06075011800", "06075012301", "06075012501", "06075012502", "06075015900", "06075023001", "06075023102", "06075023103", "06075023200", "06075023300", "06075023400", "06075025701", "06075025702", "06075025800", "06075026001", "06075026003", "06075026301", "06075026303", "06075033203", "06075033204", "06075035202", "06075047701", "06075047902", "06075060502", "06019002602", "06019003600", "06019002100", "06019004207", "06019004404", "06065045604", "06019000300", "06047000304", "06047000301", "06099002503", "06047000203", "06047000201", "06089012101", "06063000501", "06023001000", "06029004101", "06029006304", "06029006202", "06037462100", "06037234600", "06037234700", "06037234800", "06037234300", "06037219500", "06037234200", "06037234300", "06037234000", "06037231400", "06001407300", "06001409000", "06001401700", "06013376000", "06095250801", "06055201006", "06055201005", "06055201007", "06001408500", "06001408400", "06037209401", "06037208902", "06037208801", "06037224320", "06037224310", "06037212202", "06037206031", "06037204700", "06037204120", "06037203710", "06037203800", "06037203600", "06037204920", "06037203900", "06037532603", "06037532604", "06037532606", "06037533202", "06037534501", "06037534502", "06037535607", "06037540300", "06037540501", "06037535605", "06037535803", "06037535802", "06037535901", "06037535902", "06037536104", "06037540101", "06037540102", "06037541700", "06037542000", "06037541802", "06037540000", "06037542104", "06037540600", "06037542401", "06037542200", "06037570404", "06037543201", "06037543100", "06037543000", "06037542900", "06037542800", "06037541002", "06037291220", "06037542602", "06037541001", "06037291210", "06037541100", "06037541200", "06037541300", "06037553200", "06037553300", "06037554103", "06037553100", "06037554105", "06037554002", "06037554001", "06037554101", "06037554301", "06037554201", "06037188300", "06037188100", "06047000701", "06047000601", "06047000902", "06047001502", "06047001402", "06019000100", "06019000300", "06019000700", "06019001303", "06019001301", "06019002602", "06037224410", "06037221710", "06037221810", "06037221900", "06037224700", "06037222700", "06037222600", "06001442400", "06001442301", "06001409000", "06075017700", "06075022801", "06075022803", "06075022903", "06075022902", "06075025401", "06075025200", "06075033203", "06075033204", "06075033201", "06075030102", "06075042602", "06075047600", "06075061500", "06075018000", "06075060700", "06075015900", "06075016801")
 
-over_scjr <- c("06073007702","06001420500","06001422200","06001423500","06001423901","06001427800","06001440308","06001441100","06001441700","06001441923","06001442301","06001442302","06001442602","06001450607","06001450750","06001451602","06007000201","06013339002","06013340001","06013343001","06013349000","06013355115","06073017014","06037217001","06073006000","06037139600","06027000400","06029005004","06031001001","06037273402","06037216401","06037141400","06037216402","06037265700","06037139504","06037139401","06037139503","06037143603","06037139001","06037143500","06037124000","06073004300","06073008345","06075011100","06073004400","06085502202","06037124903","06037190100","06037125100","06037143300","06067001101","06073009802","06037190402","06073006100","06037128500","06073009202","06075011200","06037128801","06073006500","06075010300","06019005510","06085502910","06075040200","06085502901","06037278001","06037190301","06037124902","06075015500","06085502302","06037267300","06073009102","06037273200","06075042601","06085502701","06085500600","06075045100","06037269800","06075010800","06085502906","06037125200","06085502909","06037214502","06085512045","06075015600","06073017035","06075010100","06037214501","06037300600","06037301204","06037301502","06037301602","06037301701","06037310501","06037310601","06037310701","06037310702","06037310703","06037311801","06037400302","06037401101","06037401102","06037401312","06037403802","06037408003","06037408006","06037431002","06037431900","06037461100","06037461300","06037461400","06037462400","06037462700","06037462800","06037463101","06037463200","06037480011","06037480012","06037480302","06037481002","06037481202","06037481604","06037482101","06037501600","06037543000","06037543802","06037543903","06037554802","06037554900","06037576802","06037650003","06037650300","06037650604","06037651102","06037651221","06037700102","06037700502","06037700802","06037701702","06037701801","06037701802","06037920312","06041119201","06047001004","06047001402","06053012700","06053013000","06053013900","06053014500","06059001102","06059001503","06059001504","06059001506","06059011000","06059011403","06059021802","06059021826","06059021913","06059021922","06059032013","06059032014","06059032022","06059042313","06059042330","06059052418","06059052425","06059052521","06059052525","06059062637","06059062649","06059063004","06059063101","06059063904","06059063906","06059075504","06059075507","06059075515","06059075807","06059075812","06059075816","06059099212","06059099229","06059099234","06059099235","06059099241","06059099251","06059099309","06059099402","06059099406","06059099410","06059099411","06059099412","06059099413","06059099905","06059110014","06059110104","06059110110","06059110116","06061020300","06061020711","06061021037","06061021046","06061021130","06061022600","06065030200","06065041809","06065043216","06065044930","06065046601","06037272301","06073009301","06037267600","06085500400","06067005904","06073008901","06067002100","06067007601","06067008009","06067009619","06071001104","06071002023","06071002027","06085506301","06037275603","06067002000","06085506401","06085512035","06037270100","06075030301","06085506202","06019005607","06075045200","06073008701","06019003104","06075047702","06067007018","06085512033","06073011100","06073013310","06073014902","06075047701","06075047600","06073017048","06073017502","06073017701","06037187101","06037269903","06085512024","06075047801","06037195803","06019004901","06037267700","06085506601","06001403600","06037191000","06075042700","06085501900","06085506605","06067007015","06085502201","06075015801","06037271200","06075033100","06037269905","06037269907","06075032700","06037190510","06037269602","06075032601","06037111301","06037271702","06037211500","06075047802","06037183222","06077003106","06077003108","06077003111","06077003112","06077005124","06081603801","06081605500","06081605900","06081606100","06081606300","06081606600","06081607500","06081607600","06081608001","06081608600","06081612500","06083000102","06083002930","06083003001","06085506305","06037272302","06085506304","06075032602","06073008352","06075011700","06075032801","06073008359","06067004010","06075035300","06075032901","06037211701","06037181400","06075032802","06085506204","06037183402","06085504422","06085505007","06085505402","06085505403","06085505500","06085505900","06085506101","06037212702","06075031201","06085507905","06037276100","06085504320","06037212800","06085504315","06085506203","06037186201","06085506606","06085506702","06085504410","06085508004","06085508304","06085508504","06085508507","06085508508","06085508601","06085508800","06085509106","06085509107","06085509108","06085509202","06085509303","06085509401","06085509500","06085510700","06085503325","06085504323","06037201110","06037201120","06089010200","06089010500","06089011300","06099000807","06099003605","06099003904","06107003602","06111001201","06111001402","06111001601","06111005403","06111005502","06111006900","06111007100")
-
-over_scjr <- read.csv("~/git/sensitive_communities/code/over_scjr.csv") %>% glimpse()
+over_scjr <-
+	fread("~/git/sensitive_communities/code/over_scjr.csv") %>%
+	mutate(over_scjr = str_pad(over_scjr, 11, pad = 0)) %>% glimpse()
 
 advocate_tracts <-
-	df_final %>%
+	df_final.RB50VLI %>%
 	ungroup() %>%
 	mutate(adv_surprisedissc = case_when(GEOID %in% adv_surprisedissc ~ TRUE),
 		   adv_shouldbe = case_when(GEOID %in% adv_shouldbe ~ TRUE))
@@ -1073,7 +1081,8 @@ adv_shouldbe <-
 over_scjr_tracts <-
 	df_final.RB50VLI %>%
 	ungroup() %>%
-	mutate(over_scjr = case_when(GEOID %in% over_scjr ~ TRUE))
+	mutate(over_scjr = case_when(GEOID %in% (over_scjr %>% pull()) ~ TRUE)) %>%
+	filter(over_scjr == TRUE)
 
 #
 # transit layer
@@ -1127,6 +1136,13 @@ tm_shape(Rail) +
 				border.alpha = .5,
 				id = "label",
 				popup.vars = c("Type: " = "id"),
+				title = "") +
+tm_shape(over_scjr_tracts) +
+	tm_polygons("over_scjr", name = "Jobs Rich & SC",
+				palette= "#006600",
+				alpha = .5,
+				border.alpha = .5,
+				id = "over_scjr",
 				title = "") +
 tm_shape(df_tier2, name = "Tier 2: Vulnerable") +
 	tm_polygons("tier2",
@@ -1220,15 +1236,6 @@ tm_shape(df_final.RB50VLI, name = "Tier 1: Heightened Sensitivity") +
 						   "Rent Gap" = "dp_RentGap"
 						   ),
 			popup.format = list(digits=2)) +
-	# tm_shape(place, name = "places") +
-	# 	tm_polygons(border.col = "black", lwd = 3, alpha = 0) +
-	# tm_shape(csd, name = "county sub division") +
-	# 	tm_polygons(border.col = "grey", lwd = 3, alpha = 0) +
-	# tm_shape(adv_surprisedissc, name = "Surprised It's Sensitive") +
-	# 	tm_polygons(border.col = "blue", lwd = 3, alpha = 0) +
-	# tm_shape(adv_shouldbe, name = "Should Be Sensitive") +
-	# 	tm_polygons(border.col = "red", lwd = 3, alpha = 0) +
-# tm_layout(title = "Scenario: v_POC, v_Renters, v_VLI, v_RBLI, dp_PChRent, dp_RentGap") +
 tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
 
 map.RB50VLI <-
@@ -1240,7 +1247,7 @@ map.RB50VLI <-
 						 ))
 
 # save_map(v2map, "v2map")
-htmlwidgets::saveWidget(map.RB50VLI, file="~/git/sensitive_communities/docs/map.RB50VLI.html")
+htmlwidgets::saveWidget(map.RB50VLI, file="~/git/sensitive_communities/docs/map.RB50VLI_2.html")
 
 
 # fwrite(advocate_tracts %>% st_set_geometry(NULL), "~/git/sensitive_communities/data/191118_sc_advocate.csv")
