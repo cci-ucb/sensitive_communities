@@ -84,6 +84,8 @@ c(
 	'st_totenroll' = 'B14007_001',
 	'st_colenroll' = 'B14007_017',
 	'st_proenroll' = 'B14007_018',
+	'st_pov_under' = 'B14006_009', 
+	'st_pov_grad' = 'B14006_010', 
 ### Additional Pop-up Variables
 	# Overall rent-burden
 	'rb_tot' = 'B25070_001',
@@ -512,10 +514,11 @@ df_rent <-
 	group_by(COUNTY) %>%
 	mutate(medrent = case_when(is.na(medrent) ~ median(medrent, na.rm = TRUE),
 							   TRUE ~ medrent),
-		   medrent12 = case_when(is.na(medrent12) ~ median(medrent12, na.rm = TRUE),
+		   tr_medrent12 = case_when(is.na(medrent12) ~ median(medrent12, na.rm = TRUE),
 		   					   TRUE ~ medrent12),
-		   tr_chrent = medrent - medrent12,
-		   tr_pchrent = (medrent - medrent12)/medrent12)
+		   tr_chrent = medrent - tr_medrent12,
+		   tr_pchrent = (medrent - tr_medrent12)/tr_medrent12, 
+		   co_medrent12 = median(tr_medrent12, na.rm = TRUE))
 
 ct <- tracts("CA", cb = TRUE)
 
@@ -552,6 +555,31 @@ ct@data <-
 	ct$tr_medrent.lag <- lag.listw(lw_dist_idwW,ct$medrent)
 
 #
+# Remove water
+# --------------------------------------------------------------------------
+
+library(sf)
+library(tigris)
+
+ca_counties
+
+	st_erase <- function(x, y) {
+	  st_difference(x, st_union(st_combine(y)))
+	}
+
+	ca_water <- map_df(county)area_water("NY", "New York", class = "sf")
+
+ny_erase <- st_erase(ny2, ny_water)
+
+ca_water <- 
+
+
+ct_new <- 
+	ct %>% 
+
+
+
+#
 # Develop variables
 # --------------------------------------------------------------------------
 #
@@ -572,8 +600,6 @@ ct@data <-
 # 		select(GEOID) %>%
 # 		pull()
 
-ct_new <- ct
-
 ct_new@data <-
 	ct_new@data %>%
 	group_by(GEOID) %>%
@@ -584,6 +610,7 @@ ct_new@data <-
 		tr_rentgap = tr_medrent.lag - medrent,
 		tr_rentgapprop = tr_rentgap/((medrent + tr_medrent.lag)/2),
 		tr_pstudents = sum(st_colenroll, st_proenroll, na.rm = TRUE)/st_totenroll,
+		tr_povstudents = sum(st_pov_under, st_pov_grad, na.rm = TRUE), 
 		tr_medrent = medrent,
 		tr_prenters = totrent/totten,
 		tr_rb = sum(rb_34.9, rb_39.9, rb_49.9, rb_55, na.rm = TRUE)/rb_tot,
@@ -615,8 +642,9 @@ ct_new@data <-
 	mutate(
 		big_city = case_when(GEOID %in% big_city_tracts ~ 1,
 							 TRUE ~ 0),
-		v_VLI = case_when(tr_pstudents < .2 &
+		v_VLI = case_when(tr_pstudents < .2 & 
 						  tr_VLI_prop > .2 ~ 1,
+						  # tr_pstudents >= .2 & (tr_VLI_count - tr_povstudents)/tr_totinc_count > co_VLI_prop ~ 1,
 						  # tr_VLI_prop > co_VLI_prop ~ 1,
 						  TRUE ~ 0),
 		v_Renters = case_when(tr_prenters > .4 ~ 1,
@@ -631,10 +659,13 @@ ct_new@data <-
 						   TRUE ~ 0),
 		v_POC = case_when(tr_pPOC > .5 ~ 1, # changed to 50%
 						  TRUE ~ 0),
-		dp_PChRent = case_when(tr_pchrent > co_pchrent ~ 1,
+		dp_PChRent = case_when(#(tr_medrent12/co_medrent12) < 1.5 & 
+							   tr_pchrent > 0 & 
+							   tr_pchrent > co_pchrent ~ 1,
+							   # (tr_medrent12/co_medrent12) < 1.5 & 
 		   					   tr_pchrent.lag > co_pchrent ~ 1,
 						  	   TRUE ~ 0),
-		dp_RentGap = case_when(tr_rentgapprop > co_rentgapprop ~ 1,
+		dp_RentGap = case_when(tr_rentgapprop > 0 & tr_rentgapprop > co_rentgapprop ~ 1,
 						  	   TRUE ~ 0),
 	## Scenarios
 		# scen1.LI30RB = case_when(v_VLI == 1 &
@@ -779,9 +810,9 @@ ct_new@data <-
 						  TRUE ~ 0)) %>%
 	ungroup()
 
-	ct_new$tr_sc_LI30RB.lag <- lag.listw(lw_bin,ct_new$scen1.LI30RB)
-	ct_new$tr_sc_LI50RB.lag <- lag.listw(lw_bin,ct_new$scen1.LI50RB)
-	ct_new$tr_sc_VLI30RB.lag <- lag.listw(lw_bin,ct_new$scen1.VLI30RB)
+	# ct_new$tr_sc_LI30RB.lag <- lag.listw(lw_bin,ct_new$scen1.LI30RB)
+	# ct_new$tr_sc_LI50RB.lag <- lag.listw(lw_bin,ct_new$scen1.LI50RB)
+	# ct_new$tr_sc_VLI30RB.lag <- lag.listw(lw_bin,ct_new$scen1.VLI30RB)
 	ct_new$tr_sc_VLI50RB.lag <- lag.listw(lw_bin,ct_new$scen1.VLI50RB)
 
 # glimpse(ct@data %>% filter(GEOID == "06037228500"))
@@ -972,36 +1003,47 @@ df_final.RB50VLI <-
 # df_final.RB30VLI %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
 df_final.RB50VLI %>% st_set_geometry(NULL) %>% group_by(tier1) %>% count()
 
-df_final.RB50VLI %>%
-	filter(NeighType == 'White-Asian') %>%
-	group_by(tier1) %>%
-	count()
+# df_final.RB50VLI %>%
+# 	filter(NeighType == 'White-Asian') %>%
+# 	group_by(tier1) %>%
+# 	count()
 
-# df_final %>% st_set_geometry(NULL) %>% group_by(tier1.4) %>% count()
-# df_final %>% st_set_geometry(NULL) %>% group_by(scen1) %>% count()
-# df_final %>% st_set_geometry(NULL) %>% group_by(tier1, scen1, tier2, tier3) %>% count()
+# df_final.RB50VLI %>% 
+# 	filter(dp_RentGap == 1) %>% select(tr_rentgap) %>% summary()
+
+# df_final.RB50VLI %>% 
+# 	st_set_geometry(NULL) %>% 
+# 	ungroup() %>% 
+# 	filter(dp_RentGap == 1 & tier1 == "Tier 1: Heightened Sensitivity") %>% 
+# 	select(tr_rentgap, co_rentgap) %>% 
+# 	data.frame() %>% 
+# 	arrange(tr_rentgap)
+# 	ggplot() + 
+# 		geom_line(aes(x = reorder(GEOID, tr_rentgap), y = tr_rentgap))
+# # df_final %>% st_set_geometry(NULL) %>% group_by(tier1.4) %>% count()
+# # df_final %>% st_set_geometry(NULL) %>% group_by(scen1) %>% count()
+# # df_final %>% st_set_geometry(NULL) %>% group_by(tier1, scen1, tier2, tier3) %>% count()
 
 
-df_final.RB30VLI %>% pull(tr_pPOC) %>% unique() %>% summary()
-df_final.RB50VLI %>% pull(co_irLI_50_med) %>% unique() %>% summary()
-df_final.RB50VLI %>% pull(tr_irLI_50p) %>% unique() %>% summary()
-df_final.RB50VLI %>% pull(co_irLI_50_med) %>% unique() %>% summary()
-df_final.RB50VLI %>% pull(tr_irLI_50p) %>% unique() %>% summary()
+# df_final.RB30VLI %>% pull(tr_pPOC) %>% unique() %>% summary()
+# df_final.RB50VLI %>% pull(co_irLI_50_med) %>% unique() %>% summary()
+# df_final.RB50VLI %>% pull(tr_irLI_50p) %>% unique() %>% summary()
+# df_final.RB50VLI %>% pull(co_irLI_50_med) %>% unique() %>% summary()
+# df_final.RB50VLI %>% pull(tr_irLI_50p) %>% unique() %>% summary()
 
-ggplot(df_final.RB30VLI) +
-	# geom_point(aes(x = reorder(GEOID, tr_irLI_30p), y = tr_irLI_30p), col = "blue") +
-	geom_point(aes(x = reorder(GEOID, tr_pPOC), y = tr_pPOC), col = "red") #+
-	# geom_point(aes(x = reorder(GEOID, tr_irVLI_30p), y = tr_irVLI_30p), col = "orange") +
-	# geom_point(aes(x = reorder(GEOID, tr_irVLI_50p), y = tr_irVLI_50p), col = "green")
+# ggplot(df_final.RB30VLI) +
+# 	# geom_point(aes(x = reorder(GEOID, tr_irLI_30p), y = tr_irLI_30p), col = "blue") +
+# 	geom_point(aes(x = reorder(GEOID, tr_pPOC), y = tr_pPOC), col = "red") #+
+# 	# geom_point(aes(x = reorder(GEOID, tr_irVLI_30p), y = tr_irVLI_30p), col = "orange") +
+# 	# geom_point(aes(x = reorder(GEOID, tr_irVLI_50p), y = tr_irVLI_50p), col = "green")
 
-df_final.RB50VLI %>%
-	st_set_geometry(NULL) %>%
-	filter(NeighType == "White-Asian",
-		   tier1 == "Tier 1: Heightened Sensitivity") %>%
-	select(GEOID, NeighType, tr_pWhite:tr_pPOC) %>%
-	data.frame() %>%
-	arrange(tr_pPOC)
-
+# df_final.RB50VLI %>%
+# 	st_set_geometry(NULL) %>%
+# 	filter(NeighType == "White-Asian",
+# 		   tier1 == "Tier 1: Heightened Sensitivity") %>%
+# 	select(GEOID, NeighType, tr_pWhite:tr_pPOC) %>%
+# 	data.frame() %>%
+# 	arrange(tr_pPOC)
 
 # glimpse(df_final %>% filter(GEOID == "06081613800"))
 # glimpse(df_final %>% filter(GEOID == "06055201800"))
@@ -1026,7 +1068,17 @@ df_final.RB50VLI %>%
 # glimpse(df_final %>% filter(GEOID == "06019002701"))
 # glimpse(df_final %>% filter(GEOID == "06037228720"))
 glimpse(df_final %>% filter(GEOID == "06081610400"))
-glimpse(df_final.RB50LI %>% filter(GEOID == "06075032700"))
+glimpse(df_final.RB50VLI %>% filter(GEOID == "06001433102"))
+glimpse(df_final.RB50VLI %>% filter(GEOID == "06081611900"))
+glimpse(df_final.RB50VLI %>% filter(GEOID == "06037265700"))
+glimpse(df_final.RB50VLI %>% filter(GEOID == "06037267600"))
+glimpse(df_final.RB50VLI %>% filter(GEOID == "06037221810"))
+glimpse(df_final.RB50VLI %>% filter(GEOID == "06037265700"))
+
+ct_new@data %>% 
+	select(GEOID, tr_medrent12, co_medrent12) %>% 
+	filter(GEOID == "06037265700") %>% 
+	mutate(x = tr_medrent12/co_medrent12 <= 1.5, TRUE, FALSE))
 
 # st_write(df_final, "~/git/sensitive_communities/data/df_final.shp", delete_layer = TRUE)
 # fwrite(df_final %>% st_set_geometry(NULL), "~/git/sensitive_communities/data/df_final.csv")
@@ -1137,13 +1189,13 @@ tm_shape(Rail) +
 				id = "label",
 				popup.vars = c("Type: " = "id"),
 				title = "") +
-tm_shape(over_scjr_tracts) +
-	tm_polygons("over_scjr", name = "Jobs Rich & SC",
-				palette= "#006600",
-				alpha = .5,
-				border.alpha = .5,
-				id = "over_scjr",
-				title = "") +
+# tm_shape(over_scjr_tracts) +
+# 	tm_polygons("over_scjr", name = "Jobs Rich & SC",
+# 				palette= "#006600",
+# 				alpha = .5,
+# 				border.alpha = .5,
+# 				id = "over_scjr",
+# 				title = "") +
 tm_shape(df_tier2, name = "Tier 2: Vulnerable") +
 	tm_polygons("tier2",
 			palette = c("#6699FF", "#6699FF"),
@@ -1247,7 +1299,7 @@ map.RB50VLI <-
 						 ))
 
 # save_map(v2map, "v2map")
-htmlwidgets::saveWidget(map.RB50VLI, file="~/git/sensitive_communities/docs/map.RB50VLI_2.html")
+htmlwidgets::saveWidget(map.RB50VLI, file="~/git/sensitive_communities/docs/map_RB50VLI_posgapch.html")
 
 
 # fwrite(advocate_tracts %>% st_set_geometry(NULL), "~/git/sensitive_communities/data/191118_sc_advocate.csv")
