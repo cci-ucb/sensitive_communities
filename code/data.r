@@ -707,7 +707,7 @@ st_write(df_final.RB50VLI, "~/git/sensitive_communities/data/final_df_191216.shp
 df_final.RB50VLI %>% filter(GEOID == "06095252702") %>% glimpse()
 
 #
-# Descritpive statistics
+# Descriptive statistics
 # --------------------------------------------------------------------------
 
 df_final.RB50VLI %>% 
