@@ -729,6 +729,63 @@ summarise(
 		  ) %>% 
 data.frame()
 
+# Neighborhood type
+df_final.RB50VLI %>% 
+st_set_geometry(NULL) %>% 
+group_by(NeighType) %>% 
+summarise(count_ca = n()) %>% 
+left_join(. , 
+	df_final.RB50VLI %>% 
+	st_set_geometry(NULL) %>% 
+	filter(tier1 == "Heightened Sensitivity") %>% 
+	group_by(NeighType) %>% 
+	summarise(count_sc = n())) %>% 
+data.frame() %>% arrange(desc(count_ca)) %>% 
+mutate(p = percent(count_sc/count_ca, accuracy = .1))
+
+
+#
+# Race concatenation
+# --------------------------------------------------------------------------
+
+                  NeighType count_ca count_sc      p
+1              White-Latinx     2562      553  21.6%
+2        White-Asian-Latinx     1922      474  24.7%
+3               White-Asian      509       63  12.4%
+4              White-Shared      449       14   3.1%
+5        White-Black-Latinx      433      145  33.5%
+6              Asian-Latinx      376      172  45.7%
+7  White-Black-Asian-Latinx      348      132  37.9%
+8                All Latinx      335      143  42.7%
+9              Black-Latinx      304      185  60.9%
+10            Latinx-Shared      293      153  52.2%
+11       Black-Asian-Latinx       94       52  55.3%
+12       White-Latinx-Other       90       18  20.0%
+13                All White       56       NA   <NA>
+14 White-Asian-Latinx-Other       55        9  16.4%
+15               Integrated       44       18  40.9%
+16        unpopulated tract       29       NA   <NA>
+17 White-Black-Latinx-Other       26       16  61.5%
+18              White-Other       20        1   5.0%
+19        White-Asian-Other       18        4  22.2%
+20        White-Black-Asian       16        5  31.2%
+21             Asian-Shared       13        3  23.1%
+22 Black-Asian-Latinx-Other       10        7  70.0%
+23              White-Black        8        3  37.5%
+24       Black-Latinx-Other        7        5  71.4%
+25             Black-Shared        7        3  42.9%
+26       Asian-Latinx-Other        5        3  60.0%
+27              Asian-Black        3        2  66.7%
+28                All Other        2       NA   <NA>
+29        White-Black-Other        2        1  50.0%
+30                All Asian        1        1 100.0%
+31              Black-Other        1       NA   <NA>
+32             Latinx-Other        1       NA   <NA>
+33             Other-Shared        1       NA   <NA>
+34  White-Black-Asian-Other        1       NA   <NA>
+
+
+
 # Number of tracts with more than 500 people
 df_final.RB50VLI %>% 
 	filter(tr_population < 500) %>% 
@@ -1027,7 +1084,7 @@ map <-
 	hideGroup(c("Bus", "Vulnerable"))
 
 htmlwidgets::saveWidget(map, file="~/git/sensitive_communities/docs/map.html")
-
+# run in terminal, not in rstudio
 object.size(map)
 
 # ==========================================================================
