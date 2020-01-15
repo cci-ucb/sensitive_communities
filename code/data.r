@@ -681,7 +681,7 @@ df_final.RB50VLI <-
 						  	v_VLI == 1 &
 							  sum(v_Renters,
 							  	  v_RB50VLI,
-							  	  v_POC, na.rm = TRUE) >= 2 ~ "Tier 2: Vulnerable"),
+							  	  v_POC, na.rm = TRUE) >= 2 ~ "Vulnerable"),
 		tier3 = case_when(tr_dq == 0 ~ NA_character_,
 						  sum(v_POC, v_VLI, na.rm = TRUE) == 2 |
 						  sum(v_POC, v_RB50VLI, na.rm = TRUE) == 2|
@@ -765,46 +765,46 @@ tmap_mode("view")
 # p_text <- function(x, y){
 # 	paste0('<span class="right">', x, '</span><span class="left">', y, '</span>'​)}
 
-popup = paste0("<b>Total Population</b><br>", tr_population),
-		str_c("Tot HH: ", tr_households),
-		str_c("% Rent: ", tr_prenters),
-		str_c("$ Rent: ", tr_medrent),
-		str_c("$ R Lag: ", tr_medrent.lag),
-		str_c("$ R Gap: ", tr_rentgap),
-		str_c("Ch Rent: ", tr_chrent),
-		str_c("Ch R Lag: ", tr_chrent.lag),
-		str_c("% RB: ", tr_rb),
-		str_c("% VLI x RB: ", tr_irVLI_50p),
-		str_c("% ELI: ", tr_ELI_prop),
-		str_c("% VLI: ", tr_VLI_prop),
-		str_c("% Stud.: ", tr_pstudents),
-		str_c("----------: ", text),
-		str_c("Neigh.: ", NeighType),
-		str_c("% White: ", tr_pWhite),
-		str_c("% Black: ", tr_pBlack),
-		str_c("% Asian: ", tr_pAsian),
-		str_c("% Lat: ", tr_pLatinx),
-		str_c("% Other: ", tr_pOther),
-		str_c("% POC: ", tr_pPOC),
-		str_c("% Welf: ", tr_pwelf),
-		str_c("% Pov: ", tr_ppoverty),
-		str_c("% Unemp: ", tr_punemp),
-		str_c("%FHHw/C"= "tr_pfemhhch"),
-		str_c("----------: ", text),
-		str_c("SC Criteria: ", text),
-		str_c("----------: ", text),
-		str_c("VLI: ", v_VLI),
-		str_c("POC: ", v_POC),
-		str_c("Renters: ", v_Renters),
-		str_c("RB: ", v_RB50VLI),
-		str_c("Ch Rent: ", dp_PChRent),
-		str_c("Rent Gap: ", dp_RentGap), 
-		sep = "<br/>"
-						   )
+# popup = paste0("<b>Total Population</b><br>", tr_population),
+# 		str_c("Tot HH: ", tr_households),
+# 		str_c("% Rent: ", tr_prenters),
+# 		str_c("$ Rent: ", tr_medrent),
+# 		str_c("$ R Lag: ", tr_medrent.lag),
+# 		str_c("$ R Gap: ", tr_rentgap),
+# 		str_c("Ch Rent: ", tr_chrent),
+# 		str_c("Ch R Lag: ", tr_chrent.lag),
+# 		str_c("% RB: ", tr_rb),
+# 		str_c("% VLI x RB: ", tr_irVLI_50p),
+# 		str_c("% ELI: ", tr_ELI_prop),
+# 		str_c("% VLI: ", tr_VLI_prop),
+# 		str_c("% Stud.: ", tr_pstudents),
+# 		str_c("----------: ", text),
+# 		str_c("Neigh.: ", NeighType),
+# 		str_c("% White: ", tr_pWhite),
+# 		str_c("% Black: ", tr_pBlack),
+# 		str_c("% Asian: ", tr_pAsian),
+# 		str_c("% Lat: ", tr_pLatinx),
+# 		str_c("% Other: ", tr_pOther),
+# 		str_c("% POC: ", tr_pPOC),
+# 		str_c("% Welf: ", tr_pwelf),
+# 		str_c("% Pov: ", tr_ppoverty),
+# 		str_c("% Unemp: ", tr_punemp),
+# 		str_c("%FHHw/C"= "tr_pfemhhch"),
+# 		str_c("----------: ", text),
+# 		str_c("SC Criteria: ", text),
+# 		str_c("----------: ", text),
+# 		str_c("VLI: ", v_VLI),
+# 		str_c("POC: ", v_POC),
+# 		str_c("Renters: ", v_Renters),
+# 		str_c("RB: ", v_RB50VLI),
+# 		str_c("Ch Rent: ", dp_PChRent),
+# 		str_c("Rent Gap: ", dp_RentGap), 
+# 		sep = "<br/>"
+# 						   )
 
 df_tiers <- 
 	df_final.RB50VLI %>%
-	# filter(!is.na(tier2)) %>% 
+	select(GEOID, tr_population, tr_households, v_VLI, tr_VLI_prop, co_VLI_prop, tr_pstudents, v_POC, tr_pPOC, co_pPOC, tr_POC_rank, v_Renters, tr_prenters, co_prenters, v_RB50VLI, tr_irVLI_50p, co_irVLI_50p, dp_PChRent, tr_pchrent, tr_pchrent.lag, co_pchrent, dp_RentGap, tr_rentgap, co_rentgap, tr_medrent, tr_medrent.lag, NeighType, tr_pWhite, tr_pBlack, tr_pAsian, tr_pLatinx, tr_pOther, tier1, tier2) %>% 
 	mutate(popup = 
 		str_c(
 			"<h3>Tract: ", GEOID, "</h3>", 
@@ -890,37 +890,25 @@ df_tiers <-
 				percent(tr_pLatinx, accuracy = .1), "<br>", 
 				"<b>Other</b>", "<br>", 
 				percent(tr_pOther, accuracy = .1), "<br>"
-			  ))
+			  )) # %>% ms_simplify(.) # prefer the detail 
 
-m <- leaflet() %>% 
-	addProviderTiles(providers$CartoDB.Positron) %>% 
-	addMiniMap(tiles = providers$CartoDB.Positron, 
-			   toggleDisplay = TRUE) %>% 
-	addEasyButton(
-		easyButton(
-		    icon="fa-crosshairs", 
-		    title="My Location",
-		    onClick=JS("function(btn, map){ map.locate({setView: true}); }"))) %>% 
-	setView(-122.2712, 37.8044, zoom = 9)
+df_tier2 <- 
+	df_tiers %>% 
+	filter(!is.na(tier2))
+
+# m <- 
+# 	leaflet(df_tiers, df_tier2) %>% 
+# 	addProviderTiles(providers$CartoDB.Positron) %>% 
+# 	addMiniMap(tiles = providers$CartoDB.Positron, 
+# 			   toggleDisplay = TRUE) %>% 
+# 	addEasyButton(
+# 		easyButton(
+# 		    icon="fa-crosshairs", 
+# 		    title="My Location",
+# 		    onClick=JS("function(btn, map){ map.locate({setView: true}); }"))) %>% 
+# 	setView(-122.2712, 37.8044, zoom = 10)
 
 
-m %>%
-	# addPolygons(data = Bus, 
-	# 			label = "label", 
-	# 			color = "#000000", 
-	# 			fillColor="#CCCCCC", 
-	# 			weight = .5, 
-	# 			opacity = .45, 
-	# 			fillOpacity = .1, 
-	# 			stroke = TRUE) %>% 	
-	# addPolygons(data = Rail, 
-	# 			layerId = "label", 
-	# 			color = "#000000", 
-	# 			fillColor="#CCCCCC", 
-	# 			weight = .5, 
-	# 			opacity = .45, 
-	# 			fillOpacity = .1, 
-	# 			stroke = TRUE) %>% 
 	# addPolygons(data = df_tiers, 
 	# 			group = "tier2", 
 	# 			# name = "Vulnerable", 
@@ -940,10 +928,82 @@ pal1 <-
 		na.color = "transparent"
 	)
 
-check <- 
-m %>% 
+pal2 <- 
+	colorFactor(
+		c("#6699FF", "#CCCCCC"), 
+		domain = df_tiers$tier2, 
+		na.color = "transparent"
+	)
+
+map <- 
+	leaflet(data = c(df_tiers, df_tier2)) %>% 
+	addProviderTiles(providers$CartoDB.Positron) %>% 
+	addMiniMap(tiles = providers$CartoDB.Positron, 
+			   toggleDisplay = TRUE) %>% 
+	addEasyButton(
+		easyButton(
+		    icon="fa-crosshairs", 
+		    title="My Location",
+		    onClick=JS("function(btn, map){ map.locate({setView: true}); }"))) %>% 
+	setView(-122.2712, 37.8044, zoom = 10) %>% 
+# Bus layer
+	addPolygons(data = Bus, 
+				label = "label", 
+				color = "#000000", 
+				fillColor="#CCCCCC", 
+				weight = .5, 
+				opacity = .45, 
+				fillOpacity = .1, 
+				stroke = TRUE, 
+				group = "Bus") %>% 	
+	addLegend(
+		color = "#CCCCCC", 
+		labels = Bus$label, 
+		group = "Bus"
+	) %>% 
+# Rail layer
+	addPolygons(data = Rail, 
+				layerId = "label", 
+				color = "#000000", 
+				fillColor="#CCCCCC", 
+				weight = .5, 
+				opacity = .45, 
+				fillOpacity = .1, 
+				stroke = TRUE, 
+				group = "Rail"
+	) %>% 
+	addLegend(
+		color = "#CCCCCC", 
+		labels = Rail$label, 
+		group = "Rail"
+	) %>% 
+# Vulnerable layer
+	addPolygons(
+		data = df_tier2, 
+		group = "Vulnerable",
+		fillOpacity = .5, 
+		color = ~pal2(tier2),
+		stroke = TRUE, 
+		weight = .5, # border thickness
+		opacity = .45, 
+		highlightOptions = highlightOptions(
+							color = "#ff4a4a", 
+							weight = 5,
+      						bringToFront = TRUE
+      						), 
+		popup = ~popup, 
+		popupOptions = popupOptions(maxHeight = 215, closeOnClick = TRUE)
+	) %>% 
+	addLegend(
+		pal = pal2, 
+		values = ~tier2, 
+		group = "Vulnerable", 
+		title = ""
+	) %>% 
+# Heightened Sensitivity layer
 	addPolygons(
 		data = df_tiers, 
+		group = "Heightened Sensitivity",
 		fillOpacity = .5, 
 		color = ~pal1(tier1),
 		stroke = TRUE, 
@@ -956,10 +1016,36 @@ m %>%
       						), 
 		popup = ~popup, 
 		popupOptions = popupOptions(maxHeight = 215, closeOnClick = TRUE)
+	) %>% 
+	addLegend(
+		pal = pal1, 
+		values = ~tier1, 
+		title = ""
+	) %>% 
+	addLayersControl(overlayGroups = c("Heightened Sensitivity", "Vulnerable", "Bus", "Rail"),
+					 options = layersControlOptions(collapsed = TRUE)) %>% 
+	hideGroup(c("Bus", "Vulnerable"))
 
-	) 
+htmlwidgets::saveWidget(map, file="~/git/sensitive_communities/docs/map.html")
 
-object.size(rmapshaper::ms_simplify(check))
+object.size(map)
+
+# ==========================================================================
+# ==========================================================================
+# ==========================================================================
+# Excess code
+# ==========================================================================
+# ==========================================================================
+# ==========================================================================
+
+
+
+
+
+
+
+object.size()
+
 m %>% 
 	addPolygons(
 		data = df_tiers, 
@@ -973,7 +1059,7 @@ m %>%
 		popup = ~popup, 
 		popupOptions = popupOptions(maxHeight = 215, closeOnClick = TRUE)
 	) %>% 
-	# addLegend(values = values(tier1)) %>%
+	addLegend(values = values(tier1)) %>%
 	addLayersControl(#baseGroups = c("OSM (default)", "Toner", "Toner Lite"),
 					 overlayGroups = c("tier1", "teir2"),
 					 options = layersControlOptions(collapsed = FALSE)) %>% 
@@ -1018,7 +1104,7 @@ tm_shape(Rail) +
 				id = "label",
 				popup.vars = c("Type: " = "id"),
 				title = "") +
-tm_shape(df_tier2, name = "Tier 2: Vulnerable") +
+tm_shape(df_tier2, name = "Vulnerable") +
 	tm_polygons("tier2",
 			palette = c("#6699FF", "#6699FF"),
 			# label = "Heightened Sensitivity",
@@ -1113,7 +1199,7 @@ map <-
 	addPopups(map, options = popupOptions(minWidth = 300,
 									 maxWidth = 300)) %>% 
 	leaflet::hideGroup(c("Bus",
-						 "Tier 2: Vulnerable"#,
+						 "Vulnerable"#,
 						 # "adv_surprisedissc",
 						 # "adv_shouldbe"
 						 )) %>% 
