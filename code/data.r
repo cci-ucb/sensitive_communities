@@ -19,7 +19,7 @@ options(scipen = 10) # avoid scientific notation
 
 # load packages
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(data.table, plotly, spdep, tidyverse, tigris, tidycensus, tmap, leaflet)
+pacman::p_load(rmapshaper, scales, data.table, plotly, spdep, tidyverse, tigris, tidycensus, tmap, leaflet)
 
 # Cache downloaded tiger files
 options(tigris_use_cache = TRUE)
@@ -576,6 +576,8 @@ ct_new@data <-
 	mutate(tr_POC_rank = rank(tr_pPOC)/length(tr_pPOC),
 		   co_rentgap = median(tr_rentgap, na.rm = TRUE),
 		   co_rentgapprop = median(tr_rentgapprop, na.rm = TRUE),
+		   co_pstudents = median(tr_pstudents, na.rm = TRUE),
+		   co_irVLI_50p = median(tr_irVLI_50p, na.rm = TRUE),
 		   # co_pchrent = median(case_when(tr_pchrent >= 0 ~ tr_pchrent), na.rm = TRUE),
 		   co_pchrent = median(tr_pchrent, na.rm = TRUE),
 		   co_prenters = median(tr_prenters, na.rm = TRUE),
@@ -688,7 +690,7 @@ df_final.RB50VLI <-
 						  sum(v_VLI, v_RB50VLI, na.rm = TRUE) == 2|
 						  sum(v_VLI, v_Renters, na.rm = TRUE) == 2 ~ "Tier 3: Some Vulnerability"),
 		tier1 = case_when(tr_dq == 0 ~ "Poor Data Quality",
-						    scen3.VLI50RB == 1 ~ "Tier 1: Heightened Sensitivity",
+						    scen3.VLI50RB == 1 ~ "Heightened Sensitivity",
 						    big_city == 1 &
 							tr_sc_VLI50RB.lag >= .6 &
 							tr_pstudents < .2 &
@@ -696,24 +698,23 @@ df_final.RB50VLI <-
 						  	v_VLI == 1 &
 							sum(v_Renters,
 								v_RB50VLI,
-								v_POC, na.rm = TRUE) >= 2 ~ "Tier 1: Heightened Sensitivity"),
+								v_POC, na.rm = TRUE) >= 2 ~ "Heightened Sensitivity"),
 		text = "",
 		popup_text = paste0("Tract: ", GEOID)) %>% 
 	ungroup()
 
-fwrite(df_final.RB50VLI %>% st_set_geometry(NULL), file = "~/git/sensitive_communities/data/final_df_191216.csv")
-st_write(df_final.RB50VLI, "~/git/sensitive_communities/data/final_df_191216.shp", delete_layer = TRUE)
-
-df_final.RB50VLI %>% filter(GEOID == "06095252702") %>% glimpse()
+write_csv(df_final.RB50VLI %>% st_set_geometry(NULL), "~/git/sensitive_communities/data/final_df.csv.bz2")
+st_write(df_final.RB50VLI, "~/git/sensitive_communities/data/final_df.shp", delete_layer = TRUE)
 
 #
 # Descriptive statistics
 # --------------------------------------------------------------------------
 
+# Medians and means
 df_final.RB50VLI %>% 
 st_set_geometry(NULL) %>% 
 ungroup() %>% 
-filter(tier1 == "Tier 1: Heightened Sensitivity") %>% 
+filter(tier1 == "Heightened Sensitivity") %>% 
 summarise(
 		  pPOC = mean(tr_pPOC), 
 		  mPOC = median(tr_pPOC), 
@@ -728,11 +729,17 @@ summarise(
 		  ) %>% 
 data.frame()
 
+# Number of tracts with more than 500 people
 df_final.RB50VLI %>% 
 	filter(tr_population < 500) %>% 
 	count()
 
-df_final.RB50VLI %>% st_set_geometry(NULL) %>% filter(tr_population >= 500) %>% group_by(tier1) %>% count()
+# Number of Heightened Sensitivity, poor data quality, and NA tracts
+df_final.RB50VLI %>% 
+	st_set_geometry(NULL) %>% 
+	filter(tr_population >= 500) %>% 
+	group_by(tier1) %>% 
+	count()
 
 #
 # transit layer
@@ -751,13 +758,12 @@ Rail <-
 #
 # Map functions
 # --------------------------------------------------------------------------
-save_map <- function(x,y)
-	tmap_save(x, paste0("~/git/sensitive_communities/docs/", y, ".html"))
+# save_map <- function(x,y) tmap_save(x, paste0("~/git/sensitive_communities/docs/", y, ".html"))
 
 tmap_mode("view")
 
-p_text <- function(x, y){
-	paste0('<span class="right">', x, '</span><span class="left">', y, '</span>'​)}
+# p_text <- function(x, y){
+# 	paste0('<span class="right">', x, '</span><span class="left">', y, '</span>'​)}
 
 popup = paste0("<b>Total Population</b><br>", tr_population),
 		str_c("Tot HH: ", tr_households),
@@ -795,73 +801,82 @@ popup = paste0("<b>Total Population</b><br>", tr_population),
 		str_c("Rent Gap: ", dp_RentGap), 
 		sep = "<br/>"
 						   )
-library(scales)
 
-df_tiers <- df_final.RB50VLI %>%
+df_tiers <- 
+	df_final.RB50VLI %>%
 	# filter(!is.na(tier2)) %>% 
 	mutate(popup = 
-		str_c("<h4>Tract: ", GEOID, "</h4>", 
-			  '<b>Total population</b><br>    ', comma(tr_population), 
-			  			"<br>", 
-			 		    # "<br>", 
-			  '<b>Total households</b><br>    ', comma(tr_households),
-			  			"<br>", 
-			 		    "<br>",		
-			  "<b><i><u>Vulnerable Population Measures Met</b></i></u>", 
-					  # "<br>", 
-					  "<br>", 
-			  "<b>Very low income</b><br>    ", 
-			  	case_when(v_VLI == 1 ~ "Yes", TRUE ~ "No"), 
-			 	" (<i>VLI: ",
-			 		percent(tr_VLI_prop, accuracy = .1),
-			 		" & students: ", 
-			 		percent(tr_pstudents, accuracy = .1), "</i>)", 
-			 				"<br>", 			 				  
-			  "<b>Persons of color</b><br>    ", 
+		str_c(
+			"<h3>Tract: ", GEOID, "</h3>", 
+
+			"<b>Total population</b><br>", 
+				comma(tr_population), 
+				"<br>", 
+			 		    
+			"<b>Total households</b><br>", 
+				comma(tr_households),
+				"<br>", 
+				"<br>",		
+
+			"<b><i><u>Vulnerable Population Measures Met</b></i></u>", 
+				"<br>", 
+			
+			"<b>Very low income</b><br>", 
+				case_when(v_VLI == 1 ~ "Yes", TRUE ~ "No"), 
+			 	"<br>(<i>",
+			 		percent(tr_VLI_prop, accuracy = .1), " tract VLI, ",
+			 		percent(co_VLI_prop, accuracy = .1), " region VLI, & ",
+			 		percent(tr_pstudents, accuracy = .1), " students</i>)", 
+			 	"<br>",
+
+			"<b>Persons of color</b><br>", 
 			  	case_when(v_POC == 1 ~ "Yes", TRUE ~ "No"), 
 			 	" (<i>",
-			 		percent(tr_pPOC, accuracy = .1),
-			 		"</i>)", 
-			 				"<br>", 
-			   "<b>Renting household percentage</b><br>    ", 
+			 		percent(tr_pPOC, accuracy = .1), " tract & ",
+			 		percent(co_pPOC, accuracy = .1), " region</i>)", 
+			 	"<br>",
+
+			"<b>Renting household percentage</b><br>    ", 
 			  	case_when(v_Renters == 1 ~ "Yes", TRUE ~ "No"), 
 			 	" (<i>",
-			 		percent(tr_prenters, accuracy = .1),
-			 		"</i>)", 
-						 	"<br>", 
-			   "<b>Very low income renters paying<br>over 50% of income to rent</b><br>    ", 
+			 		percent(tr_prenters, accuracy = .1), " tract & ",
+			 		percent(co_prenters, accuracy = .1), " region</i>)", 
+				"<br>", 
+
+			"<b>Very low income renters paying<br>over 50% of income to rent</b><br>    ", 
 			  	case_when(v_RB50VLI == 1 ~ "Yes", TRUE ~ "No"), 
 			 	" (<i>",
-			 		percent(tr_irVLI_50p, accuracy = .1),
-			 		"</i>)", 
-			  "<br>",
-			  "<br>",
-			  "<b><i><u>Displacement Pressures Met</b></i></u>", 
-			  # "<br>", 
+			 		percent(tr_irVLI_50p, accuracy = .1), " tract & ",
+			 		percent(co_irVLI_50p, accuracy = .1), " region</i>)", 
+				"<br>", 			  
+				"<br>",
+
+			"<b><i><u>Displacement Pressures Met</b></i></u>", 
 			  "<br>", 
 			  "<b>Change in rent</b><br>    ", 
 			  	case_when(dp_PChRent == 1 ~ "Yes", TRUE ~ "No"), 
-			 	" (<i>Local: ",
-			 		percent(tr_pchrent, accuracy = .1),
-			 		" & nearby: ",
-			 		percent(tr_pchrent.lag, accuracy = .1),
-			 		"</i>)", 
-			 				"<br>", 
-			 				# "<br>", 			  
-			  "<b>Rent gap</b><br>     ", 
+			 	" (<i>",
+			 		percent(tr_pchrent, accuracy = .1), " tract, ",
+			 		percent(tr_pchrent.lag, accuracy = .1), " nearby, & ",
+			 		percent(co_pchrent, accuracy = .1), " region</i>)", 
+			 	"<br>",
+	  
+			"<b>Rent gap</b><br>     ", 
 			  	case_when(dp_RentGap == 1 ~ "Yes", TRUE ~ "No"), 
 			 	" (<i>",
-			 		percent(tr_rentgapprop, accuracy = .1),
-			 		"</i>)", 
-			 				"<br>", 
-			 				"<br>", 
+			 		dollar(tr_rentgap), " tract & ",
+			 		dollar(co_rentgap), " region</i>)", 
+				"<br>", 			  
+				"<br>",
+
 			"<b><i><u>Rent</b></i></u>", 
-			  "<br>", 
-				"<b>Local</b>","<br>", 
-				dollar(tr_medrent), "<br>", 
-				"<b>Nearby</b>", "<br>", 
-				dollar(tr_medrent.lag), "<br>", 
-					"<br>", 
+				"<br>", 
+					"<b>Local</b>","<br>", 
+					dollar(tr_medrent), "<br>", 
+					"<b>Nearby</b>", "<br>", 
+					dollar(tr_medrent.lag), "<br>", 
+				"<br>", 
+
 			"<b><i><u>Racial composition</b></i></u>", "<br>", 
 				"<b>Neighborhood Type</b>", "<br>", 
 				NeighType, "<br>", 
@@ -881,56 +896,110 @@ m <- leaflet() %>%
 	addProviderTiles(providers$CartoDB.Positron) %>% 
 	addMiniMap(tiles = providers$CartoDB.Positron, 
 			   toggleDisplay = TRUE) %>% 
-	addEasyButton(easyButton(
-    icon="fa-crosshairs", title="My Location",
-    onClick=JS("function(btn, map){ map.locate({setView: true}); }"))) %>% 
+	addEasyButton(
+		easyButton(
+		    icon="fa-crosshairs", 
+		    title="My Location",
+		    onClick=JS("function(btn, map){ map.locate({setView: true}); }"))) %>% 
 	setView(-122.2712, 37.8044, zoom = 9)
 
 
 m %>%
-	addPolygons(data = Bus, 
-				label = "label", 
-				color = "#000000", 
-				fillColor="#CCCCCC", 
-				weight = .5, 
-				opacity = .45, 
-				fillOpacity = .1, 
-				stroke = TRUE) %>% 	
-	addPolygons(data = Rail, 
-				layerId = "label", 
-				color = "#000000", 
-				fillColor="#CCCCCC", 
-				weight = .5, 
-				opacity = .45, 
-				fillOpacity = .1, 
-				stroke = TRUE) %>% 
-	addPolygons(data = df_tiers, 
-				group = "tier2", 
-				weight = .5, 
-				opacity = .45, 
-				fillOpacity = .1, 
-				stroke = TRUE, 
-				popup = ~popup, 
-				popupOptions = popupOptions(maxHeight = 215, closeOnClick = TRUE)) %>% 
-	addPolygons(data = df_tiers, 
-				group = "tier1", 
-				weight = .5, 
-				opacity = .45, 
-				fillOpacity = .1, 
-				stroke = TRUE, 
-				popup = ~popup, 
-				popupOptions = popupOptions(maxHeight = 215, closeOnClick = TRUE)) %>% 
+	# addPolygons(data = Bus, 
+	# 			label = "label", 
+	# 			color = "#000000", 
+	# 			fillColor="#CCCCCC", 
+	# 			weight = .5, 
+	# 			opacity = .45, 
+	# 			fillOpacity = .1, 
+	# 			stroke = TRUE) %>% 	
+	# addPolygons(data = Rail, 
+	# 			layerId = "label", 
+	# 			color = "#000000", 
+	# 			fillColor="#CCCCCC", 
+	# 			weight = .5, 
+	# 			opacity = .45, 
+	# 			fillOpacity = .1, 
+	# 			stroke = TRUE) %>% 
+	# addPolygons(data = df_tiers, 
+	# 			group = "tier2", 
+	# 			# name = "Vulnerable", 
+	# 			fillColor = c("#6699FF", "#6699FF"),
+	# 			weight = .5, 
+	# 			opacity = .45, 
+	# 			fillOpacity = .1, 
+	# 			stroke = TRUE, 
+	# 			popup = ~popup, 
+	# 			popupOptions = popupOptions(maxHeight = 215, closeOnClick = TRUE)) %>% 
+
+
+pal1 <- 
+	colorFactor(
+		c("#FF6633", "#CCCCCC"), 
+		domain = df_tiers$tier1, 
+		na.color = "transparent"
+	)
+
+check <- 
+m %>% 
+	addPolygons(
+		data = df_tiers, 
+		fillOpacity = .5, 
+		color = ~pal1(tier1),
+		stroke = TRUE, 
+		weight = .5, # border thickness
+		opacity = .45, 
+		highlightOptions = highlightOptions(
+							color = "#ff4a4a", 
+							weight = 5,
+      						bringToFront = TRUE
+      						), 
+		popup = ~popup, 
+		popupOptions = popupOptions(maxHeight = 215, closeOnClick = TRUE)
+
+	) 
+
+object.size(rmapshaper::ms_simplify(check))
+m %>% 
+	addPolygons(
+		data = df_tiers, 
+		group = "tier1", 
+		fillColor = c("#CCCCCC", "red"), # polygon colors per value
+		weight = .5, # border thickness
+		color = "transparent",
+		opacity = .45, 
+		fillOpacity = .1, 
+		stroke = TRUE, 
+		popup = ~popup, 
+		popupOptions = popupOptions(maxHeight = 215, closeOnClick = TRUE)
+	) %>% 
+	# addLegend(values = values(tier1)) %>%
 	addLayersControl(#baseGroups = c("OSM (default)", "Toner", "Toner Lite"),
 					 overlayGroups = c("tier1", "teir2"),
 					 options = layersControlOptions(collapsed = FALSE)) %>% 
 	hideGroup(c("Bus",
-						 "Tier 2: Vulnerable"#,
+						 "tier2"#,
 						 # "adv_surprisedissc",
 						 # "adv_shouldbe"
 						 ))
+## 
+# Issues: 
+# 	What is it coloring? 
+
+df_tiers %>% 
+	filter(GEOID == "06001981900") %>% 
+	glimpse()
 
 
-map <-
+
+
+
+
+
+
+
+
+# map <-
 tm_basemap(leaflet::providers$CartoDB.Positron) + 
 	# For other basemaps see: http://leaflet-extras.github.io/leaflet-providers/preview/
 tm_shape(Bus) +
@@ -991,7 +1060,7 @@ tm_shape(df_tier2, name = "Tier 2: Vulnerable") +
 						   "Rent Gap" = "dp_RentGap"
 						   ),
 			popup.format = list(digits=2)) +
-tm_shape(df_final.RB50VLI, name = "Tier 1: Heightened Sensitivity") +
+tm_shape(df_final.RB50VLI, name = "Heightened Sensitivity") +
 	tm_polygons("tier1",
 			palette = c("#CCCCCC", "#FF6633"),
 			# label = "Heightened Sensitivity",
