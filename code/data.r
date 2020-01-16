@@ -1102,39 +1102,37 @@ object.size(map)
 
 
 
-object.size()
+# object.size()
 
-m %>% 
-	addPolygons(
-		data = df_tiers, 
-		group = "tier1", 
-		fillColor = c("#CCCCCC", "red"), # polygon colors per value
-		weight = .5, # border thickness
-		color = "transparent",
-		opacity = .45, 
-		fillOpacity = .1, 
-		stroke = TRUE, 
-		popup = ~popup, 
-		popupOptions = popupOptions(maxHeight = 215, closeOnClick = TRUE)
-	) %>% 
-	addLegend(values = values(tier1)) %>%
-	addLayersControl(#baseGroups = c("OSM (default)", "Toner", "Toner Lite"),
-					 overlayGroups = c("tier1", "teir2"),
-					 options = layersControlOptions(collapsed = FALSE)) %>% 
-	hideGroup(c("Bus",
-						 "tier2"#,
-						 # "adv_surprisedissc",
-						 # "adv_shouldbe"
-						 ))
-## 
-# Issues: 
-# 	What is it coloring? 
+# m %>% 
+# 	addPolygons(
+# 		data = df_tiers, 
+# 		group = "tier1", 
+# 		fillColor = c("#CCCCCC", "red"), # polygon colors per value
+# 		weight = .5, # border thickness
+# 		color = "transparent",
+# 		opacity = .45, 
+# 		fillOpacity = .1, 
+# 		stroke = TRUE, 
+# 		popup = ~popup, 
+# 		popupOptions = popupOptions(maxHeight = 215, closeOnClick = TRUE)
+# 	) %>% 
+# 	addLegend(values = values(tier1)) %>%
+# 	addLayersControl(#baseGroups = c("OSM (default)", "Toner", "Toner Lite"),
+# 					 overlayGroups = c("tier1", "teir2"),
+# 					 options = layersControlOptions(collapsed = FALSE)) %>% 
+# 	hideGroup(c("Bus",
+# 						 "tier2"#,
+# 						 # "adv_surprisedissc",
+# 						 # "adv_shouldbe"
+# 						 ))
+# ## 
+# # Issues: 
+# # 	What is it coloring? 
 
-df_tiers %>% 
-	filter(GEOID == "06001981900") %>% 
-	glimpse()
-
-
+# df_tiers %>% 
+# 	filter(GEOID == "06001981900") %>% 
+# 	glimpse()
 
 
 
@@ -1142,130 +1140,132 @@ df_tiers %>%
 
 
 
+
+
+
+# # map <-
+# tm_basemap(leaflet::providers$CartoDB.Positron) + 
+# 	# For other basemaps see: http://leaflet-extras.github.io/leaflet-providers/preview/
+# tm_shape(Bus) +
+# 	tm_polygons("label",
+# 				palette="Greys", alpha = .25,
+# 				border.color = "gray",
+# 				border.alpha = .5,
+# 				id = "label",
+# 				popup.vars = c("Type: " = "id"),
+# 				title = "") +
+# tm_shape(Rail) +
+# 	tm_polygons("label",
+# 				palette="Greys",
+# 				alpha = .25,
+# 				border.alpha = .5,
+# 				id = "label",
+# 				popup.vars = c("Type: " = "id"),
+# 				title = "") +
+# tm_shape(df_tier2, name = "Vulnerable") +
+# 	tm_polygons("tier2",
+# 			palette = c("#6699FF", "#6699FF"),
+# 			# label = "Heightened Sensitivity",
+# 			alpha = .5,
+# 			border.alpha = .05,
+# 			border.color = "gray",
+# 			colorNA = NULL,
+# 			title = "",
+# 			id = "popup_text",
+# 			popup.vars = c("Tot Pop" = "tr_population",
+# 						   "Tot HH" = "tr_households",
+# 						   "% Rent" = "tr_prenters",
+# 						   "$ Rent" = "tr_medrent",
+# 						   "$ R Lag" = "tr_medrent.lag",
+# 						   "$ R Gap" = "tr_rentgap",
+# 						   "Ch Rent" = "tr_chrent",
+# 						   "Ch R Lag" = "tr_chrent.lag",
+# 						   "% RB" = "tr_rb",
+# 						   "% VLI x RB" = "tr_irVLI_50p",
+# 						   "% ELI" = "tr_ELI_prop",
+# 						   "% VLI" = "tr_VLI_prop",
+# 						   "% Stud." = "tr_pstudents",
+# 						   "----------" = "text",
+# 						   "Neigh." = "NeighType",
+# 						   "% White" = "tr_pWhite",
+# 						   "% Black" = "tr_pBlack",
+# 						   "% Asian" = "tr_pAsian",
+# 						   "% Lat" = "tr_pLatinx",
+# 						   "% Other" = "tr_pOther",
+# 						   "% POC" = "tr_pPOC",
+# 						   "----------" = "text",
+# 						   "SC Criteria" = "text",
+# 						   "----------" = "text",
+# 						   "VLI" = "v_VLI",
+# 						   "POC" = "v_POC",
+# 						   "Renters" = "v_Renters",
+# 						   "RB" = "v_RB50VLI",
+# 						   "Ch Rent" = "dp_PChRent",
+# 						   "Rent Gap" = "dp_RentGap"
+# 						   ),
+# 			popup.format = list(digits=2)) +
+# tm_shape(df_final.RB50VLI, name = "Heightened Sensitivity") +
+# 	tm_polygons("tier1",
+# 			palette = c("#CCCCCC", "#FF6633"),
+# 			# label = "Heightened Sensitivity",
+# 			alpha = .5,
+# 			border.alpha = .05,
+# 			border.color = "gray",
+# 			colorNA = NULL,
+# 			title = "",
+# 			id = "popup_text",
+# 			popup.vars = c("Tot Pop" = "tr_population",
+# 						   "Tot HH" = "tr_households",
+# 						   "% Rent" = "tr_prenters",
+# 						   "$ Rent" = "tr_medrent",
+# 						   "$ R Lag" = "tr_medrent.lag",
+# 						   "$ R Gap" = "tr_rentgap",
+# 						   "Ch Rent" = "tr_chrent",
+# 						   "Ch R Lag" = "tr_chrent.lag",
+# 						   "% RB" = "tr_rb",
+# 						   "% VLI x RB" = "tr_irVLI_50p",
+# 						   "% ELI" = "tr_ELI_prop",
+# 						   "% VLI" = "tr_VLI_prop",
+# 						   "% Stud." = "tr_pstudents",
+# 						   "----------" = "text",
+# 						   "Neigh." = "NeighType",
+# 						   "% White" = "tr_pWhite",
+# 						   "% Black" = "tr_pBlack",
+# 						   "% Asian" = "tr_pAsian",
+# 						   "% Lat" = "tr_pLatinx",
+# 						   "% Other" = "tr_pOther",
+# 						   "% POC" = "tr_pPOC",
+# 						   "% Welf" = "tr_pwelf",
+# 						   "% Pov" = "tr_ppoverty",
+# 						   "% Unemp" = "tr_punemp",
+# 						   "%FHHw/C"= "tr_pfemhhch",
+# 						   "----------" = "text",
+# 						   "SC Criteria" = "text",
+# 						   "----------" = "text",
+# 						   "VLI" = "v_VLI",
+# 						   "POC" = "v_POC",
+# 						   "Renters" = "v_Renters",
+# 						   "RB" = "v_RB50VLI",
+# 						   "Ch Rent" = "dp_PChRent",
+# 						   "Rent Gap" = "dp_RentGap"
+# 						   ),
+# 			popup.format = list(digits=2)) +
+# tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
 
 # map <-
-tm_basemap(leaflet::providers$CartoDB.Positron) + 
-	# For other basemaps see: http://leaflet-extras.github.io/leaflet-providers/preview/
-tm_shape(Bus) +
-	tm_polygons("label",
-				palette="Greys", alpha = .25,
-				border.color = "gray",
-				border.alpha = .5,
-				id = "label",
-				popup.vars = c("Type: " = "id"),
-				title = "") +
-tm_shape(Rail) +
-	tm_polygons("label",
-				palette="Greys",
-				alpha = .25,
-				border.alpha = .5,
-				id = "label",
-				popup.vars = c("Type: " = "id"),
-				title = "") +
-tm_shape(df_tier2, name = "Vulnerable") +
-	tm_polygons("tier2",
-			palette = c("#6699FF", "#6699FF"),
-			# label = "Heightened Sensitivity",
-			alpha = .5,
-			border.alpha = .05,
-			border.color = "gray",
-			colorNA = NULL,
-			title = "",
-			id = "popup_text",
-			popup.vars = c("Tot Pop" = "tr_population",
-						   "Tot HH" = "tr_households",
-						   "% Rent" = "tr_prenters",
-						   "$ Rent" = "tr_medrent",
-						   "$ R Lag" = "tr_medrent.lag",
-						   "$ R Gap" = "tr_rentgap",
-						   "Ch Rent" = "tr_chrent",
-						   "Ch R Lag" = "tr_chrent.lag",
-						   "% RB" = "tr_rb",
-						   "% VLI x RB" = "tr_irVLI_50p",
-						   "% ELI" = "tr_ELI_prop",
-						   "% VLI" = "tr_VLI_prop",
-						   "% Stud." = "tr_pstudents",
-						   "----------" = "text",
-						   "Neigh." = "NeighType",
-						   "% White" = "tr_pWhite",
-						   "% Black" = "tr_pBlack",
-						   "% Asian" = "tr_pAsian",
-						   "% Lat" = "tr_pLatinx",
-						   "% Other" = "tr_pOther",
-						   "% POC" = "tr_pPOC",
-						   "----------" = "text",
-						   "SC Criteria" = "text",
-						   "----------" = "text",
-						   "VLI" = "v_VLI",
-						   "POC" = "v_POC",
-						   "Renters" = "v_Renters",
-						   "RB" = "v_RB50VLI",
-						   "Ch Rent" = "dp_PChRent",
-						   "Rent Gap" = "dp_RentGap"
-						   ),
-			popup.format = list(digits=2)) +
-tm_shape(df_final.RB50VLI, name = "Heightened Sensitivity") +
-	tm_polygons("tier1",
-			palette = c("#CCCCCC", "#FF6633"),
-			# label = "Heightened Sensitivity",
-			alpha = .5,
-			border.alpha = .05,
-			border.color = "gray",
-			colorNA = NULL,
-			title = "",
-			id = "popup_text",
-			popup.vars = c("Tot Pop" = "tr_population",
-						   "Tot HH" = "tr_households",
-						   "% Rent" = "tr_prenters",
-						   "$ Rent" = "tr_medrent",
-						   "$ R Lag" = "tr_medrent.lag",
-						   "$ R Gap" = "tr_rentgap",
-						   "Ch Rent" = "tr_chrent",
-						   "Ch R Lag" = "tr_chrent.lag",
-						   "% RB" = "tr_rb",
-						   "% VLI x RB" = "tr_irVLI_50p",
-						   "% ELI" = "tr_ELI_prop",
-						   "% VLI" = "tr_VLI_prop",
-						   "% Stud." = "tr_pstudents",
-						   "----------" = "text",
-						   "Neigh." = "NeighType",
-						   "% White" = "tr_pWhite",
-						   "% Black" = "tr_pBlack",
-						   "% Asian" = "tr_pAsian",
-						   "% Lat" = "tr_pLatinx",
-						   "% Other" = "tr_pOther",
-						   "% POC" = "tr_pPOC",
-						   "% Welf" = "tr_pwelf",
-						   "% Pov" = "tr_ppoverty",
-						   "% Unemp" = "tr_punemp",
-						   "%FHHw/C"= "tr_pfemhhch",
-						   "----------" = "text",
-						   "SC Criteria" = "text",
-						   "----------" = "text",
-						   "VLI" = "v_VLI",
-						   "POC" = "v_POC",
-						   "Renters" = "v_Renters",
-						   "RB" = "v_RB50VLI",
-						   "Ch Rent" = "dp_PChRent",
-						   "Rent Gap" = "dp_RentGap"
-						   ),
-			popup.format = list(digits=2)) +
-tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
+# 	tmap_leaflet(map) %>%
+# 	addPopups(map, options = popupOptions(minWidth = 300,
+# 									 maxWidth = 300)) %>% 
+# 	leaflet::hideGroup(c("Bus",
+# 						 "Vulnerable"#,
+# 						 # "adv_surprisedissc",
+# 						 # "adv_shouldbe"
+# 						 )) %>% 
+# 	addMiniMap(tiles = providers$CartoDB.Positron, 
+# 			   toggleDisplay = TRUE) %>% 
+# 	addEasyButton(easyButton(
+#     icon="fa-crosshairs", title="My Location",
+#     onClick=JS("function(btn, map){ map.locate({setView: true}); }")))
 
-map <-
-	tmap_leaflet(map) %>%
-	addPopups(map, options = popupOptions(minWidth = 300,
-									 maxWidth = 300)) %>% 
-	leaflet::hideGroup(c("Bus",
-						 "Vulnerable"#,
-						 # "adv_surprisedissc",
-						 # "adv_shouldbe"
-						 )) %>% 
-	addMiniMap(tiles = providers$CartoDB.Positron, 
-			   toggleDisplay = TRUE) %>% 
-	addEasyButton(easyButton(
-    icon="fa-crosshairs", title="My Location",
-    onClick=JS("function(btn, map){ map.locate({setView: true}); }")))
-
-# Create html 
-htmlwidgets::saveWidget(map, file="~/git/sensitive_communities/docs/map.html")
+# # Create html 
+# htmlwidgets::saveWidget(map, file="~/git/sensitive_communities/docs/map.html")
