@@ -748,6 +748,13 @@ mutate(p = percent(count_sc/count_ca, accuracy = .1))
 # Race concatenation
 # --------------------------------------------------------------------------
 
+data <- 
+	fread("~/git/sensitive_communities/data/final_df.csv.bz2")
+
+data %>% 
+	group_by()
+
+
 #                   NeighType count_ca count_sc      p
 # 1              White-Latinx     2562      553  21.6%
 # 2        White-Asian-Latinx     1922      474  24.7%

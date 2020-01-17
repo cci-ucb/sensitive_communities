@@ -1,4 +1,4 @@
-# Sensitive Communities Project
+# Sensitive Communities Project <a href='https://http://sensitivecommunities.org/'><img src='docs/images/UDP Logo.png' align="right" height="138.5" /></a>
 
 Version 1.0 map URL
 https://cci-ucb.github.io/sensitive_communities/map.html
