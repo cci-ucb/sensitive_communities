@@ -2,11 +2,12 @@
 
 ## Overview
 
-Version 1.0 map URL
-https://cci-ucb.github.io/sensitive_communities/map.html
+This repository holds all the code necessary for the [Sensitive Communities maps](https://sensitivecommunities.org). We provide this code so that you may be able to replicate this work in your own state/city. 
 
-## Code
+## Code & Usage
 
-The final code is located at `code/data.r`.
+To run the code, fork this repository and navigate to the `code/data.r` file. You will also need to clone a copy of Tim Thomas' [Neighborhood Typology Function](https://gitlab.com/timathomas/Functions/blob/master/NeighType_Fun.R) to run the typologies. 
 
-## Usage
+## Contact
+
+Please feel free to reach out to us for questions, help, or suggestions. 

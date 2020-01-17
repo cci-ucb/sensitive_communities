@@ -360,7 +360,7 @@ df_irli_f <-
 # --------------------------------------------------------------------------
 
 source("~/git/Functions/NeighType_Fun.R")
-# get code from https://gitlab.com/timathomas/Functions/blob/master/NeighType_Fun.R
+# This code is pulled from https://gitlab.com/timathomas/Functions/blob/master/NeighType_Fun.R
 
 df_nt <-
 	ntdf(state = "CA") %>%
@@ -387,8 +387,10 @@ df_rent <-
 		   tr_pchrent = (medrent - tr_medrent12)/tr_medrent12, 
 		   co_medrent12 = median(tr_medrent12, na.rm = TRUE))
 
+# Pull in CA tracts shapefile
 ct <- tracts("CA", cb = TRUE)
 
+# join data to these tracts
 ct@data <-
 	left_join(ct@data, df_rent, by = "GEOID") %>%
 	left_join(., df_vli) %>%
@@ -637,41 +639,43 @@ data %>%
 	summarise(poc = median(tr_pPOC, na.rm = TRUE))
 
 
-#                   NeighType count_ca count_sc      p
-# 1              White-Latinx     2562      553  21.6%
-# 2        White-Asian-Latinx     1922      474  24.7%
-# 3               White-Asian      509       63  12.4%
-# 4              White-Shared      449       14   3.1% # Mostly white
-# 13                All White       56       NA   <NA> # Mostly white
-# 5        White-Black-Latinx      433      145  33.5%
-# 6              Asian-Latinx      376      172  45.7%
-# 7  White-Black-Asian-Latinx      348      132  37.9%
-# 8                All Latinx      335      143  42.7%
-# 9              Black-Latinx      304      185  60.9%
-# 10            Latinx-Shared      293      153  52.2%
-# 11       Black-Asian-Latinx       94       52  55.3%
-# 12       White-Latinx-Other       90       18  20.0%
-# 21             Asian-Shared       13        3  23.1% # Mostly POC
-# 22 Black-Asian-Latinx-Other       10        7  70.0% # Mostly POC
-# 24       Black-Latinx-Other        7        5  71.4% # Mostly POC
-# 25             Black-Shared        7        3  42.9% # Mostly POC
-# 26       Asian-Latinx-Other        5        3  60.0% # Mostly POC
-# 27              Asian-Black        3        2  66.7% # Mostly POC
-# 28                All Other        2       NA   <NA> # Mostly POC
-# 30                All Asian        1        1 100.0% # Mostly POC
-# 31              Black-Other        1       NA   <NA> # Mostly POC
-# 32             Latinx-Other        1       NA   <NA> # Mostly POC
-# 33             Other-Shared        1       NA   <NA> # Mostly POC
-# 14 White-Asian-Latinx-Other       55        9  16.4% # Diverse
-# 15               Integrated       44       18  40.9% # Diverse
-# 17 White-Black-Latinx-Other       26       16  61.5% # Diverse
-# 18              White-Other       20        1   5.0% # Diverse
-# 19        White-Asian-Other       18        4  22.2% # Diverse
-# 20        White-Black-Asian       16        5  31.2% # Diverse
-# 23              White-Black        8        3  37.5% # Diverse
-# 29        White-Black-Other        2        1  50.0% # Diverse
-# 34  White-Black-Asian-Other        1       NA   <NA> # Diverse
-# 16        unpopulated tract       29       NA   <NA>
+
+
+#                NeighType count_ca count_sc      p NT2
+#             White-Latinx     2562      553  21.6% # White-Latinx
+#       White-Asian-Latinx     1922      474  24.7% # White-Asian-Latinx
+#              White-Asian      509       63  12.4% # White-Asian
+#             White-Shared      449       14   3.1% # Mostly white
+#                All White       56       NA   <NA> # Mostly white
+#       White-Black-Latinx      433      145  33.5% # White-Black-Latinx
+#             Asian-Latinx      376      172  45.7% # Asian-Latinx
+# White-Black-Asian-Latinx      348      132  37.9% # White-Black-Asian-Latinx
+#               All Latinx      335      143  42.7% # All Latinx
+#             Black-Latinx      304      185  60.9% # Black-Latinx
+#            Latinx-Shared      293      153  52.2% # Latinx-Shared
+#       Black-Asian-Latinx       94       52  55.3% # Black-Asian-Latinx
+#       White-Latinx-Other       90       18  20.0% # White-Latinx-Other
+#             Asian-Shared       13        3  23.1% # Mostly POC
+# Black-Asian-Latinx-Other       10        7  70.0% # Mostly POC
+#       Black-Latinx-Other        7        5  71.4% # Mostly POC
+#             Black-Shared        7        3  42.9% # Mostly POC
+#       Asian-Latinx-Other        5        3  60.0% # Mostly POC
+#              Asian-Black        3        2  66.7% # Mostly POC
+#                All Other        2       NA   <NA> # Mostly POC
+#                All Asian        1        1 100.0% # Mostly POC
+#              Black-Other        1       NA   <NA> # Mostly POC
+#             Latinx-Other        1       NA   <NA> # Mostly POC
+#             Other-Shared        1       NA   <NA> # Mostly POC
+# White-Asian-Latinx-Other       55        9  16.4% # Diverse
+#               Integrated       44       18  40.9% # Diverse
+# White-Black-Latinx-Other       26       16  61.5% # Diverse
+#              White-Other       20        1   5.0% # Diverse
+#        White-Asian-Other       18        4  22.2% # Diverse
+#        White-Black-Asian       16        5  31.2% # Diverse
+#              White-Black        8        3  37.5% # Diverse
+#        White-Black-Other        2        1  50.0% # Diverse
+#  White-Black-Asian-Other        1       NA   <NA> # Diverse
+#        unpopulated tract       29       NA   <NA>
 
 # Descriptive stats
 check <- 
@@ -739,51 +743,10 @@ Rail <-
 	mutate(label = as.character(label))
 
 #
-# Map functions
+# Make maps
 # --------------------------------------------------------------------------
-# save_map <- function(x,y) tmap_save(x, paste0("~/git/sensitive_communities/docs/", y, ".html"))
 
-tmap_mode("view")
-
-# p_text <- function(x, y){
-# 	paste0('<span class="right">', x, '</span><span class="left">', y, '</span>'​)}
-
-# popup = paste0("<b>Total Population</b><br>", tr_population),
-# 		str_c("Tot HH: ", tr_households),
-# 		str_c("% Rent: ", tr_prenters),
-# 		str_c("$ Rent: ", tr_medrent),
-# 		str_c("$ R Lag: ", tr_medrent.lag),
-# 		str_c("$ R Gap: ", tr_rentgap),
-# 		str_c("Ch Rent: ", tr_chrent),
-# 		str_c("Ch R Lag: ", tr_chrent.lag),
-# 		str_c("% RB: ", tr_rb),
-# 		str_c("% VLI x RB: ", tr_irVLI_50p),
-# 		str_c("% ELI: ", tr_ELI_prop),
-# 		str_c("% VLI: ", tr_VLI_prop),
-# 		str_c("% Stud.: ", tr_pstudents),
-# 		str_c("----------: ", text),
-# 		str_c("Neigh.: ", NeighType),
-# 		str_c("% White: ", tr_pWhite),
-# 		str_c("% Black: ", tr_pBlack),
-# 		str_c("% Asian: ", tr_pAsian),
-# 		str_c("% Lat: ", tr_pLatinx),
-# 		str_c("% Other: ", tr_pOther),
-# 		str_c("% POC: ", tr_pPOC),
-# 		str_c("% Welf: ", tr_pwelf),
-# 		str_c("% Pov: ", tr_ppoverty),
-# 		str_c("% Unemp: ", tr_punemp),
-# 		str_c("%FHHw/C"= "tr_pfemhhch"),
-# 		str_c("----------: ", text),
-# 		str_c("SC Criteria: ", text),
-# 		str_c("----------: ", text),
-# 		str_c("VLI: ", v_VLI),
-# 		str_c("POC: ", v_POC),
-# 		str_c("Renters: ", v_Renters),
-# 		str_c("RB: ", v_RB50VLI),
-# 		str_c("Ch Rent: ", dp_PChRent),
-# 		str_c("Rent Gap: ", dp_RentGap), 
-# 		sep = "<br/>"
-# 						   )
+# map dataframe
 
 df_tiers <- 
 	df_final.RB50VLI %>%
@@ -879,31 +842,7 @@ df_tier2 <-
 	df_tiers %>% 
 	filter(!is.na(tier2))
 
-# m <- 
-# 	leaflet(df_tiers, df_tier2) %>% 
-# 	addProviderTiles(providers$CartoDB.Positron) %>% 
-# 	addMiniMap(tiles = providers$CartoDB.Positron, 
-# 			   toggleDisplay = TRUE) %>% 
-# 	addEasyButton(
-# 		easyButton(
-# 		    icon="fa-crosshairs", 
-# 		    title="My Location",
-# 		    onClick=JS("function(btn, map){ map.locate({setView: true}); }"))) %>% 
-# 	setView(-122.2712, 37.8044, zoom = 10)
-
-
-	# addPolygons(data = df_tiers, 
-	# 			group = "tier2", 
-	# 			# name = "Vulnerable", 
-	# 			fillColor = c("#6699FF", "#6699FF"),
-	# 			weight = .5, 
-	# 			opacity = .45, 
-	# 			fillOpacity = .1, 
-	# 			stroke = TRUE, 
-	# 			popup = ~popup, 
-	# 			popupOptions = popupOptions(maxHeight = 215, closeOnClick = TRUE)) %>% 
-
-
+# color scheme 1
 pal1 <- 
 	colorFactor(
 		c("#FF6633", "#CCCCCC"), 
@@ -911,6 +850,7 @@ pal1 <-
 		na.color = "transparent"
 	)
 
+# color scheme 2
 pal2 <- 
 	colorFactor(
 		c("#6699FF", "#CCCCCC"), 
@@ -918,6 +858,7 @@ pal2 <-
 		na.color = "transparent"
 	)
 
+# make map
 map <- 
 	leaflet(data = c(df_tiers, df_tier2)) %>% 
 	addProviderTiles(providers$CartoDB.Positron) %>% 
@@ -1009,188 +950,6 @@ map <-
 					 options = layersControlOptions(collapsed = TRUE)) %>% 
 	hideGroup(c("Bus", "Vulnerable"))
 
+# save map
 htmlwidgets::saveWidget(map, file="~/git/sensitive_communities/docs/map.html")
 # run in terminal, not in rstudio
-object.size(map)
-
-# ==========================================================================
-# ==========================================================================
-# ==========================================================================
-# Excess code
-# ==========================================================================
-# ==========================================================================
-# ==========================================================================
-
-
-
-
-
-
-
-# object.size()
-
-# m %>% 
-# 	addPolygons(
-# 		data = df_tiers, 
-# 		group = "tier1", 
-# 		fillColor = c("#CCCCCC", "red"), # polygon colors per value
-# 		weight = .5, # border thickness
-# 		color = "transparent",
-# 		opacity = .45, 
-# 		fillOpacity = .1, 
-# 		stroke = TRUE, 
-# 		popup = ~popup, 
-# 		popupOptions = popupOptions(maxHeight = 215, closeOnClick = TRUE)
-# 	) %>% 
-# 	addLegend(values = values(tier1)) %>%
-# 	addLayersControl(#baseGroups = c("OSM (default)", "Toner", "Toner Lite"),
-# 					 overlayGroups = c("tier1", "teir2"),
-# 					 options = layersControlOptions(collapsed = FALSE)) %>% 
-# 	hideGroup(c("Bus",
-# 						 "tier2"#,
-# 						 # "adv_surprisedissc",
-# 						 # "adv_shouldbe"
-# 						 ))
-# ## 
-# # Issues: 
-# # 	What is it coloring? 
-
-# df_tiers %>% 
-# 	filter(GEOID == "06001981900") %>% 
-# 	glimpse()
-
-
-
-
-
-
-
-
-
-
-# # map <-
-# tm_basemap(leaflet::providers$CartoDB.Positron) + 
-# 	# For other basemaps see: http://leaflet-extras.github.io/leaflet-providers/preview/
-# tm_shape(Bus) +
-# 	tm_polygons("label",
-# 				palette="Greys", alpha = .25,
-# 				border.color = "gray",
-# 				border.alpha = .5,
-# 				id = "label",
-# 				popup.vars = c("Type: " = "id"),
-# 				title = "") +
-# tm_shape(Rail) +
-# 	tm_polygons("label",
-# 				palette="Greys",
-# 				alpha = .25,
-# 				border.alpha = .5,
-# 				id = "label",
-# 				popup.vars = c("Type: " = "id"),
-# 				title = "") +
-# tm_shape(df_tier2, name = "Vulnerable") +
-# 	tm_polygons("tier2",
-# 			palette = c("#6699FF", "#6699FF"),
-# 			# label = "Heightened Sensitivity",
-# 			alpha = .5,
-# 			border.alpha = .05,
-# 			border.color = "gray",
-# 			colorNA = NULL,
-# 			title = "",
-# 			id = "popup_text",
-# 			popup.vars = c("Tot Pop" = "tr_population",
-# 						   "Tot HH" = "tr_households",
-# 						   "% Rent" = "tr_prenters",
-# 						   "$ Rent" = "tr_medrent",
-# 						   "$ R Lag" = "tr_medrent.lag",
-# 						   "$ R Gap" = "tr_rentgap",
-# 						   "Ch Rent" = "tr_chrent",
-# 						   "Ch R Lag" = "tr_chrent.lag",
-# 						   "% RB" = "tr_rb",
-# 						   "% VLI x RB" = "tr_irVLI_50p",
-# 						   "% ELI" = "tr_ELI_prop",
-# 						   "% VLI" = "tr_VLI_prop",
-# 						   "% Stud." = "tr_pstudents",
-# 						   "----------" = "text",
-# 						   "Neigh." = "NeighType",
-# 						   "% White" = "tr_pWhite",
-# 						   "% Black" = "tr_pBlack",
-# 						   "% Asian" = "tr_pAsian",
-# 						   "% Lat" = "tr_pLatinx",
-# 						   "% Other" = "tr_pOther",
-# 						   "% POC" = "tr_pPOC",
-# 						   "----------" = "text",
-# 						   "SC Criteria" = "text",
-# 						   "----------" = "text",
-# 						   "VLI" = "v_VLI",
-# 						   "POC" = "v_POC",
-# 						   "Renters" = "v_Renters",
-# 						   "RB" = "v_RB50VLI",
-# 						   "Ch Rent" = "dp_PChRent",
-# 						   "Rent Gap" = "dp_RentGap"
-# 						   ),
-# 			popup.format = list(digits=2)) +
-# tm_shape(df_final.RB50VLI, name = "Heightened Sensitivity") +
-# 	tm_polygons("tier1",
-# 			palette = c("#CCCCCC", "#FF6633"),
-# 			# label = "Heightened Sensitivity",
-# 			alpha = .5,
-# 			border.alpha = .05,
-# 			border.color = "gray",
-# 			colorNA = NULL,
-# 			title = "",
-# 			id = "popup_text",
-# 			popup.vars = c("Tot Pop" = "tr_population",
-# 						   "Tot HH" = "tr_households",
-# 						   "% Rent" = "tr_prenters",
-# 						   "$ Rent" = "tr_medrent",
-# 						   "$ R Lag" = "tr_medrent.lag",
-# 						   "$ R Gap" = "tr_rentgap",
-# 						   "Ch Rent" = "tr_chrent",
-# 						   "Ch R Lag" = "tr_chrent.lag",
-# 						   "% RB" = "tr_rb",
-# 						   "% VLI x RB" = "tr_irVLI_50p",
-# 						   "% ELI" = "tr_ELI_prop",
-# 						   "% VLI" = "tr_VLI_prop",
-# 						   "% Stud." = "tr_pstudents",
-# 						   "----------" = "text",
-# 						   "Neigh." = "NeighType",
-# 						   "% White" = "tr_pWhite",
-# 						   "% Black" = "tr_pBlack",
-# 						   "% Asian" = "tr_pAsian",
-# 						   "% Lat" = "tr_pLatinx",
-# 						   "% Other" = "tr_pOther",
-# 						   "% POC" = "tr_pPOC",
-# 						   "% Welf" = "tr_pwelf",
-# 						   "% Pov" = "tr_ppoverty",
-# 						   "% Unemp" = "tr_punemp",
-# 						   "%FHHw/C"= "tr_pfemhhch",
-# 						   "----------" = "text",
-# 						   "SC Criteria" = "text",
-# 						   "----------" = "text",
-# 						   "VLI" = "v_VLI",
-# 						   "POC" = "v_POC",
-# 						   "Renters" = "v_Renters",
-# 						   "RB" = "v_RB50VLI",
-# 						   "Ch Rent" = "dp_PChRent",
-# 						   "Rent Gap" = "dp_RentGap"
-# 						   ),
-# 			popup.format = list(digits=2)) +
-# tm_view(set.view = c(lon = -122.2712, lat = 37.8044, zoom = 9), alpha = .9)
-
-# map <-
-# 	tmap_leaflet(map) %>%
-# 	addPopups(map, options = popupOptions(minWidth = 300,
-# 									 maxWidth = 300)) %>% 
-# 	leaflet::hideGroup(c("Bus",
-# 						 "Vulnerable"#,
-# 						 # "adv_surprisedissc",
-# 						 # "adv_shouldbe"
-# 						 )) %>% 
-# 	addMiniMap(tiles = providers$CartoDB.Positron, 
-# 			   toggleDisplay = TRUE) %>% 
-# 	addEasyButton(easyButton(
-#     icon="fa-crosshairs", title="My Location",
-#     onClick=JS("function(btn, map){ map.locate({setView: true}); }")))
-
-# # Create html 
-# htmlwidgets::saveWidget(map, file="~/git/sensitive_communities/docs/map.html")
