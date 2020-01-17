@@ -762,7 +762,6 @@ mutate(p = percent(count_sc/count_ca, accuracy = .1))
 # 10            Latinx-Shared      293      153  52.2%
 # 11       Black-Asian-Latinx       94       52  55.3%
 # 12       White-Latinx-Other       90       18  20.0%
-
 # 21             Asian-Shared       13        3  23.1% # Mostly POC
 # 22 Black-Asian-Latinx-Other       10        7  70.0% # Mostly POC
 # 24       Black-Latinx-Other        7        5  71.4% # Mostly POC
@@ -783,8 +782,45 @@ mutate(p = percent(count_sc/count_ca, accuracy = .1))
 # 23              White-Black        8        3  37.5% # Diverse
 # 29        White-Black-Other        2        1  50.0% # Diverse
 # 34  White-Black-Asian-Other        1       NA   <NA> # Diverse
-
 # 16        unpopulated tract       29       NA   <NA>
+
+# Descriptive stats
+check <- 
+	df_final.RB50VLI %>% 
+	st_set_geometry(NULL) %>% 
+	mutate(nt2 = case_when(
+		NeighType == "White-Shared" | 
+		NeighType == "All White" ~ "Mostly White", 
+		NeighType == "Asian-Shared" |
+		NeighType == "Black-Asian-Latinx-Other" |
+		NeighType == "Black-Latinx-Other" |
+		NeighType == "Black-Shared" |
+		NeighType == "Asian-Latinx-Other" |
+		NeighType == "Asian-Black" |
+		NeighType == "All Other" |
+		NeighType == "All Asian" |
+		NeighType == "Black-Other" |
+		NeighType == "Latinx-Other" |
+		NeighType == "Other-Shared" ~ "Mostly POC", 
+		NeighType == "White-Asian-Latinx-Other" |
+		NeighType == "Integrated" |
+		NeighType == "White-Black-Latinx-Other" |
+		NeighType == "White-Other" |
+		NeighType == "White-Asian-Other" |
+		NeighType == "White-Black-Asian" |
+		NeighType == "White-Black" |
+		NeighType == "White-Black-Other" |
+		NeighType == "White-Black-Asian-Other" ~ "Diverse", 
+		TRUE ~ NeighType)) 
+
+check %>% 
+	group_by(nt2) %>% 
+	summarise(total_tracts = n()) %>% 
+	left_join(., check %>% 
+					filter(tier1 == "Heightened Sensitivity") %>% 
+					group_by(nt2) %>% 
+					summarise(sc_tracts = n())) %>% 
+	mutate(p_sc_tracts = percent(sc_tracts/total_tracts))
 
 
 # Number of tracts with more than 500 people
