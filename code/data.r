@@ -19,7 +19,7 @@ options(scipen = 10) # avoid scientific notation
 
 # load packages
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(rmapshaper, scales, data.table, plotly, spdep, tidyverse, tigris, tidycensus, tmap, leaflet)
+pacman::p_load(colorout, rmapshaper, scales, data.table, plotly, spdep, tidyverse, tigris, tidycensus, tmap, leaflet)
 
 # Cache downloaded tiger files
 options(tigris_use_cache = TRUE)
@@ -388,7 +388,7 @@ df_rent <-
 		   co_medrent12 = median(tr_medrent12, na.rm = TRUE))
 
 # Pull in CA tracts shapefile
-ct <- tracts("CA", cb = TRUE)
+ct <- tracts("CA", cb = TRUE, class = 'sp')
 
 # join data to these tracts
 ct@data <-
