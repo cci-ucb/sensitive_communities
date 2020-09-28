@@ -6,6 +6,10 @@ This repository holds all the code needed to produce the [Sensitive Communities 
 
 Any modified code that is taken from this repo and not reviewed by the Urban Displacement Project is not endorsed by us and should be documented accordingly as not endorsed by the Urban Displacement Project. 
 
+## Download the data
+
+You can download the data that produces this map by visiting the [data](https://github.com/cci-ucb/sensitive_communities/blob/master/data/README.md) directory and reading the instructions.
+
 ## Code & Usage
 
 To run the code, fork this repository and navigate to the `code/data.r` file. You will also need to clone a copy of Tim Thomas' [Neighborhood Typology Function](https://gitlab.com/timathomas/Functions/blob/master/NeighType_Fun.R) to run the neighborhood racial typologies portion. 
