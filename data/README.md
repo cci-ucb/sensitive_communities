@@ -6,8 +6,7 @@ This folder holds data needed to produce the sensitive community maps as well as
 
 The maps underlying data can be downloaded here either as a csv ([`final_df.csv`](https://github.com/cci-ucb/sensitive_communities/blob/master/data/final_df.csv)) or as a shapefile by downloading all the associated `.shp` files including: 
 
-[final_df.dbf](https://github.com/cci-ucb/sensitive_communities/blob/master/data/final_df.dbf)
-[final_df.prj](https://github.com/cci-ucb/sensitive_communities/blob/master/data/final_df.prj)
-[final_df.shp](https://github.com/cci-ucb/sensitive_communities/blob/master/data/final_df.shp)
-[final_df.shx](https://github.com/cci-ucb/sensitive_communities/blob/master/data/final_df.shx)
-```
+[final_df.dbf](https://github.com/cci-ucb/sensitive_communities/blob/master/data/final_df.dbf)  
+[final_df.prj](https://github.com/cci-ucb/sensitive_communities/blob/master/data/final_df.prj)  
+[final_df.shp](https://github.com/cci-ucb/sensitive_communities/blob/master/data/final_df.shp)  
+[final_df.shx](https://github.com/cci-ucb/sensitive_communities/blob/master/data/final_df.shx)  
